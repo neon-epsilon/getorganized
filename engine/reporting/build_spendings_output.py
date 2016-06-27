@@ -7,8 +7,6 @@ import config
 summary_outputpath = '/generated_content/spendings/summary.html'
 chart_7days_outputpath = '/generated_content/spendings/chart_7days.png'
 chart_progress_outputpath = '/generated_content/spendings/chart_progress.png'
-# money to be spent in one month
-monthly_goal = 500
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
@@ -28,20 +26,24 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 
-# find out date today and calculate daily goal
-today = datetime.date.today()
-daily_goal = monthly_goal/calendar.monthrange(today.year, today.month)[1]
-
-
-# fetch database tables
+# fetch from database
 con = MySQLdb.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+# fetch money to be spent in one month
+monthly_goal = pd.io.sql.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
+#fetch categories
 db_categories = pd.io.sql.read_sql('select category from spendings_categories order by priority', con=con)
+#fetch data from last 30 days
 db = pd.io.sql.read_sql("""
     select id, amount, date, category
     from spendings
     where date >= date_sub(curdate(), interval 30 day)
     """, con=con, parse_dates=True, index_col="id")
 con.close()
+
+
+# find out date today and calculate daily goal
+today = datetime.date.today()
+daily_goal = monthly_goal/calendar.monthrange(today.year, today.month)[1]
 
 
 # create index column with last 31 dates

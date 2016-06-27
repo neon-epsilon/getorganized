@@ -7,8 +7,6 @@ import config
 summary_outputpath = '/generated_content/hoursofwork/summary.html'
 chart_7days_outputpath = '/generated_content/hoursofwork/chart_7days.png'
 chart_progress_outputpath = '/generated_content/hoursofwork/chart_progress.png'
-# money to be spent in one month
-weekly_goal = 37.5
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 plot_style = u'ggplot'
@@ -27,6 +25,21 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 
 
+# fetch from database
+con = MySQLdb.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+# fetch hours to work in one week
+weekly_goal = pd.io.sql.read_sql('select value from hoursofwork_goals where property="weekly goal"', con=con)['value'][0]
+#fetch categories
+db_categories = pd.io.sql.read_sql('select category from hoursofwork_categories order by priority', con=con)
+#fetch data from last 30 days
+db = pd.io.sql.read_sql("""
+    select id, amount, date, category
+    from hoursofwork
+    where date >= date_sub(curdate(), interval 30 day)
+    """, con=con, parse_dates=True, index_col="id")
+con.close()
+
+
 # find out date today and calculate daily goal
 today = datetime.date.today()
 daily_goal = weekly_goal/5.0
@@ -34,17 +47,6 @@ daily_goal = weekly_goal/5.0
 businessdays_this_month = sum( 1 for x in range( calendar.monthrange(today.year, today.month)[1] ) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
 businessdays_until_today = sum( 1 for x in range(today.day) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
 monthly_goal = daily_goal*businessdays_this_month
-
-
-# fetch database tables
-con = MySQLdb.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
-db_categories = pd.io.sql.read_sql('select category from hoursofwork_categories order by priority', con=con)
-db = pd.io.sql.read_sql("""
-    select id, amount, date, category
-    from hoursofwork
-    where date >= date_sub(curdate(), interval 30 day)
-    """, con=con, parse_dates=True, index_col="id")
-con.close()
 
 
 # create index column with last 31 dates
