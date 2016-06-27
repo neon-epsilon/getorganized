@@ -8,7 +8,7 @@ www_root = os.path.dirname( os.path.dirname( os.path.dirname(os.path.abspath(__f
 # set up database login data
 __parser = configparser.ConfigParser()
 __parser.read(www_root + '/etc/config.ini')
-db_name = __parser.get('DB', 'name')
-db_host = __parser.get('DB', 'host')
-db_user = __parser.get ('DB', 'user')
-db_password = __parser.get('DB', 'password')
+db_name = __parser.get('DB', 'name').strip('"')
+db_host = __parser.get('DB', 'host').strip('"')
+db_user = __parser.get ('DB', 'user').strip('"')
+db_password = __parser.get('DB', 'password').strip('"')
