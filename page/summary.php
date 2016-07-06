@@ -19,6 +19,7 @@ include $_SERVER["DOCUMENT_ROOT"] . '/design/menu.php';
         <?php
         include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/spendings_input_form.php';
         include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/shoppinglist_input_form.php';
+        include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/calories_items_input_form.php';
         ?>
     </div>
 
@@ -26,7 +27,7 @@ include $_SERVER["DOCUMENT_ROOT"] . '/design/menu.php';
         <?php
         include $_SERVER["DOCUMENT_ROOT"] . '/generated_content/spendings/summary.html';
         ?>
-        </div>
+    </div>
 
 </div>
 
