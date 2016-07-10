@@ -49,7 +49,7 @@ if(!empty($_POST['ids_to_delete'])){
     $info_message = "<p class=\"smallinfo\">Einträge <br>" . $ids_string . "<br>in calories_entries gelöscht.</p>";
 
     /* rebuild calories_entries output */
-    exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_spendings_output.py > /dev/null 2> /dev/null &');
+    exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_calories_output.py > /dev/null 2> /dev/null &');
 }
 
 // Get the last entries
