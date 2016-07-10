@@ -61,6 +61,9 @@ if ( !empty($_POST["calories_entries_input_form_submit"]) )
         $stmt->close();
 
         $info_message = "<p class=\"smallinfo\">Zeile<br>('$date', '$item_id', '$quantity')<br>in calories_items eingefügt.</p>";
+
+        /* rebuild calories output */
+        exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_calories_output.py > /dev/null 2> /dev/null &');
     }
 
     $mysqli->close();

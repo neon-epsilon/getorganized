@@ -31,6 +31,12 @@ include $_SERVER["DOCUMENT_ROOT"] . '/design/menu.php';
     ?>
     </div>
 
+    <div class="box">
+        <?php
+            include $_SERVER["DOCUMENT_ROOT"] . '/generated_content/calories/summary.html';
+        ?>
+    </div>
+
 </div>
 
 </body>
