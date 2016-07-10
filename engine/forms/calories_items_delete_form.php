@@ -37,7 +37,7 @@ if ( !empty($_POST["calories_items_delete_form_submit"]) )
     /* close statement */
     $stmt->close();
 
-    $info_message = "<p class=\"smallinfo\">Eintrak mit id <br>" . $item_id . "<br>in calories_items gelöscht.</p>";
+    $info_message = "<p class=\"smallinfo\">Eintrag mit id <br>" . $item_id . "<br>in calories_items gelöscht.</p>";
 
     $mysqli->close();
 }
