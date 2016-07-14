@@ -53,7 +53,7 @@ if(!empty($_POST['ids_to_delete'])){
 }
 
 // Get the last entries
-if (! $result = $mysqli->query("SELECT a.id, a.date, b.name AS item, (a.quantity * b.kcal_per_unit) AS kcals FROM calories_entries a LEFT JOIN calories_items b ON a.item_id = b.id ORDER BY id DESC LIMIT {$number_of_items}" ) ) {
+if (! $result = $mysqli->query("SELECT a.id, a.date, b.name AS item, ROUND(a.quantity * b.kcal_per_unit) AS kcals FROM calories_entries a LEFT JOIN calories_items b ON a.item_id = b.id ORDER BY id DESC LIMIT {$number_of_items}" ) ) {
 die( "query failed: (" . $mysqli->errno . ") " . $mysqli->error );
 }
 
