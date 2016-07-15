@@ -74,7 +74,7 @@ if ( !empty($_POST["calories_items_delete_form_submit"]) )
         if (! $stmt ) {
             die( "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error);
         }
-        if (! $stmt->bind_param("iid", $item_to_map_to_id, $quantity_conversion_factor, $item_to_delete_id) ) {
+        if (! $stmt->bind_param("idi", $item_to_map_to_id, $quantity_conversion_factor, $item_to_delete_id) ) {
             die( "Binding parameters failed: (" . $mysqli->errno . ") " . $mysqli->error);
         }
         if (! $stmt->execute() ) {
