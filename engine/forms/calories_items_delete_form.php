@@ -113,7 +113,7 @@ $form = '
             <select name="item_to_map_to_id">%s</select>
         </li>
     </ul>
-    <input class="form_button" type="submit" name="calories_items_delete_form_submit" value="Speichern" />
+    <input class="form_button" type="submit" name="calories_items_delete_form_submit" value="Löschen" />
     %s
     </form>
     ';
