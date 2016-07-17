@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
-import config
 # absolute outputpaths regarding www_root as root (just like the server does)
 summary_outputpath = '/generated_content/calories/summary.html'
 chart_7days_outputpath = '/generated_content/calories/chart_7days.png'
@@ -12,6 +10,14 @@ max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
 plot_style = u'ggplot'
 
+# import module ../config/config.py and turn www_root into string
+import pathlib, sys
+file_name = pathlib.Path.cwd() / pathlib.Path(__file__)
+sys.path.append(str(file_name.parent.parent / 'config'))
+import config
+config.www_root = str(config.www_root)
+
+# other imports
 import MySQLdb
 import pandas as pd
 import time
