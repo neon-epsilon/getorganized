@@ -117,3 +117,10 @@ h1 {
 h2 {
     font-size: 1em;
 }
+
+.error {
+    background: #d45252;
+    border-radius: 3px 3px 3px 3px;
+    color: white;
+    padding: 1px 3px;
+}

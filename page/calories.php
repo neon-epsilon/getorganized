@@ -27,7 +27,7 @@ include $_SERVER["DOCUMENT_ROOT"] . '/design/menu.php';
     <h1>Löschen</h1>
     <?php
         include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/calories_entries_delete_form.php';
-        //include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/calories_items_delete_form.php';
+        include $_SERVER["DOCUMENT_ROOT"] . '/engine/forms/calories_items_delete_form.php';
     ?>
     </div>
 
