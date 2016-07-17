@@ -1,4 +1,4 @@
------------- calories --------------
+-- ---------- calories --------------
 --
 -- Table structure for table `calories_categories`
 --
@@ -57,7 +57,7 @@ CREATE TABLE `calories_goals` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
------------- hoursofwork --------------
+-- ---------- hoursofwork --------------
 --
 -- Table structure for table `hoursofwork_categories`
 --
@@ -98,7 +98,7 @@ CREATE TABLE `hoursofwork_goals` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
------------- shoppinglist --------------
+-- ---------- shoppinglist --------------
 --
 -- Table structure for table `shoppinglist_categories`
 --
@@ -124,7 +124,7 @@ CREATE TABLE `shoppinglist` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
------------- spendings --------------
+-- ---------- spendings --------------
 --
 -- Table structure for table `spendings_categories`
 --
@@ -165,7 +165,7 @@ CREATE TABLE `spendings_goals` (
   UNIQUE KEY `property` (`property`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
------------- workout --------------
+-- ---------- workout --------------
 --
 -- Table structure for table `workout_categories`
 --
