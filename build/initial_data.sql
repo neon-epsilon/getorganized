@@ -1,4 +1,4 @@
------------- calories --------------
+-- ---------- calories --------------
 LOCK TABLES `calories_categories` WRITE;
 INSERT INTO `calories_categories` (name, priority) VALUES ('Normales',1),('Getränke',2),('Snacks',3);
 UNLOCK TABLES;
@@ -12,7 +12,7 @@ INSERT INTO `calories_goals` (property, value) VALUES ('daily goal',2000);
 UNLOCK TABLES;
 
 
------------- hoursofwork --------------
+-- ---------- hoursofwork --------------
 LOCK TABLES `hoursofwork_categories` WRITE;
 INSERT INTO `hoursofwork_categories` VALUES ('Amnesty',2),('FSI',3),('Uni',1);
 UNLOCK TABLES;
@@ -22,13 +22,13 @@ INSERT INTO `hoursofwork_goals` (property, value) VALUES ('weekly goal',37.5);
 UNLOCK TABLES;
 
 
------------- shoppinglist --------------
+-- ---------- shoppinglist --------------
 LOCK TABLES `shoppinglist_categories` WRITE;
 INSERT INTO `shoppinglist_categories` VALUES ('Baumarkt',5),('Büro',4),('Drogerie',2),('Haushalt',3),('Kleidung',6),('Lebensmittel',1),('Sonstiges',127);
 UNLOCK TABLES;
 
 
------------- spendings --------------
+-- ---------- spendings --------------
 LOCK TABLES `spendings_categories` WRITE;
 INSERT INTO `spendings_categories` VALUES ('Anschaffung',4),('Behörden',5),('Dienstleistung',5),('Einkaufen',1),('Essen/Trinken',2),('Geschenk',4),('Hobby',4),('Kleidung',5),('Medizinisches',6),('Reise',7),('Sonstiges',127),('Spende',5),('Transport',6),('Weggehen',3);
 UNLOCK TABLES;
@@ -37,7 +37,7 @@ LOCK TABLES `spendings_goals` WRITE;
 INSERT INTO `spendings_goals` (property, value) VALUES ('monthly goal',500);
 UNLOCK TABLES;
 
------------- workout --------------
+-- ---------- workout --------------
 LOCK TABLES `workout_categories` WRITE;
 INSERT INTO `workout_categories` VALUES ('Dehnen',3,'Übungen',5.00),('Fitnessstudio',2,'Wiederholungen',1.20),('Home Workout',4,'Wiederholungen',0.70),('Radfahren',1,'Minuten',4.00),('Rock\'n\'Roll',2,'Stunde',240.00),('Schwimmen',5,'Bahnen',40.00),('Zirkeltraining',5,'Trainingseinheit',300.00);
 UNLOCK TABLES;
