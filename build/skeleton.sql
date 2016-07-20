@@ -1,9 +1,14 @@
 -- ---------- calories --------------
+
+DROP TABLE IF EXISTS `calories_entries`;
+DROP TABLE IF EXISTS `calories_items`;
+DROP TABLE IF EXISTS `calories_categories`;
+
+DROP TABLE IF EXISTS `calories_goals`;
 --
 -- Table structure for table `calories_categories`
 --
 
-DROP TABLE IF EXISTS `calories_categories`;
 CREATE TABLE `calories_categories` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(40) DEFAULT NULL,
@@ -16,7 +21,6 @@ CREATE TABLE `calories_categories` (
 -- Table structure for table `calories_items`
 --
 
-DROP TABLE IF EXISTS `calories_items`;
 CREATE TABLE `calories_items` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(40) DEFAULT NULL,
@@ -32,7 +36,6 @@ CREATE TABLE `calories_items` (
 -- Table structure for table `calories_entries`
 --
 
-DROP TABLE IF EXISTS `calories_entries`;
 CREATE TABLE `calories_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `date` date NOT NULL,
@@ -47,7 +50,6 @@ CREATE TABLE `calories_entries` (
 -- Table structure for table `calories_goals`
 --
 
-DROP TABLE IF EXISTS `calories_goals`;
 CREATE TABLE `calories_goals` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `property` varchar(40) NOT NULL,
@@ -58,11 +60,15 @@ CREATE TABLE `calories_goals` (
 
 
 -- ---------- hoursofwork --------------
+
+DROP TABLE IF EXISTS `hoursofwork`;
+DROP TABLE IF EXISTS `hoursofwork_categories`;
+
+DROP TABLE IF EXISTS `hoursofwork_goals`;
 --
 -- Table structure for table `hoursofwork_categories`
 --
 
-DROP TABLE IF EXISTS `hoursofwork_categories`;
 CREATE TABLE `hoursofwork_categories` (
   `category` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
@@ -73,7 +79,6 @@ CREATE TABLE `hoursofwork_categories` (
 -- Table structure for table `hoursofwork`
 --
 
-DROP TABLE IF EXISTS `hoursofwork`;
 CREATE TABLE `hoursofwork` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
@@ -88,7 +93,6 @@ CREATE TABLE `hoursofwork` (
 -- Table structure for table `hoursofwork_goals`
 --
 
-DROP TABLE IF EXISTS `hoursofwork_goals`;
 CREATE TABLE `hoursofwork_goals` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `property` varchar(40) NOT NULL,
@@ -99,11 +103,13 @@ CREATE TABLE `hoursofwork_goals` (
 
 
 -- ---------- shoppinglist --------------
+
+DROP TABLE IF EXISTS `shoppinglist`;
+DROP TABLE IF EXISTS `shoppinglist_categories`;
 --
 -- Table structure for table `shoppinglist_categories`
 --
 
-DROP TABLE IF EXISTS `shoppinglist_categories`;
 CREATE TABLE `shoppinglist_categories` (
   `category` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
@@ -114,7 +120,6 @@ CREATE TABLE `shoppinglist_categories` (
 -- Table structure for table `shoppinglist`
 --
 
-DROP TABLE IF EXISTS `shoppinglist`;
 CREATE TABLE `shoppinglist` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(40) NOT NULL DEFAULT '',
@@ -125,11 +130,15 @@ CREATE TABLE `shoppinglist` (
 
 
 -- ---------- spendings --------------
+
+DROP TABLE IF EXISTS `spendings`;
+DROP TABLE IF EXISTS `spendings_categories`;
+
+DROP TABLE IF EXISTS `spendings_goals`;
 --
 -- Table structure for table `spendings_categories`
 --
 
-DROP TABLE IF EXISTS `spendings_categories`;
 CREATE TABLE `spendings_categories` (
   `category` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
@@ -140,7 +149,6 @@ CREATE TABLE `spendings_categories` (
 -- Table structure for table `spendings`
 --
 
-DROP TABLE IF EXISTS `spendings`;
 CREATE TABLE `spendings` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
@@ -156,7 +164,6 @@ CREATE TABLE `spendings` (
 -- Table structure for table `spendings_goals`
 --
 
-DROP TABLE IF EXISTS `spendings_goals`;
 CREATE TABLE `spendings_goals` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `property` varchar(40) NOT NULL,
@@ -166,11 +173,13 @@ CREATE TABLE `spendings_goals` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ---------- workout --------------
+
+DROP TABLE IF EXISTS `workout`;
+DROP TABLE IF EXISTS `workout_categories`;
 --
 -- Table structure for table `workout_categories`
 --
 
-DROP TABLE IF EXISTS `workout_categories`;
 CREATE TABLE `workout_categories` (
   `category` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
@@ -183,7 +192,6 @@ CREATE TABLE `workout_categories` (
 -- Table structure for table `workout`
 --
 
-DROP TABLE IF EXISTS `workout`;
 CREATE TABLE `workout` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` smallint(5) unsigned NOT NULL,
