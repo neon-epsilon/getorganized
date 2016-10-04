@@ -7,6 +7,7 @@ chart_7days_outputpath = '/generated_content/hoursofwork/chart_7days.png'
 chart_progress_outputpath = '/generated_content/hoursofwork/chart_progress.png'
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
+max_categories_progress = 5  # max number of categories to show for progress plot
 plot_style = u'ggplot'
 
 # import module ../config/config.py and turn www_root into string
@@ -93,7 +94,7 @@ ax7days = fig7days.add_subplot(111)
 
 # create output chart for 7 days
 formatted_xticklabels = seven_days_per_day.index.map(lambda t: t.strftime('%a %b %-d'))
-seven_days_per_day.plot(ax = ax7days, kind='bar', stacked=False, rot=0, title="Letzte 7 Tage", grid=False, zorder=2)
+seven_days_per_day.plot(ax = ax7days, kind='bar', stacked=True, rot=0, title="Letzte 7 Tage", grid=False, zorder=2)
 # add horizontal lines to indicate the daily goal
 ax7days.axhline(y=daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1);
 # add minor ticks on the y-axis
@@ -107,16 +108,23 @@ fig7days.savefig(config.www_root + chart_7days_outputpath)
 
 
 ### Make progress plots
-figprogress = plt.figure(figsize=(7,2.15))
+figprogress = plt.figure(figsize=(7,3))
 
 ### bar chart for this week's progress
 # aggregate data
-this_week = per_day[['Uni']][-today.weekday()-1:].sum()
+this_week = per_day[-today.weekday()-1:].sum().order(ascending=False)
+this_week = this_week[this_week != 0]
+if len(this_week) == 0:
+    this_week['Alles'] = 0
+elif len(this_week) > max_categories_progress:
+    this_week_small_entries = this_week[max_categories_progress-1:].sum()
+    this_week = this_week[:max_categories_progress-1]
+    this_week['Alles andere'] = this_week_small_entries
 this_week = pd.DataFrame(this_week).transpose()
 
 # plot data
 axweek = figprogress.add_subplot(211)
-this_week.plot(ax = axweek, kind='barh', stacked=True, title="Uni diese Woche", width=0.8, grid=False, zorder=2, legend=False)
+this_week.plot(ax = axweek, kind='barh', stacked=True, title="Diese Woche", width=0.8, grid=False, zorder=2)
 axweek.axvline(x=min((today.weekday()+1),5)*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the week
 axweek.axvline(x=5*daily_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per week
 # add minor ticks on the x-axis
@@ -127,12 +135,19 @@ axweek.set_yticklabels([''])
 
 ### bar chart for this month's progress
 # aggregate data
-this_month = per_day[['Uni']][-today.day:].sum()
+this_month = per_day[-today.day:].sum().order(ascending=False)
+this_month = this_month[this_month != 0]
+if len(this_month) == 0:
+    this_month['Alles'] = 0
+elif len(this_month) > max_categories_progress:
+    this_month_small_entries = this_month[max_categories_progress-1:].sum()
+    this_month = this_month[:max_categories_progress-1]
+    this_month['Alles andere'] = this_month_small_entries
 this_month = pd.DataFrame(this_month).transpose()
 
 # plot data
 axmonth = figprogress.add_subplot(212)
-this_month.plot(ax = axmonth, kind='barh', stacked=True, title="Uni diesen Monat", width=0.8, grid=False, zorder=2, legend=False)
+this_month.plot(ax = axmonth, kind='barh', stacked=True, title="Diesen Monat", width=0.8, grid=False, zorder=2)
 axmonth.axvline(x=businessdays_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the month
 axmonth.axvline(x=monthly_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per month
 # add minor ticks on the x-axis
@@ -144,6 +159,14 @@ axmonth.set_yticklabels([''])
 ### adjust and save figure
 figprogress.tight_layout()
 plt.setp(axweek.get_xticklabels(), visible=True) # otherwise the upper xtick labels will be unvisible...
+
+boxweek = axweek.get_position()
+axweek.set_position([boxweek.x0, boxweek.y0 + boxweek.height*0.5, boxweek.width, boxweek.height * 0.5])
+axweek.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_week.columns), bbox_to_anchor=(0.5,-1.6))
+
+boxmonth = axmonth.get_position()
+axmonth.set_position([boxmonth.x0, boxmonth.y0 + boxmonth.height*0.5, boxmonth.width, boxmonth.height * 0.5])
+axmonth.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_month.columns), bbox_to_anchor=(0.5,-1.6))
 
 figprogress.savefig(config.www_root + chart_progress_outputpath)
 
