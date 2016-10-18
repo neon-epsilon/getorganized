@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="static/normalize.css">
+    <link rel="stylesheet" href="static/main.css">
+    <link rel="stylesheet" href="static/menu.css">
+    <link rel="stylesheet" href="static/forms.css">
+    <title>GetOrganized</title>
+  </head>
+  <body>
+
+    <nav>
+        <input type="checkbox" id="nav-checkbox-0">
+        <label for="nav-checkbox-0"><span class="nav-name">GetOrganized</span><span class="nav-icon">&equiv;</span></label>
+        <ul>
+            <li><a href="/" class="route-link">Übersicht</a></li>
+            <li>
+                <input type="checkbox" id="nav-checkbox-0-0">
+                <label for="nav-checkbox-0-0"><span class="nav-name">Details</span><span class="nav-icon">&#9660;</span></label>
+                <ul>
+                    <li><a href="/hoursofwork" class="route-link">Arbeitszeit</a></li>
+                    <li><a href="/spendings" class="route-link">Ausgaben</a></li>
+                    <li><a href="/calories" class="route-link">Kalorien</a></li>
+                    <!-- <li><a href="/workout" class="route-link">Training</a></li> -->
+                </ul>
+            </li>
+            <li><a href="/shoppinglist" class="route-link">Einkaufsliste</a></li>
+        </ul>
+    </nav>
+
+    <div id="main">
+    </div>
+
+    <script type="text/javascript">
+      var navigateTo = function (url) {
+        window.history.pushState({}, document.title, url);
+        window.dispatchEvent(new Event('popstate'));
+      }
+
+      var routeLinks = document.querySelectorAll("a.route-link");
+
+      var turnLinkIntoRouteLink = function(routeLink) {
+        routeLink.addEventListener('click', function(clickEvent) {
+          clickEvent.preventDefault();
+          var url = clickEvent.target.getAttribute('href');
+          navigateTo(url);
+        });
+      };
+
+      [].forEach.call(
+        routeLinks,
+        turnLinkIntoRouteLink
+      );
+    </script>
+    <script type="text/javascript" src="app.js"></script>
+  </body>
+</html>
