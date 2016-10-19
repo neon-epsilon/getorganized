@@ -5,8 +5,8 @@ import Pux (start, fromSimple, renderToDOM)
 import Pux.Router (sampleUrl)
 import Signal ((~>))
 
-import RoutingExample.Routes (match)
-import RoutingExample.App (Action(PageView), init, update, view)
+import Routes (match)
+import App (Action(PageView), init, update, view)
 
 main = do
   urlSignal <- sampleUrl

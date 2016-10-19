@@ -1,9 +1,9 @@
-module RoutingExample.App where
+module App where
 
 import Prelude ((<>), ($), show)
 import Pux.Html (Html, div, h1, text)
 
-import RoutingExample.Routes (Route(..))
+import Routes (Route(..))
 
 data Action = PageView Route
 

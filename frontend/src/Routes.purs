@@ -1,4 +1,4 @@
-module RoutingExample.Routes where
+module Routes where
 
 import Control.Alt ((<|>))
 import Control.Apply ((<*), (*>))
