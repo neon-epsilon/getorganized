@@ -17,7 +17,7 @@
   "scripts": {
     "postinstall": "bower install",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "pulp --watch browserify --optimise --to dist/app.js & node server.js"
+    "dev": "pulp --watch browserify --optimise --to ../static/app/app.js"
   },
   "author": "",
   "license": "ISC"
