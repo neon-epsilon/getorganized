@@ -3,10 +3,10 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="static/normalize.css">
-    <link rel="stylesheet" href="static/main.css">
-    <link rel="stylesheet" href="static/menu.css">
-    <link rel="stylesheet" href="static/forms.css">
+    <link rel="stylesheet" href="static/css/normalize.css">
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/menu.css">
+    <link rel="stylesheet" href="static/css/forms.css">
     <title>GetOrganized</title>
   </head>
   <body>
@@ -33,27 +33,7 @@
     <div id="main">
     </div>
 
-    <script type="text/javascript">
-      var navigateTo = function (url) {
-        window.history.pushState({}, document.title, url);
-        window.dispatchEvent(new Event('popstate'));
-      }
-
-      var routeLinks = document.querySelectorAll("a.route-link");
-
-      var turnLinkIntoRouteLink = function(routeLink) {
-        routeLink.addEventListener('click', function(clickEvent) {
-          clickEvent.preventDefault();
-          var url = clickEvent.target.getAttribute('href');
-          navigateTo(url);
-        });
-      };
-
-      [].forEach.call(
-        routeLinks,
-        turnLinkIntoRouteLink
-      );
-    </script>
     <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="static/js/route-links.js"></script>
   </body>
 </html>
