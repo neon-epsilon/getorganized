@@ -4,6 +4,7 @@ import Prelude ((<>), ($), show)
 import Pux.Html (Html, div, h1, text)
 
 import Routes (Route(..))
+import Pages.Home as Home
 
 data Action = PageView Route
 
@@ -20,4 +21,5 @@ view state =
   div [] [ page state.currentRoute ]
 
 page :: Route -> Html Action
-page route      = h1 [] [ text $ show route ]
+page Home  = Home.view
+page route = h1 [] [ text $ show route ]

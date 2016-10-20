@@ -1,0 +1,43 @@
+module Pages.Home where
+
+import Pux.Html as H
+import Pux.Html.Attributes as A
+
+view :: forall action. H.Html action
+view =
+  H.div [ A.className "container"]
+    [ H.div [ A.className "small_box"]
+      [ H.h1 [] [ H.text "Eingabemaske"]
+      , H.h2 [] [ H.text "Irgendwas eingeben" ]
+      , H.form []
+        [ H.ul []
+          [ H.li []
+            [ H.label [] [ H.text "Datum:" ]
+            , H.input [ A.type_"date", A.name "date", A.defaultValue "2016-10-20", A.placeholder "2016-10-20", A.required true] []
+            ]
+          , H.li []
+            [ H.label [] [ H.text "Betrag:" ]
+            , H.input [ A.type_ "number", A.step "0.01", A.name "amount", A.required true ] []
+            , H.span [ A.className "form_hint"] [ H.text "Format: -?\\d+(.\\d+)?" ]
+            ]
+          , H.li []
+            [ H.label [] [ H.text "Kategorie:" ]
+            , H.select [ A.name "category" ]
+              [ H.option [ A.value "Kategorie1" ] [ H.text "Kategorie 1" ]
+              , H.option [ A.value "Kategorie2" ] [ H.text "Kategorie 2" ]
+              ]
+            , H.span [ A.className "form_hint"] [ H.text "Format: -?\\d+(.\\d+)?" ]
+            ]
+          , H.li []
+            [ H.label [] [ H.text "(Kommentar):" ]
+            , H.input [ A.type_ "text", A.name "comment" ] []
+            ]
+          ]
+        , H.input [ A.className "form_button", A.type_ "submit", A.name "spendings_input_form_submit", A.value "Speichern"] []
+        ]
+      ]
+    , H.div [ A.className "box" ] 
+      [ H.img [ A.src "/generated/spendings/chart_7days.png" ] []
+      , H.img [ A.src "/generated/spendings/chart_progress.png" ] []
+      ]
+    ]
