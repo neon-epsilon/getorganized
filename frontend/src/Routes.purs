@@ -2,9 +2,9 @@ module Routes where
 
 import Control.Alt ((<|>))
 import Control.Apply ((<*), (*>))
-import Data.Functor ((<$))
+import Data.Functor ((<$), (<$>))
 import Data.Maybe (fromMaybe)
-import Prelude (($), (<$>), class Show)
+import Prelude (($), class Show)
 import Pux.Router (router, lit, end)
 
 data Route = Home | Calories | HoursOfWork | Spendings | ShoppingList | NotFound

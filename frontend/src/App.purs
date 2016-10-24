@@ -1,10 +1,13 @@
 module App where
 
-import Prelude ((<>), ($), show)
 import Pux.Html (Html, div, h1, text)
 
 import Routes (Route(..))
 import Pages.Home as Home
+import Pages.Calories as Calories
+import Pages.HoursOfWork as HoursOfWork
+import Pages.Spendings as Spendings
+import Pages.ShoppingList as ShoppingList
 
 data Action = PageView Route
 
@@ -22,4 +25,8 @@ view state =
 
 page :: Route -> Html Action
 page Home  = Home.view
-page route = h1 [] [ text $ show route ]
+page Calories = Calories.view
+page HoursOfWork = HoursOfWork.view
+page Spendings = Spendings.view
+page ShoppingList = ShoppingList.view
+page NotFound = h1 [] [ text "404, nix ist hier!"]
