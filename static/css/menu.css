@@ -21,7 +21,7 @@
 */
 
 /* NORMAL SIZE MENU */
-@media (min-width: 551px) {
+@media (min-width: 751px) {
 /* positioning and drop-down logic */
     nav {
         display: flex;
@@ -102,7 +102,7 @@
     }
 
     /* reduce font size as screen goes smaller */
-    @media (max-width: 800px) {
+    @media (max-width: 900px) {
         nav {
             font-size: 1em;
         }
@@ -153,7 +153,7 @@
 
 
 /* SMALL MENU */
-@media (max-width: 550px) {
+@media (max-width: 750px) {
 /* positioning and drop-down logic */
     nav {
         display: flex; /* this makes sure that menu elements span the whole available width */
