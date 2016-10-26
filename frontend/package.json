@@ -1,11 +1,8 @@
 {
-  "name": "purescript-test",
-  "version": "1.0.0",
+  "name": "getorganized",
+  "version": "2.0.0",
   "description": "",
-  "main": "dist/app.js",
-  "directories": {
-    "test": "test"
-  },
+  "main": "../static/js/app.js",
   "dependencies": {
     "bower": "^1.7.9",
     "pulp": "^9.0.1",
@@ -16,9 +13,8 @@
   "devDependencies": {},
   "scripts": {
     "postinstall": "bower install",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "pulp --watch browserify --optimise --to ../static/app/app.js"
   },
-  "author": "",
+  "author": "Alexander Spies",
   "license": "ISC"
 }
