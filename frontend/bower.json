@@ -11,7 +11,8 @@
     "purescript-math": "^2.0.0",
     "purescript-lists": "^1.0.1",
     "purescript-control": "^1.0.0",
-    "purescript-pux": "^6.0.1"
+    "purescript-pux": "^6.0.1",
+    "purescript-signal": "^7.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^1.0.0"
