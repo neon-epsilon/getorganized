@@ -92,12 +92,39 @@ function validate_nonnegative_balance ($amount) {
     );
 }
 
-// validate numbers d+
+// validate numbers -?\d+
 // returns: 
 // Array with the two keys "valid" and "error"
 //  valid: Bool, True iff the string is valid
 //  error: String, empty iff the string is valid
 function validate_number ($number) {
+    if(empty($number))
+    {
+        return array(
+            "valid" => False,
+            "error" => '<span class="form_error">Anzahl fehlt</span>',
+        );
+    }
+    if( !preg_match( "/^-?\\d+$/", $number ) )
+    {
+        return array(
+            "valid" => False,
+            "error" => '<span class="form_error">falsches Format</span>',
+        );
+    }
+
+    return array(
+        "valid" => True,
+        "error" => '',
+    );
+  }
+//
+// validate numbers \d+
+// returns: 
+// Array with the two keys "valid" and "error"
+//  valid: Bool, True iff the string is valid
+//  error: String, empty iff the string is valid
+function validate_nonnegative_number ($number) {
     if(empty($number))
     {
         return array(

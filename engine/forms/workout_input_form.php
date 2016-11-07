@@ -32,7 +32,7 @@ if ( !empty($_POST["workout_input_form_submit"]) )
     $valid = $valid && $result["valid"]; 
     $dateError = $result["error"];
     // Anzahl Validieren
-    $result = validate_number($amount);
+    $result = validate_nonnegative_number($amount);
     $valid = $valid && $result["valid"]; 
     $amountError = $result["error"];
 

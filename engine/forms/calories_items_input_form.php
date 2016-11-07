@@ -36,7 +36,7 @@ if ( !empty($_POST["calories_items_input_form_submit"]) )
     $valid = $valid && $result["valid"]; 
     $unit_error = $result["error"];
     // kcal_per_unit Validieren
-    $result = validate_number($kcal_per_unit);
+    $result = validate_balance($kcal_per_unit);
     $valid = $valid && $result["valid"]; 
     $kcal_per_unit_error = $result["error"];
 
@@ -53,7 +53,7 @@ if ( !empty($_POST["calories_items_input_form_submit"]) )
         }
 
         /* bind parameters for markers */
-        if (! $stmt->bind_param("ssii", $name, $unit, $kcal_per_unit, $category_id) ) {
+        if (! $stmt->bind_param("ssdi", $name, $unit, $kcal_per_unit, $category_id) ) {
             die( "Binding parameters failed: (" . $mysqli->errno . ") " . $mysqli->error);
         }
 
@@ -92,8 +92,8 @@ $form = '
         </li>
         <li>
             <label for="kcal_per_unit">kcal/Einheit:</label>
-            <input type="number" step="1" name="kcal_per_unit" required />
-            <span class="form_hint">Format: \d+</span>
+            <input type="number" step="0.01" name="kcal_per_unit" required />
+            <span class="form_hint">Format: -?\d+</span>
             %s
         </li>
         <li>

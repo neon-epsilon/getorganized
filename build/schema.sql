@@ -25,7 +25,7 @@ CREATE TABLE `calories_items` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(40) DEFAULT NULL,
   `unit` varchar(40) NOT NULL,
-  `kcal_per_unit` float unsigned NOT NULL,
+  `kcal_per_unit` float NOT NULL,
   `category_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `category_id` (`category_id`),
