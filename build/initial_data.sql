@@ -1,6 +1,6 @@
 -- ---------- calories --------------
 LOCK TABLES `calories_categories` WRITE;
-INSERT INTO `calories_categories` (name, priority) VALUES ('Normales',1),('Getränke',2),('Snacks',3);
+INSERT INTO `calories_categories` (name, priority) VALUES ('Normales',1),('Getränke',2),('Snacks',3),('Sport',4);
 UNLOCK TABLES;
 
 LOCK TABLES `calories_items` WRITE;
