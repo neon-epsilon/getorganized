@@ -31,7 +31,7 @@ if ( !empty($_POST["calories_entries_input_form_submit"]) )
     $valid = $valid && $result["valid"]; 
     $date_error = $result["error"];
     // quantity Validieren
-    $result = validate_nonnegative_balance($quantity);
+    $result = validate_balance($quantity);
     $valid = $valid && $result["valid"]; 
     $quantity_error = $result["error"];
 
@@ -90,7 +90,7 @@ $form = '
         <li>
             <label for="quantity">Menge:</label>
             <input type="number" step="0.01" name="quantity" required />
-            <span class="form_hint">Format: \d+(\.\d{1,2})?</span>
+            <span class="form_hint">Format: -?\d+(\.\d{1,2})?</span>
             %s
         </li>
     </ul>
