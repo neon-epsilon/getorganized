@@ -8,7 +8,7 @@ www_root = file_name.parent.parent.parent
 
 # set up database login data
 __parser = configparser.ConfigParser()
-__parser.read( str(www_root / 'etc' / 'config.ini') )
+__parser.read( str(www_root / 'config' / 'config.ini') )
 db_name = __parser.get('DB', 'name').strip('"')
 db_host = __parser.get('DB', 'host').strip('"')
 db_user = __parser.get ('DB', 'user').strip('"')
