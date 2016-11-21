@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # absolute outputpaths regarding www_root as root (just like the server does)
-summary_outputpath = '/generated_content/spendings/summary.html'
-chart_7days_outputpath = '/generated_content/spendings/chart_7days.png'
-chart_progress_outputpath = '/generated_content/spendings/chart_progress.png'
+summary_outputpath = '/generated/spendings/summary.html'
+chart_7days_outputpath = '/generated/spendings/chart_7days.png'
+chart_progress_outputpath = '/generated/spendings/chart_progress.png'
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot

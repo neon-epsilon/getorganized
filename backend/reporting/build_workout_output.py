@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # absolute outputpaths regarding www_root as root (just like the server does)
-summary_outputpath = '/generated_content/workout/summary.html'
-chart_7days_outputpath = '/generated_content/workout/chart_7days.png'
+summary_outputpath = '/generated/workout/summary.html'
+chart_7days_outputpath = '/generated/workout/chart_7days.png'
 # fitnessscore goals
 weekly_goal_fitness = 300.0 # Fitnessstudio
 weekly_goal_back = 400.0 # Dehnen, Home Workout
