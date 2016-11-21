@@ -25,4 +25,4 @@ main = do
 
   renderToDOM "#main" app.html
 
-  send inputChannel (PageView NotFound)
+  send inputChannel (PageView Home)
