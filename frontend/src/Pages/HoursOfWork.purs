@@ -1,9 +1,27 @@
 module Pages.HoursOfWork where
 
+
+import Data.Either (Either(Left, Right), either)
+
 import Pux.Html as H
 
 import Pages.Components as C
 
+
+data Action = RequestCategories | ReceiveCategories (Either String (Array String))
+
+
+data DataState = Fetching | HasData
+
+type Category =
+  { category :: String
+  , priority :: Int
+  }
+
+type State =
+  { dataState :: DataState
+  , categories :: Array Category
+  }
 
 view :: forall action. H.Html action
 view =
@@ -19,7 +37,7 @@ view =
           , C.numberInput
           , C.formHint "Format: \\d+(.\\d\\d?)?"           ]
         , [ C.label "Kategorie:"
-          , C.select "category" 
+          , C.select "category"
             [ {value : "1", text : "Uni"}
             , {value : "2", text : "Nebenjob"}
             ]
