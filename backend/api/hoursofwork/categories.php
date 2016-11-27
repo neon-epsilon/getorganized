@@ -13,11 +13,14 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 
   // Get list of categories
   $categories = array();
-  if (! $result = $mysqli->query("SELECT category FROM hoursofwork_categories ORDER BY priority ASC")) {
+  if (! $result = $mysqli->query("SELECT category, priority from hoursofwork_categories ORDER BY priority ASC")) {
       die( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
   }
   for( $i = 0; $row = $result->fetch_assoc(); ++$i ) {
-      $categories[$i] = $row["category"];
+    $categories[$i] = array(
+      "category" => $row["category"],
+      "priority" => intval($row["priority"])
+    );
   }
   $mysqli->close();
 
