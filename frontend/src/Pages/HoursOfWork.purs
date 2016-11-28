@@ -1,27 +1,42 @@
 module Pages.HoursOfWork where
 
 
+import Control.Monad.Aff (attempt)
+import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(Left, Right), either)
-
+import Network.HTTP.Affjax (AJAX, get)
+import Prelude (($), bind, map, const, show, (<>), pure, (<<<))
+import Pux (EffModel, noEffects)
+import Pux.Html.Attributes as HA
+import Pux.Html.Events as HE
 import Pux.Html as H
-
 import Pages.Components as C
 
 
-data Action = RequestCategories | ReceiveCategories (Either String (Array String))
+data Action = RequestCategories | ReceiveCategories (Either String (Array Category))
 
 
 data DataState = Fetching | HasData
 
-type Category =
+newtype Category = Category
   { category :: String
-  , priority :: Int
-  }
+  , priority :: Int }
+
+instance decodeJsonCategory :: DecodeJson Category where
+  decodeJson json = do
+    obj <- decodeJson json
+    category <- obj .? "category"
+    priority <- obj .? "priority"
+    pure $ Category { category: category, priority: priority }
 
 type State =
   { dataState :: DataState
-  , categories :: Array Category
-  }
+  , categories :: Array Category }
+
+init :: State
+init =
+  { dataState : HasData
+  , categories : [] }
 
 view :: forall action. H.Html action
 view =
