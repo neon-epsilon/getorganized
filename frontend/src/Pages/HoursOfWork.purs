@@ -16,7 +16,7 @@ import Pages.Components as C
 data Action = RequestCategories | ReceiveCategories (Either String (Array Category))
 
 
-data DataState = Fetching | HasData
+data DataState = Fetching | HasData | Error
 
 newtype Category = Category
   { category :: String
@@ -37,6 +37,23 @@ init :: State
 init =
   { dataState : HasData
   , categories : [] }
+
+
+update :: Action -> State -> EffModel State Action (ajax :: AJAX)
+update (ReceiveCategories (Left err)) state =
+  noEffects $ state { dataState = Error }
+update (ReceiveCategories (Right categories)) state =
+  noEffects $ state { dataState = HasData, categories = categories }
+update RequestCategories state =
+  { state: state { dataState = Fetching }
+  , effects: [ do
+      res <- attempt $ get "/backend/api/hoursofwork/categories.php"
+      let decode r = decodeJson r.response :: Either String (Array Category)
+      let categories = either (Left <<< show) decode res
+      pure $ ReceiveCategories categories
+    ]
+  }
+
 
 view :: forall action. H.Html action
 view =
