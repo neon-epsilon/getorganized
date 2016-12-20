@@ -55,8 +55,8 @@ update RequestCategories state =
   }
 
 
-view :: forall action. H.Html action
-view =
+view :: forall action. State -> H.Html action
+view { dataState, categories } =
   C.container
     [ C.smallBox
       [ C.h1 "Eingabe"
@@ -70,9 +70,9 @@ view =
           , C.formHint "Format: \\d+(.\\d\\d?)?"           ]
         , [ C.label "Kategorie:"
           , C.select "category"
-            [ {value : "1", text : "Uni"}
-            , {value : "2", text : "Nebenjob"}
-            ]
+            (map
+            ( \(Category x) -> {value : show x.priority, text : x.category} )
+            categories)
           ]
         ]
       ]

@@ -9,24 +9,35 @@ import Pages.HoursOfWork as HoursOfWork
 import Pages.Spendings as Spendings
 import Pages.ShoppingList as ShoppingList
 
-data Action = PageView Route
 
-type State = { currentRoute :: Route }
+data Action =
+  PageView Route
+
+
+type State =
+  { currentRoute :: Route
+  , hoursOfWorkState :: HoursOfWork.State }
 
 init :: State
-init = { currentRoute: Home }
+init =
+  { currentRoute: Home
+  , hoursOfWorkState: HoursOfWork.init }
+
 
 update :: Action -> State -> State
 update (PageView route) state = state { currentRoute = route }
 
-view :: State -> Html Action
-view state =
-  div [] [ page state.currentRoute ]
 
-page :: Route -> Html Action
-page Home  = Home.view
-page Calories = Calories.view
-page HoursOfWork = HoursOfWork.view
-page Spendings = Spendings.view
-page ShoppingList = ShoppingList.view
-page NotFound = h1 [] [ text "404, nix ist hier!"]
+view :: State -> Html Action
+view { currentRoute: Home } =
+  div [] [ Home.view ]
+view { currentRoute: Calories } =
+  div [] [ Calories.view ]
+view { currentRoute: HoursOfWork, hoursOfWorkState } =
+  div [] [ HoursOfWork.view  hoursOfWorkState ]
+view { currentRoute: Spendings } =
+  div [] [ Spendings.view ]
+view { currentRoute: ShoppingList } =
+  div [] [ ShoppingList.view ]
+view { currentRoute: NotFound } =
+  h1 [] [ text "404, nix ist hier!" ]
