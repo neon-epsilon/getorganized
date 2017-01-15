@@ -1,0 +1,7 @@
+pathlib
+configparser
+pymysql
+MySQL-python
+
+pandas
+matplotlib
