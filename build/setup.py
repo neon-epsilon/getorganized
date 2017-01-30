@@ -9,6 +9,8 @@ import config
 
 schema_filename = dir_name / 'schema.sql'
 initial_data_filename = dir_name / 'initial_data.sql'
+schema_shared_filename = dir_name / 'schema_shared.sql'
+initial_data_shared_filename = dir_name / 'initial_data_shared.sql'
 generate_static_content_script_filename = dir_name / 'generate_static_content.py'
 
 # set up database
@@ -23,6 +25,20 @@ with connection as cursor:
     cursor.execute(query)
     # populate the database with data
     with open( str( initial_data_filename) ) as f:
+        query = f.read()
+    cursor.execute(query)
+connection.close()
+
+print('setting up shared database')
+# fetch from database
+connection = pymysql.connect(host=config.db_shared_host, user=config.db_shared_user, passwd=config.db_shared_password, database=config.db_shared_name)
+with connection as cursor:
+    # initiate database
+    with open( str( schema_shared_filename) ) as f:
+        query = f.read()
+    cursor.execute(query)
+    # populate the database with data
+    with open( str( initial_data_shared_filename) ) as f:
         query = f.read()
     cursor.execute(query)
 connection.close()

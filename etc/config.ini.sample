@@ -3,3 +3,9 @@ name = getorganized
 host = localhost
 user = root
 password = root
+
+[DB_shared]
+name = getorganized_shared
+host = localhost
+user = root
+password = root

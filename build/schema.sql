@@ -125,7 +125,8 @@ CREATE TABLE `shoppinglist` (
   `name` varchar(40) NOT NULL DEFAULT '',
   `category` varchar(40) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `shoppinglist_ibfk_1` FOREIGN KEY (`category`) REFERENCES `shoppinglist_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
