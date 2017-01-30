@@ -10,7 +10,7 @@ $nameError = '';
 $info_message = '';
 
 // Handle posted input
-if ( !empty($_POST["shoppinglist_input_form_submit"]) )
+if ( !empty($_POST["shoppinglist_shared_input_form_submit"]) )
 {
     $mysqli = new mysqli($config['DB_shared']['host'],$config['DB_shared']['user'],$config['DB_shared']['password'],$config['DB_shared']['name']);
 
@@ -97,7 +97,7 @@ $form = '
             <select name="category">%s</select>
         </li>
     </ul>
-    <input class="form_button" type="submit" name="shoppinglist_input_form_submit" value="Speichern" />
+    <input class="form_button" type="submit" name="shoppinglist_shared_input_form_submit" value="Speichern" />
     %s
     </form>
     '; // to be filled out with: form-action, date-default-value, date-error, amount-error, list-of-categories, info-message

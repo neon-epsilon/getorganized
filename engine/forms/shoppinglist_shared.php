@@ -13,7 +13,7 @@ if ($mysqli->connect_errno)
 
 // First, delete checked items from shoppinglist
 // Look up their respective names, first, for the info message
-if(!empty($_POST['names_to_delete'])){
+if(!empty($_POST['shoppinglist_shared_delete_submit'])){
     
     // put names together into a string for info mesage
     // and delete names
@@ -96,7 +96,7 @@ foreach($categories as $category) {
 }
 
 echo "</table>";
-echo '<input class="form_button" type="submit" name="shoppinglist_delete_submit" value="Löschen"/>';
+echo '<input class="form_button" type="submit" name="shoppinglist_shared_delete_submit" value="Löschen"/>';
 // Print info message if input was succesful
 echo $info_message;
 echo '</form>';

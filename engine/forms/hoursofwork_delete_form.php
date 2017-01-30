@@ -15,7 +15,7 @@ if ($mysqli->connect_errno)
 
 // First, delete checked items
 // Look up their respective ids first, for the info message
-if(!empty($_POST['ids_to_delete'])){
+if(!empty($_POST['hoursofwork_delete_submit'])){
     
     // put ids together into a string for info mesage
     // and delete ids

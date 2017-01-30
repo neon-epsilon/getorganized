@@ -13,7 +13,7 @@ if ($mysqli->connect_errno)
 
 // First, delete checked items from shoppinglist
 // Look up their respective names, first, for the info message
-if(!empty($_POST['names_to_delete'])){
+if(!empty($_POST['shoppinglist_delete_submit'])){
     
     // put names together into a string for info mesage
     // and delete names
