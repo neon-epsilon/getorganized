@@ -5,3 +5,4 @@
 /.psci*
 /src/.webpack.js
 /page/app.js
+npm-debug.log
