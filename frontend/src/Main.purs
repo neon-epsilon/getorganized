@@ -1,7 +1,11 @@
 module Main where
 
-import Prelude ((<<<), bind)
-import Pux (start, fromSimple, renderToDOM)
+import DOM (DOM)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Exception (EXCEPTION)
+import Network.HTTP.Affjax (AJAX)
+import Prelude ((<<<), bind, Unit)
+import Pux (start, renderToDOM)
 import Pux.Router (sampleUrl)
 import Signal ((~>))
 import Signal.Channel
@@ -9,6 +13,8 @@ import Signal.Channel
 import Routes (match, Route(..))
 import App (Action(..), init, update, view)
 
+
+main :: Eff (channel :: CHANNEL, dom :: DOM, err :: EXCEPTION, ajax :: AJAX ) Unit
 main = do
   urlSignal <- sampleUrl
   let routeSignal = urlSignal ~> (PageView <<< match)
@@ -18,7 +24,7 @@ main = do
 
   app <- start
     { initialState: init
-    , update: fromSimple update
+    , update: update
     , view: view
     , inputs: [inputSignal, routeSignal]
     }
@@ -26,3 +32,4 @@ main = do
   renderToDOM "#main" app.html
 
   send inputChannel (PageView Home)
+  send inputChannel FetchData

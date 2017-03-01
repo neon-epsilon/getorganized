@@ -1,6 +1,9 @@
 module App where
 
+import Prelude (($), map, pure)
+import Pux (EffModel, noEffects)
 import Pux.Html (Html, div, h1, text)
+import Network.HTTP.Affjax (AJAX)
 
 import Routes (Route(..))
 import Pages.Home as Home
@@ -11,7 +14,9 @@ import Pages.ShoppingList as ShoppingList
 
 
 data Action =
-  PageView Route
+  PageView Route |
+  FetchData |
+  HoursOfWorkAction HoursOfWork.Action
 
 
 type State =
@@ -24,8 +29,20 @@ init =
   , hoursOfWorkState: HoursOfWork.init }
 
 
-update :: Action -> State -> State
-update (PageView route) state = state { currentRoute = route }
+-- The "forall eff" is important. Without it the effects in the main monad get
+-- restricted which leads to a compiler error.
+update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
+update (PageView route) state = noEffects $ state { currentRoute = route }
+update FetchData state =
+  { state: state
+  , effects: [ pure (HoursOfWorkAction HoursOfWork.RequestCategories) ]}
+update (HoursOfWorkAction hoursOfWorkAction) state@{hoursOfWorkState} = 
+  { state: state {hoursOfWorkState = newHoursOfWorkState}
+  , effects: map (map HoursOfWorkAction) hoursOfWorkEffects }
+  where
+    hoursOfWorkEffModel = HoursOfWork.update hoursOfWorkAction hoursOfWorkState
+    newHoursOfWorkState = hoursOfWorkEffModel.state
+    hoursOfWorkEffects = hoursOfWorkEffModel.effects
 
 
 view :: State -> Html Action

@@ -39,7 +39,7 @@ init =
   , categories : [] }
 
 
-update :: Action -> State -> EffModel State Action (ajax :: AJAX)
+update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
 update (ReceiveCategories (Left err)) state =
   noEffects $ state { dataState = Error }
 update (ReceiveCategories (Right categories)) state =
