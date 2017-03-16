@@ -1,0 +1,21 @@
+/hoursofwork/categories.php:
+if GET:
+ try;
+   200, categories as JSON payload
+ else:
+   500, error message
+else:
+ 405, error message
+
+/hoursofwork/entries.php:
+if GET:
+ todo
+elif POST:
+ if payload malformed:
+   400, error message
+ elif processing didn't work:
+   500, error message
+ else
+   200
+else:
+ 405, error message
