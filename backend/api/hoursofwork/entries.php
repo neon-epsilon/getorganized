@@ -1,5 +1,5 @@
 <?php
-include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/forms/field_validators.php' );
+include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/field_validators.php' );
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/etc/config.ini', true);
 
 // Handle posted input
