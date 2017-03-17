@@ -1,6 +1,7 @@
 <?php
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/field_validators.php' );
-$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/etc/config.ini', true);
+
+$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
 // Handle posted input
 if($_SERVER['REQUEST_METHOD'] === 'POST')
