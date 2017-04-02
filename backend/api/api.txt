@@ -24,9 +24,9 @@ elif POST:
   if payload malformed:
     400, error message
   elif processing didn't work:
-    500, error message
+    500, error message, optionally which POSTed fields where invalid
   else
-    200
+    200, JSON-object with id of created row
 elif DELETE:
   todo
 else:
