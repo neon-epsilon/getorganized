@@ -1,7 +1,7 @@
 /hoursofwork/categories.php:
 if GET:
  try;
-   200, categories as JSON payload
+   200, categories as JSON-list
  else:
    500, error message
 else:
@@ -9,13 +9,25 @@ else:
 
 /hoursofwork/entries.php:
 if GET:
- todo
+  expect JSON payload:
+    {
+      limit: non-negative integer (default: 10)
+      start: non-negative integer (default: 0)
+    }
+  if payload malformed:
+    400, error message
+  elif processing didn't work:
+    500, error message
+  else
+    200, entries as JSON-list (id, date, category, amount)
 elif POST:
- if payload malformed:
-   400, error message
- elif processing didn't work:
-   500, error message
- else
-   200
+  if payload malformed:
+    400, error message
+  elif processing didn't work:
+    500, error message
+  else
+    200
+elif DELETE:
+  todo
 else:
- 405, error message
+  405, error message
