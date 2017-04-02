@@ -1,6 +1,6 @@
 <?php
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php' );
-include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/field_validators.php' );
+include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
@@ -52,65 +52,100 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 {
-    $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  if ($mysqli->connect_errno)
+  {
+      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
+      exit;
+  }
 
-    if ($mysqli->connect_errno)
-    {
-        die( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error);
+  $request_body = file_get_contents('php://input');
+  $data = json_decode($request_body, true);
+
+  $date = $data["date"];
+  $amount = $data["amount"];
+  $category = $data["category"];
+
+  // Validierung
+  $valid = true;
+  $invalid_fields = array();
+  // Datum validieren
+  if(! is_date($date) )
+  {
+    $valid = false;
+    $invalid_fields[] = "date";
+  }
+  // Betrag validieren
+  if(! is_nonnegative_number($amount))
+  {
+    $valid = false;
+    $invalid_fields[] = "amount";
+  }
+  // Kategorie validierenn
+  // Get list of categories
+  $categories = array();
+  if (! $result = $mysqli->query("SELECT category, priority from hoursofwork_categories ORDER BY priority ASC")) {
+      internal_server_error( "Query failed: (" . $mysqli->connect_errno . ") " . $mysqli->error );
+      exit;
+  }
+  while( $row = $result->fetch_assoc() ) {
+    $categories[] = $row["category"];
+  }
+  if(! in_array($category, $categories) )
+  {
+    $valid = false;
+    $invalid_fields[] = "category";
+  }
+
+  if(! $valid)
+  {
+    http_response_code(400);
+    $response = array(
+      "error" => "Some fields are invalid.",
+      "invalid fields" => $invalid_fields
+    );
+    echo json_encode($response);
+  }
+
+  if($valid)
+  {
+    $query = "INSERT INTO hoursofwork
+      (date, amount, category)
+      VALUES
+      (?,?,?)";
+
+    /* create a prepared statement */
+    if (! $stmt = $mysqli->prepare($query)) {
+      internal_server_error( "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error);
+      exit;
     }
 
-
-    $request_body = file_get_contents('php://input');
-    $data = json_decode($request_body, true);
-
-
-    $date = $data["date"];
-    $amount = $data["amount"];
-    $category = $data["category"];
-    
-    // Validierung
-    $valid = True;
-    // Datum validieren
-    $result = validate_date($date);
-    $valid = $valid && $result["valid"]; 
-    $dateError = $result["error"];
-    // Betrag Validieren
-    $result = validate_nonnegative_balance($amount);
-    $valid = $valid && $result["valid"]; 
-    $amountError = $result["error"];
-
-    if($valid)
-    {
-        $query = "INSERT INTO hoursofwork
-            (date, amount, category)
-            VALUES
-            (?,?,?)";
-
-        /* create a prepared statement */
-        if (! $stmt = $mysqli->prepare($query)) {
-            die( "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error);
-        }
-
-        /* bind parameters for markers */
-        if (! $stmt->bind_param("sds", $date, $amount, $category) ) {
-            die( "Binding parameters failed: (" . $mysqli->errno . ") " . $mysqli->error);
-        }
-
-        /* execute query */
-        if (! $stmt->execute() ) {
-            die( "Execute failed: (" . $mysqli->errno . ") " . $mysqli->error);
-        }
-
-        /* close statement */
-        $stmt->close();
-
-        $info_message = "<p class=\"smallinfo\">Zeile<br>('$date', '$amount', '$category')<br>in hoursofwork eingefügt.</p>";
-
-        /* rebuild hoursofwork output */
-        exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
+    /* bind parameters for markers */
+    if (! $stmt->bind_param("sds", $date, $amount, $category) ) {
+      internal_server_error( "Binding parameters failed: (" . $mysqli->errno . ") " . $mysqli->error);
+      exit;
     }
 
-    $mysqli->close();
+    /* execute query */
+    if (! $stmt->execute() ) {
+      internal_server_error( "Execute failed: (" . $mysqli->errno . ") " . $mysqli->error);
+      exit;
+    }
+
+    /* close statement */
+    $stmt->close();
+
+    // Respond with id of new database entry
+    $response = array(
+      "id" => $mysqli->insert_id
+    );
+    echo json_encode($response);
+
+    /* rebuild hoursofwork output */
+    exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
+  }
+
+  $mysqli->close();
 }
 else
 {

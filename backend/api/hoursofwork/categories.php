@@ -5,7 +5,6 @@ $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true)
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
-  // Get a list of input categories for the drop down menu 
   $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
 
   if ($mysqli->connect_errno)
