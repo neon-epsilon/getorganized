@@ -10,7 +10,7 @@ function validate_date ($date) {
     {
         return array( 
             "valid" => False,
-            "error" => '<span class="form_error">Datum fehlt</span>', 
+            "error" => 'Datum fehlt.', 
         );
     }
     // check, if date format is valid by regex and write matches
@@ -20,7 +20,7 @@ function validate_date ($date) {
     {
         return array( 
             "valid" => False,
-            "error" => '<span class="form_error">falsches Format</span>',
+            "error" => 'Falsches Format.',
         );
     }
     // check if date actually exists
@@ -28,7 +28,7 @@ function validate_date ($date) {
     {
         return array( 
             "valid" => False,
-            "error" => '<span class="form_error">ungültiges Datum</span>',
+            "error" => 'Ungültiges Datum.',
         );
     }
 
@@ -48,14 +48,14 @@ function validate_balance ($amount) {
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">Betrag fehlt</span>',
+            "error" => 'Betrag fehlt.',
         );
     }
     if(! preg_match( "/^-?\\d+(\\.\\d{1,2})?$/", $amount ) )
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">falsches Format</span>',
+            "error" => 'Falsches Format.',
         );
     }
 
@@ -75,14 +75,14 @@ function validate_nonnegative_balance ($amount) {
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">Betrag fehlt</span>',
+            "error" => 'Betrag fehlt.',
         );
     }
     if(! preg_match( "/^\\d+(\\.\\d{1,2})?$/", $amount ) )
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">falsches Format</span>',
+            "error" => 'Falsches Format.',
         );
     }
 
@@ -102,14 +102,14 @@ function validate_number ($number) {
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">Anzahl fehlt</span>',
+            "error" => 'Anzahl fehlt.',
         );
     }
     if( !preg_match( "/^\\d+$/", $number ) )
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">falsches Format</span>',
+            "error" => 'Falsches Format.',
         );
     }
 
@@ -129,7 +129,7 @@ function validate_nonempty ($string) {
     {
         return array(
             "valid" => False,
-            "error" => '<span class="form_error">Name fehlt</span>',
+            "error" => 'Name fehlt.',
         );
     }
 
