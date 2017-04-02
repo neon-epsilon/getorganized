@@ -27,12 +27,4 @@ function internal_server_error($error_message)
   echo json_encode($response);
 }
 
-function is_nonnegative_int($to_assert)
-{
-  if(!is_int($to_assert)) return false;
-  if($to_assert < 0) return false;
-
-  return true;
-}
-
 ?>
