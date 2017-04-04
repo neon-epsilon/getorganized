@@ -106,8 +106,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     );
     echo json_encode($response);
   }
-
-  if($valid)
+  else
   {
     $query = "INSERT INTO hoursofwork
       (date, amount, category)
@@ -146,6 +145,68 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
 
   $mysqli->close();
+}
+elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
+{
+  $request_body = file_get_contents('php://input');
+  /* Expect JSON-list of ids, that is, non-negative integers as input. */
+  $ids = json_decode($request_body, true);
+
+  // Validate ids.
+  if($ids === NULL)
+  {
+    bad_request("Was expecting a JSON-list of ids (non-negative integers).");
+    exit;
+  }
+  foreach($ids as $id)
+  {
+    if(! is_nonnegative_int($id))
+    {
+      bad_request("Was expecting a JSON-list of ids (non-negative integers).");
+      exit;
+    }
+  }
+
+  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  if ($mysqli->connect_errno)
+  {
+    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
+    exit;
+  }
+
+  // Check if rows are in table. If not, respond with not found ids.
+  $not_found_ids = array();
+  foreach($ids as $id)
+  {
+    if (! $result = $mysqli->query("SELECT id FROM hoursofwork WHERE id = {$id}" ) ) {
+      internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
+      exit;
+    }
+
+    if( $result->num_rows == 0)
+    {
+      $not_found_ids[] = $id;
+    }
+  }
+  if(!empty($not_found_ids))
+  {
+    $response = array(
+      "error" => "Some ids could not be found.",
+      "not found ids" => $not_found_ids
+    );
+    http_response_code(404);
+    echo json_encode($response);
+    exit;
+  }
+
+  // Delete rows, respond 200.
+  foreach($ids as $id)
+  {
+    if (! $mysqli->query("DELETE FROM hoursofwork WHERE id = {$id}" ) ) {
+      internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
+      exit;
+    }
+  }
 }
 else
 {

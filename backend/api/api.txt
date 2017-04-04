@@ -28,6 +28,12 @@ elif POST:
   else
     200, JSON-object with id of created row
 elif DELETE:
-  todo
+  expect JSON-list of entry ids
+  if payload malformed:
+    400, error message
+  elif processing didn't work:
+    500, error message
+  else
+    200
 else:
   405, error message
