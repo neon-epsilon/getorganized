@@ -1,8 +1,12 @@
 module App where
 
+import Data.Maybe (Maybe(..))
+
 import Prelude (($), map, pure)
 import Pux (EffModel, noEffects)
-import Pux.Html (Html, div, h1, text)
+import Pux.DOM.HTML (HTML)
+import Text.Smolder.HTML (div, h1)
+import Text.Smolder.Markup (text)
 import Network.HTTP.Affjax (AJAX)
 
 import Routes (Route(..))
@@ -13,10 +17,10 @@ import Pages.Spendings as Spendings
 import Pages.ShoppingList as ShoppingList
 
 
-data Action =
+data Event =
   PageView Route |
   FetchData |
-  HoursOfWorkAction HoursOfWork.Action
+  HoursOfWorkEvent HoursOfWork.Event
 
 
 type State =
@@ -31,30 +35,31 @@ init =
 
 -- The "forall eff" is important. Without it the effects in the main monad get
 -- restricted which leads to a compiler error.
-update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
-update (PageView route) state = noEffects $ state { currentRoute = route }
-update FetchData state =
+foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX | eff)
+foldp (PageView route) state = noEffects $ state { currentRoute = route }
+foldp FetchData state =
   { state: state
-  , effects: [ pure (HoursOfWorkAction HoursOfWork.RequestCategories) ]}
-update (HoursOfWorkAction hoursOfWorkAction) state@{hoursOfWorkState} = 
+  , effects: [ pure $ Just $ HoursOfWorkEvent HoursOfWork.RequestCategories ]}
+foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
   { state: state {hoursOfWorkState = newHoursOfWorkState}
-  , effects: map (map HoursOfWorkAction) hoursOfWorkEffects }
+  , effects: map (map (map HoursOfWorkEvent)) hoursOfWorkEffects }
   where
-    hoursOfWorkEffModel = HoursOfWork.update hoursOfWorkAction hoursOfWorkState
+    hoursOfWorkEffModel = HoursOfWork.foldp hoursOfWorkEvent hoursOfWorkState
     newHoursOfWorkState = hoursOfWorkEffModel.state
     hoursOfWorkEffects = hoursOfWorkEffModel.effects
 
 
-view :: State -> Html Action
-view { currentRoute: Home } =
-  div [] [ Home.view ]
-view { currentRoute: Calories } =
-  div [] [ Calories.view ]
-view { currentRoute: HoursOfWork, hoursOfWorkState } =
-  div [] [ HoursOfWork.view  hoursOfWorkState ]
-view { currentRoute: Spendings } =
-  div [] [ Spendings.view ]
-view { currentRoute: ShoppingList } =
-  div [] [ ShoppingList.view ]
-view { currentRoute: NotFound } =
-  h1 [] [ text "404, nix ist hier!" ]
+view :: State -> HTML Event
+view _ = div $ text "Test!"
+-- view { currentRoute: Home } =
+--   div [] [ Home.view ]
+-- view { currentRoute: Calories } =
+--   div [] [ Calories.view ]
+-- view { currentRoute: HoursOfWork, hoursOfWorkState } =
+--   div [] [ HoursOfWork.view  hoursOfWorkState ]
+-- view { currentRoute: Spendings } =
+--   div [] [ Spendings.view ]
+-- view { currentRoute: ShoppingList } =
+--   div [] [ ShoppingList.view ]
+-- view { currentRoute: NotFound } =
+--   h1 [] [ text "404, nix ist hier!" ]

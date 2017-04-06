@@ -4,16 +4,17 @@ module Pages.HoursOfWork where
 import Control.Monad.Aff (attempt)
 import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(Left, Right), either)
+import Data.Maybe (Maybe(..))
 import Network.HTTP.Affjax (AJAX, get)
 import Prelude (($), bind, map, const, show, (<>), pure, (<<<))
 import Pux (EffModel, noEffects)
-import Pux.Html.Attributes as HA
-import Pux.Html.Events as HE
-import Pux.Html as H
-import Pages.Components as C
+-- import Pux.Html.Attributes as HA
+-- import Pux.Html.Events as HE
+-- import Pux.Html as H
+-- import Pages.Components as C
 
 
-data Action = RequestCategories | ReceiveCategories (Either String (Array Category))
+data Event = RequestCategories | ReceiveCategories (Either String (Array Category))
 
 
 data DataState = Fetching | HasData | Error
@@ -39,46 +40,46 @@ init =
   , categories : [] }
 
 
-update :: forall eff. Action -> State -> EffModel State Action (ajax :: AJAX | eff)
-update (ReceiveCategories (Left err)) state =
+foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX | eff)
+foldp (ReceiveCategories (Left err)) state =
   noEffects $ state { dataState = Error }
-update (ReceiveCategories (Right categories)) state =
+foldp (ReceiveCategories (Right categories)) state =
   noEffects $ state { dataState = HasData, categories = categories }
-update RequestCategories state =
+foldp RequestCategories state =
   { state: state { dataState = Fetching }
   , effects: [ do
       res <- attempt $ get "/backend/api/hoursofwork/categories.php"
       let decode r = decodeJson r.response :: Either String (Array Category)
       let categories = either (Left <<< show) decode res
-      pure $ ReceiveCategories categories
+      pure $ Just $ ReceiveCategories categories
     ]
   }
 
 
-view :: forall action. State -> H.Html action
-view { dataState, categories } =
-  C.container
-    [ C.smallBox
-      [ C.h1 "Eingabe"
-      , C.h2 "Arbeitszeit eingeben"
-      , C.form "hoursofwork_input_form_submit"
-        [ [ C.label "Datum:"
-          , C.dateInput
-          ]
-        , [ C.label "Stunden:"
-          , C.numberInput
-          , C.formHint "Format: \\d+(.\\d\\d?)?"           ]
-        , [ C.label "Kategorie:"
-          , C.select "category"
-            (map
-            ( \(Category x) -> {value : show x.priority, text : x.category} )
-            categories)
-          ]
-        ]
-      ]
-
-    , C.box
-      [ C.img "/generated/hoursofwork/chart_7days.png"
-      , C.img "/generated/hoursofwork/chart_progress.png"
-      ]
-    ]
+-- view :: forall action. State -> H.Html action
+-- view { dataState, categories } =
+--   C.container
+--     [ C.smallBox
+--       [ C.h1 "Eingabe"
+--       , C.h2 "Arbeitszeit eingeben"
+--       , C.form "hoursofwork_input_form_submit"
+--         [ [ C.label "Datum:"
+--           , C.dateInput
+--           ]
+--         , [ C.label "Stunden:"
+--           , C.numberInput
+--           , C.formHint "Format: \\d+(.\\d\\d?)?"           ]
+--         , [ C.label "Kategorie:"
+--           , C.select "category"
+--             (map
+--             ( \(Category x) -> {value : show x.priority, text : x.category} )
+--             categories)
+--           ]
+--         ]
+--       ]
+-- 
+--     , C.box
+--       [ C.img "/generated/hoursofwork/chart_7days.png"
+--       , C.img "/generated/hoursofwork/chart_progress.png"
+--       ]
+--     ]
