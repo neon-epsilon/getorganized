@@ -50,16 +50,17 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
 
 
 view :: State -> HTML Event
-view _ = div $ text "Test!"
--- view { currentRoute: Home } =
---   div [] [ Home.view ]
--- view { currentRoute: Calories } =
---   div [] [ Calories.view ]
+view { currentRoute: Home } =
+  div $ Home.view
+view { currentRoute: Calories } =
+  div $ Calories.view
 -- view { currentRoute: HoursOfWork, hoursOfWorkState } =
 --   div [] [ HoursOfWork.view  hoursOfWorkState ]
--- view { currentRoute: Spendings } =
---   div [] [ Spendings.view ]
--- view { currentRoute: ShoppingList } =
---   div [] [ ShoppingList.view ]
+view { currentRoute: Spendings } =
+  div $ Spendings.view
+view { currentRoute: ShoppingList } =
+  div $ ShoppingList.view
 -- view { currentRoute: NotFound } =
 --   h1 [] [ text "404, nix ist hier!" ]
+view _ =
+  h1 $ text "404, nix ist hier!"

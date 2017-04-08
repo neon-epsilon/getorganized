@@ -1,23 +1,22 @@
 module Pages.Home where
 
--- import Pux.Html as H
--- 
--- import Pages.Components as C
--- 
--- 
--- view :: forall action. H.Html action
--- view =
---   C.container
---     [ C.box
---       [ C.h1 "Ausgaben"
---       , C.img "/generated/spendings/chart_progress.png"
---       ]
---     , C.box
---       [ C.h1 "Kalorien"
---       , C.img "/generated/calories/chart_progress.png"
---       ]
---     , C.box
---       [ C.h1 "Arbeitszeit"
---       , C.img "/generated/hoursofwork/chart_progress.png"
---       ]
---     ]
+import Prelude (($), bind)
+import Text.Smolder.HTML (h1, img)
+import Text.Smolder.HTML.Attributes (src)
+import Text.Smolder.Markup (Markup, (!), text)
+
+import Pages.Components
+
+
+view :: forall e. Markup e
+view =
+  container $ do
+    box $ do
+      h1 $ text "Ausgaben"
+      img ! src "/generated/spendings/chart_progress.png"
+    box $ do
+      h1 $ text "Kalorien"
+      img ! src "/generated/calories/chart_progress.png"
+    box $ do
+     h1 $ text "Arbeitszeit"
+     img ! src "/generated/hoursofwork/chart_progress.png"

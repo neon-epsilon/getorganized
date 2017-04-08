@@ -4,7 +4,7 @@ import Prelude (($))
 import Control.Bind (bind)
 import Data.Foldable (foldMap)
 
-import Text.Smolder.HTML (div, span, form, ul, input, select, option)
+import Text.Smolder.HTML (div, form, input, select, option)
 import Text.Smolder.HTML.Attributes (className, name, type', value, placeholder, required, step)
 import Text.Smolder.Markup (Attribute, Markup, attribute, text, (!))
 
@@ -24,16 +24,16 @@ smallBox = div ! className "small-box"
 
 customForm :: forall e. String -> Markup e -> Markup e
 customForm submitName children =
-  form $ ul $ do
-      children
-      input
-        ! name submitName
-        ! className "form_button"
-        ! type' "submit"
-        ! value "Speichern"
+  form $ do
+    children
+    input
+      ! name submitName
+      ! className "form_button"
+      ! type' "submit"
+      ! value "Speichern"
 
 dateInput :: forall e. Markup e
-dateInput = 
+dateInput =
   input
     ! type' "date"
     ! name "date"
@@ -42,7 +42,7 @@ dateInput =
     ! required "true"
 
 numberInput :: forall e. Markup e
-numberInput = 
+numberInput =
   input
     ! type' "number"
     ! name "amount"
@@ -50,13 +50,10 @@ numberInput =
     ! required "true"
 
 textInput :: forall e. Markup e
-textInput = 
+textInput =
   input
     ! type' "text"
     ! name "comment"
-
-formHint :: forall e. String -> Markup e
-formHint s = span ! className "form_hint" $ text s
 
 customSelect :: forall e. String -> Array {value :: String, text :: String} -> Markup e
 customSelect selectName options =

@@ -1,29 +1,28 @@
 module Pages.ShoppingList where
 
--- import Pux.Html as H
--- 
--- import Pages.Components as C
--- 
--- 
--- view :: forall action. H.Html action
--- view =
---   C.container
---     [ C.box
---       [ C.h1 "Einkaufsliste"
---       , C.h2 "Einkäufe eingeben"
---       , C.form "shoppinglist_input_form_submit"
---         [ [ C.label "Artikel:"
---           , C.textInput
---           ]
---         , [ C.label "Kategorie:"
---           , C.select "category" 
---             [ {value : "1", text : "Avocado (240kcal/Stück)"}
---             , {value : "2", text : "Mars Eisrigel (240kcal/Stück)"}
---             , {value : "3", text : "Club Mate (100kcal/Flasche)"}
---             ]
---           ]
---         ]
---       , C.h2 "Einkaufsliste"
---       , H.text "Here be dragons."
---       ]
---     ]
+import Prelude (($), bind)
+import Text.Smolder.HTML (h1, h2, ul, li, label)
+import Text.Smolder.Markup (Markup, text)
+
+import Pages.Components
+
+
+view :: forall e. Markup e
+view =
+  container $ do
+    box $ do
+      h1 $ text "Einkaufsliste"
+      h2 $ text "Einkäufe eingeben"
+      customForm "shoppinglist_input_form_submit" $ ul $ do
+        li $ do
+          label $ text "Artikel:"
+          textInput
+        li $ do
+          label $ text "Kategorie:"
+          customSelect "category" 
+            [ {value : "1", text : "Avocado (240kcal/Stück)"}
+            , {value : "2", text : "Mars Eisrigel (240kcal/Stück)"}
+            , {value : "3", text : "Club Mate (100kcal/Flasche)"}
+            ]
+      h2 $ text "Einkaufsliste"
+      text "Here be dragons."
