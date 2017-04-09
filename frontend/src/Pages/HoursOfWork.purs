@@ -6,12 +6,15 @@ import Data.Argonaut (class DecodeJson, decodeJson, (.?))
 import Data.Either (Either(Left, Right), either)
 import Data.Maybe (Maybe(..))
 import Network.HTTP.Affjax (AJAX, get)
-import Prelude (($), bind, map, const, show, (<>), pure, (<<<))
+import Prelude (($), bind, map, show, pure, (<<<))
+
 import Pux (EffModel, noEffects)
--- import Pux.Html.Attributes as HA
--- import Pux.Html.Events as HE
--- import Pux.Html as H
--- import Pages.Components as C
+
+import Text.Smolder.HTML (h1, h2, img, ul, li, label)
+import Text.Smolder.HTML.Attributes (src)
+import Text.Smolder.Markup (Markup, (!), text)
+
+import Pages.Components
 
 
 data Event = RequestCategories | ReceiveCategories (Either String (Array Category))
@@ -56,30 +59,25 @@ foldp RequestCategories state =
   }
 
 
--- view :: forall action. State -> H.Html action
--- view { dataState, categories } =
---   C.container
---     [ C.smallBox
---       [ C.h1 "Eingabe"
---       , C.h2 "Arbeitszeit eingeben"
---       , C.form "hoursofwork_input_form_submit"
---         [ [ C.label "Datum:"
---           , C.dateInput
---           ]
---         , [ C.label "Stunden:"
---           , C.numberInput
---           , C.formHint "Format: \\d+(.\\d\\d?)?"           ]
---         , [ C.label "Kategorie:"
---           , C.select "category"
---             (map
---             ( \(Category x) -> {value : show x.priority, text : x.category} )
---             categories)
---           ]
---         ]
---       ]
--- 
---     , C.box
---       [ C.img "/generated/hoursofwork/chart_7days.png"
---       , C.img "/generated/hoursofwork/chart_progress.png"
---       ]
---     ]
+view :: forall e. State -> Markup e
+view { dataState, categories } =
+  container $ do
+    smallBox $ do
+      h1 $ text "Eingabe"
+      h2 $ text "Arbeitszeit eingeben"
+      customForm "hoursofwork_input_form_submit" $ ul $ do
+        li $ do
+          label $ text "Datum:"
+          dateInput
+        li $ do
+          label $ text "Stunden:"
+          numberInput
+        li $ do
+          label $ text "Kategorie:"
+          customSelect "category"
+            (map
+            ( \(Category x) -> {value : show x.priority, text : x.category} )
+            categories)
+    box $ do
+      img ! src "/generated/hoursofwork/chart_7days.png"
+      img ! src "/generated/hoursofwork/chart_progress.png"
