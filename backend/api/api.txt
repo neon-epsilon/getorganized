@@ -1,9 +1,9 @@
 /hoursofwork/categories.php:
 if GET:
  try;
-   200, categories as JSON-list
+   200, {categories: []}
  else:
-   500, error message
+   500, {error: String}
 else:
  405, error message
 

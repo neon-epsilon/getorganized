@@ -1,12 +1,18 @@
 <?php
 
+function send_json($data)
+{
+  header('Content-Type: application/json');
+  echo json_encode($data);
+}
+
 function bad_request($error_message)
 {
   http_response_code(400);
   $response = array(
     "error" => $error_message
   );
-  echo json_encode($response);
+  send_json($response);
 }
 
 function method_not_allowed()
@@ -15,7 +21,7 @@ function method_not_allowed()
   $response = array(
     "error" => "Method not allowed."
   );
-  echo json_encode($response);
+  send_json($response);
 }
 
 function internal_server_error($error_message)
@@ -24,7 +30,7 @@ function internal_server_error($error_message)
   $response = array(
     "error" => $error_message
   );
-  echo json_encode($response);
+  send_json($response);
 }
 
 ?>

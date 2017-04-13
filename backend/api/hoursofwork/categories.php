@@ -29,7 +29,10 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 
 
   // output the categories as JSON
-  echo json_encode($categories);
+  $response = array(
+    "categories" => $categories
+  );
+  send_json($response);
 } 
 else
 {
