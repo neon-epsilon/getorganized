@@ -1,8 +1,9 @@
 module App where
 
+import Prelude (($), map, pure)
+import Control.Monad.Eff.Console (CONSOLE)
 import Data.Maybe (Maybe(..))
 
-import Prelude (($), map, pure)
 import Pux (EffModel, noEffects)
 import Pux.DOM.HTML (HTML)
 import Text.Smolder.HTML (div, h1)
@@ -35,7 +36,7 @@ init =
 
 -- The "forall eff" is important. Without it the effects in the main monad get
 -- restricted which leads to a compiler error.
-foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX | eff)
+foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE | eff)
 foldp (PageView route) state = noEffects $ state { currentRoute = route }
 foldp FetchData state =
   { state: state

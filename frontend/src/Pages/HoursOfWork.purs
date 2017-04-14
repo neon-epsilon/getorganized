@@ -1,12 +1,15 @@
 module Pages.HoursOfWork where
 
-
-import Control.Monad.Aff (attempt)
-import Data.Argonaut (class DecodeJson, decodeJson, (.?))
-import Data.Either (Either(Left, Right), either)
+import Prelude (($), bind, map, show, pure, (>=>), (<<<), const, (==), (<>))
+import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
+
+import Control.Monad.Aff.Console (log, CONSOLE)
+import Control.Monad.Aff (attempt, Aff)
+
+import Data.Argonaut (class DecodeJson, decodeJson, (.?), Json)
 import Network.HTTP.Affjax (AJAX, get)
-import Prelude (($), bind, map, show, pure, (<<<))
+import Network.HTTP.StatusCode (StatusCode(..))
 
 import Pux (EffModel, noEffects)
 
@@ -17,45 +20,38 @@ import Text.Smolder.Markup (Markup, (!), text)
 import Pages.Components
 
 
-data Event = RequestCategories | ReceiveCategories (Either String (Array Category))
+data Event = RequestCategories
+  | ReceiveCategories (Array Category)
+  | FetchingError
 
 
-data DataState = Fetching | HasData | Error
-
-newtype Category = Category
-  { category :: String
-  , priority :: Int }
-
-instance decodeJsonCategory :: DecodeJson Category where
-  decodeJson json = do
-    obj <- decodeJson json
-    category <- obj .? "category"
-    priority <- obj .? "priority"
-    pure $ Category { category: category, priority: priority }
+data DataState = Fetching
+  | HasData
+  | Error
 
 type State =
   { dataState :: DataState
   , categories :: Array Category }
 
+newtype Category = Category
+  { category :: String
+  , priority :: Int }
+
+
 init :: State
 init =
-  { dataState : HasData
+  { dataState : Fetching
   , categories : [] }
 
 
-foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX | eff)
-foldp (ReceiveCategories (Left err)) state =
+foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE | eff)
+foldp FetchingError state =
   noEffects $ state { dataState = Error }
-foldp (ReceiveCategories (Right categories)) state =
+foldp (ReceiveCategories categories) state =
   noEffects $ state { dataState = HasData, categories = categories }
 foldp RequestCategories state =
   { state: state { dataState = Fetching }
-  , effects: [ do
-      res <- attempt $ get "/backend/api/hoursofwork/categories.php"
-      let decode r = decodeJson r.response :: Either String (Array Category)
-      let categories = either (Left <<< show) decode res
-      pure $ Just $ ReceiveCategories categories
-    ]
+  , effects: [ fetchCategories ]
   }
 
 
@@ -81,3 +77,45 @@ view { dataState, categories } =
     box $ do
       img ! src "/generated/hoursofwork/chart_7days.png"
       img ! src "/generated/hoursofwork/chart_progress.png"
+
+
+fetchCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+fetchCategories = do
+  r <- attempt $ get "/backend/api/hoursofwork/categories.php"
+  case r of
+    Left err -> do
+      log $ show err
+      pure $ Just FetchingError
+    Right res | res.status == (StatusCode 200) -> do
+      let categories = decodeCategoriesResponse res.response
+      either
+        (log >=> const (pure $ Just FetchingError))
+        (pure <<< Just <<< ReceiveCategories)
+        categories
+    -- | If status is not 200, we expect an object of the form {error: String}
+    Right res -> do
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
+      let err = decodeErrorResponse res.response
+      either log log err
+      pure $ Just FetchingError
+
+  where
+    decodeCategoriesResponse :: Json -> Either String (Array Category)
+    decodeCategoriesResponse r = do
+      obj <- decodeJson r
+      categories <- obj .? "categories"
+      decodeJson categories
+
+    decodeErrorResponse :: Json -> Either String String
+    decodeErrorResponse r = do
+      obj <- decodeJson r
+      err <- obj .? "error"
+      decodeJson err
+
+
+instance decodeJsonCategory :: DecodeJson Category where
+  decodeJson json = do
+    obj <- decodeJson json
+    category <- obj .? "category"
+    priority <- obj .? "priority"
+    pure $ Category { category: category, priority: priority }

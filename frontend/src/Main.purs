@@ -6,6 +6,7 @@ import DOM.HTML.Types (HISTORY)
 import Control.Bind (bind, (=<<))
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (EXCEPTION)
+import Control.Monad.Eff.Console (CONSOLE)
 import Network.HTTP.Affjax (AJAX)
 import Prelude ((<<<), Unit)
 import Pux (start)
@@ -18,7 +19,7 @@ import Routes (match, Route(..))
 import App (Event(..), init, foldp, view)
 
 
-main :: Eff (history:: HISTORY, channel :: CHANNEL, dom :: DOM, err :: EXCEPTION, ajax :: AJAX ) Unit
+main :: Eff (history:: HISTORY, channel :: CHANNEL, dom :: DOM, err :: EXCEPTION, ajax :: AJAX, console :: CONSOLE ) Unit
 main = do
   urlSignal <- sampleURL =<< window
   let routeSignal = urlSignal ~> (PageView <<< match)
