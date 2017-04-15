@@ -48,7 +48,9 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 
   $mysqli->close();
 
-  echo json_encode($items);
+  send_json( array(
+    "entries" => $items
+  ));
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 {
@@ -81,7 +83,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $valid = false;
     $invalid_fields[] = "amount";
   }
-  // Kategorie validierenn
+  // validate category
   // Get list of categories
   $categories = array();
   if (! $result = $mysqli->query("SELECT category, priority from hoursofwork_categories ORDER BY priority ASC")) {
@@ -104,7 +106,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
       "error" => "Some fields are invalid.",
       "invalid fields" => $invalid_fields
     );
-    echo json_encode($response);
+    send_json($response);
   }
   else
   {
@@ -138,7 +140,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $response = array(
       "id" => $mysqli->insert_id
     );
-    echo json_encode($response);
+    send_json($response);
 
     /* rebuild hoursofwork output */
     exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
@@ -149,8 +151,11 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
 {
   $request_body = file_get_contents('php://input');
+
   /* Expect JSON-list of ids, that is, non-negative integers as input. */
-  $ids = json_decode($request_body, true);
+  $request_body = file_get_contents('php://input');
+  $data = json_decode($request_body, true);
+  $ids = $data["ids"];
 
   // Validate ids.
   if($ids === NULL)
@@ -195,11 +200,11 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
       "not found ids" => $not_found_ids
     );
     http_response_code(404);
-    echo json_encode($response);
+    send_json($response);
     exit;
   }
 
-  // Delete rows, respond 200.
+  // Delete rows, respond 200 and a dummy JSON object
   foreach($ids as $id)
   {
     if (! $mysqli->query("DELETE FROM hoursofwork WHERE id = {$id}" ) ) {
@@ -207,6 +212,9 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
       exit;
     }
   }
+  send_json( array(
+    "ids" => $ids
+  ));
 }
 else
 {

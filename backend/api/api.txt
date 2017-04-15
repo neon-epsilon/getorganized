@@ -15,25 +15,27 @@ if GET:
       start: non-negative integer (default: 0)
     }
   if payload malformed:
-    400, error message
+    400, {error: String}
   elif processing didn't work:
-    500, error message
+    500, {error: String}
   else
-    200, entries as JSON-list (id, date, category, amount)
+    200, {entries: [ {(id: int, date: string, category:string, amount: float)} ]}
 elif POST:
+  expect JSON payload:
+    {(id: int, date: string, category:string, amount: float)}
   if payload malformed:
-    400, error message
+    400, {error: String}
   elif processing didn't work:
-    500, error message, optionally which POSTed fields where invalid
+    500, {error: String, "invalid fields": [String]}
   else
-    200, JSON-object with id of created row
+    200, {id: int}
 elif DELETE:
-  expect JSON-list of entry ids
+  expect {ids: [int]}
   if payload malformed:
-    400, error message
+    400, {error: String}
   elif processing didn't work:
-    500, error message
-  else
-    200
+    500, {error: String}
+    else
+    200, {ids: [int]}
 else:
-  405, error message
+  405, {error: String}
