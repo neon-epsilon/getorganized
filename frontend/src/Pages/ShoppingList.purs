@@ -13,13 +13,13 @@ view =
     box $ do
       h1 $ text "Einkaufsliste"
       h2 $ text "Einkäufe eingeben"
-      customForm "shoppinglist_input_form_submit" $ ul $ do
+      customForm $ ul $ do
         li $ do
           label $ text "Artikel:"
           textInput
         li $ do
           label $ text "Kategorie:"
-          customSelect "category" 
+          customSelect
             [ {value : "1", text : "Avocado (240kcal/Stück)"}
             , {value : "2", text : "Mars Eisrigel (240kcal/Stück)"}
             , {value : "3", text : "Club Mate (100kcal/Flasche)"}

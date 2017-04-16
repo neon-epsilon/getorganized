@@ -4,12 +4,9 @@ import Prelude (($))
 import Control.Bind (bind)
 import Data.Foldable (foldMap)
 
-import Text.Smolder.HTML (div, form, input, select, option)
-import Text.Smolder.HTML.Attributes (className, name, type', value, placeholder, required, step)
-import Text.Smolder.Markup (Attribute, Markup, attribute, text, (!))
-
-defaultValue :: String -> Attribute
-defaultValue = attribute "defaultValue"
+import Text.Smolder.HTML (div, form, input, select, option, button)
+import Text.Smolder.HTML.Attributes (className, name, type', value, required, step)
+import Text.Smolder.Markup (Markup, text, (!))
 
 
 container :: forall e. Markup e -> Markup e
@@ -22,30 +19,22 @@ smallBox :: forall e. Markup e -> Markup e
 smallBox = div ! className "small-box"
 
 
-customForm :: forall e. String -> Markup e -> Markup e
-customForm submitName children =
+customForm :: forall e. Markup e -> Markup e
+customForm children =
   form $ do
     children
-    input
-      ! name submitName
-      ! className "form_button"
-      ! type' "submit"
-      ! value "Speichern"
+    input ! type' "submit" ! className "form_button" ! value "Speichern"
 
 dateInput :: forall e. Markup e
 dateInput =
   input
     ! type' "date"
-    ! name "date"
-    ! defaultValue "2016-10-20"
-    ! placeholder "2016-10-20"
     ! required "true"
 
 numberInput :: forall e. Markup e
 numberInput =
   input
     ! type' "number"
-    ! name "amount"
     ! step "0.01"
     ! required "true"
 
@@ -53,10 +42,9 @@ textInput :: forall e. Markup e
 textInput =
   input
     ! type' "text"
-    ! name "comment"
 
-customSelect :: forall e. String -> Array {value :: String, text :: String} -> Markup e
-customSelect selectName options =
-  select ! name selectName $ foldMap makeOption options
+customSelect :: forall e. Array {value :: String, text :: String} -> Markup e
+customSelect options =
+  select $ foldMap makeOption options
   where
     makeOption o = option ! value o.value $ text o.text

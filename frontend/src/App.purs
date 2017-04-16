@@ -4,17 +4,17 @@ import Prelude (($), map, pure)
 import Control.Monad.Eff.Console (CONSOLE)
 import Data.Maybe (Maybe(..))
 
+import DOM (DOM)
+import Network.HTTP.Affjax (AJAX)
+
 import Pux (EffModel, noEffects)
-import Pux.DOM.HTML (HTML)
+import Pux.DOM.HTML (HTML, mapEvent)
 import Text.Smolder.HTML (div, h1)
 import Text.Smolder.Markup (text)
-import Network.HTTP.Affjax (AJAX)
 
 import Routes (Route(..))
 import Pages.Home as Home
-import Pages.Calories as Calories
 import Pages.HoursOfWork as HoursOfWork
-import Pages.Spendings as Spendings
 import Pages.ShoppingList as ShoppingList
 
 
@@ -36,11 +36,11 @@ init =
 
 -- The "forall eff" is important. Without it the effects in the main monad get
 -- restricted which leads to a compiler error.
-foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE | eff)
+foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff)
 foldp (PageView route) state = noEffects $ state { currentRoute = route }
 foldp FetchData state =
   { state: state
-  , effects: [ pure $ Just $ HoursOfWorkEvent HoursOfWork.RequestCategories ]}
+  , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Ajax HoursOfWork.RequestCategories ]}
 foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
   { state: state {hoursOfWorkState = newHoursOfWorkState}
   , effects: map (map (map HoursOfWorkEvent)) hoursOfWorkEffects }
@@ -54,12 +54,15 @@ view :: State -> HTML Event
 view { currentRoute: Home } =
   div $ Home.view
 view { currentRoute: Calories } =
-  div $ Calories.view
+  noPage
 view { currentRoute: HoursOfWork, hoursOfWorkState } =
-  div $ HoursOfWork.view hoursOfWorkState
+  div $ mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
 view { currentRoute: Spendings } =
-  div $ Spendings.view
+  noPage
 view { currentRoute: ShoppingList } =
   div $ ShoppingList.view
 view { currentRoute: NotFound } =
-  h1 $ text "404, nix ist hier!"
+  noPage
+
+noPage :: HTML Event
+noPage = h1 $ text "404, nix ist hier."
