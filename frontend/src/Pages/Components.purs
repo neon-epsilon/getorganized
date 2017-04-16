@@ -5,7 +5,7 @@ import Control.Bind (bind)
 import Data.Foldable (foldMap)
 
 import Text.Smolder.HTML (div, form, input, select, option, button)
-import Text.Smolder.HTML.Attributes (className, name, type', value, required, step)
+import Text.Smolder.HTML.Attributes (className, type', value, required, step)
 import Text.Smolder.Markup (Markup, text, (!))
 
 
@@ -23,7 +23,8 @@ customForm :: forall e. Markup e -> Markup e
 customForm children =
   form $ do
     children
-    input ! type' "submit" ! className "form_button" ! value "Speichern"
+    -- It is important to button and not input: With input, (p)react may create errors.
+    button ! type' "submit" ! className "form_button" $ text "Speichern"
 
 dateInput :: forall e. Markup e
 dateInput =

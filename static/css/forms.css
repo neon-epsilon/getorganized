@@ -83,7 +83,7 @@ form input:focus + * + .form_error {visibility: hidden;}
 form input:valid + * + .form_error { visibility: hidden; }
 
 /* Button Style */
-form input.form_button, form input.form_button:focus {
+form button.form_button, form button.form_button:focus {
     width: calc(100% - 6px);
     margin: 3px;
     background: #3877A7;
@@ -103,12 +103,12 @@ form input.form_button, form input.form_button:focus {
     text-align: center;
     text-shadow: 0 -1px 0 #185787;
 }
-form input.form_button:hover {
+form button.form_button:hover {
     background: #5897C7;
     box-shadow: inset 0 1px 0 0 #78B7E7;    
     cursor: pointer; 
 }
-form input.form_button:active {
+form button.form_button:active {
     background: #3877A7;
     border: 1px solid #3877A7;
     box-shadow: 0 0 2px 2px #185787 inset; 
