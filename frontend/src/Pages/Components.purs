@@ -2,6 +2,7 @@ module Pages.Components where
 
 import Prelude (($))
 import Control.Bind (bind)
+import Data.List (List)
 import Data.Foldable (foldMap)
 
 import Text.Smolder.HTML (div, form, input, select, option, button)
@@ -44,7 +45,7 @@ textInput =
   input
     ! type' "text"
 
-customSelect :: forall e. Array {value :: String, text :: String} -> Markup e
+customSelect :: forall e. List {value :: String, text :: String} -> Markup e
 customSelect options =
   select $ foldMap makeOption options
   where

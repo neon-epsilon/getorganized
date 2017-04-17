@@ -2,6 +2,7 @@ module App where
 
 import Prelude (($), map, pure)
 import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Now (NOW)
 import Data.Maybe (Maybe(..))
 
 import DOM (DOM)
@@ -36,11 +37,12 @@ init =
 
 -- The "forall eff" is important. Without it the effects in the main monad get
 -- restricted which leads to a compiler error.
-foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff)
+foldp :: forall eff. Event -> State
+  -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp (PageView route) state = noEffects $ state { currentRoute = route }
 foldp FetchData state =
   { state: state
-  , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Ajax HoursOfWork.RequestCategories ]}
+  , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Init ]}
 foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
   { state: state {hoursOfWorkState = newHoursOfWorkState}
   , effects: map (map (map HoursOfWorkEvent)) hoursOfWorkEffects }

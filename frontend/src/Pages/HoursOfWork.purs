@@ -1,13 +1,18 @@
 module Pages.HoursOfWork where
 
 import Prelude (($), bind, map, show, pure, (>>=), (>=>), (<<<), const, (==), (<>), comparing)
-import Data.Array (sortBy)
-import Data.Either (Either(..), either)
+import Data.List (List(..), (:), sortBy)
+import Data.Either (Either(..), either, fromRight)
 import Data.Maybe (Maybe(..))
 
+import Data.Formatter.DateTime (formatDateTime)
+import Control.Comonad (extract)
+import Partial.Unsafe (unsafePartial)
+
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Aff.Console (log, CONSOLE)
+import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Control.Monad.Aff (attempt, Aff)
+import Control.Monad.Aff.Console (log, CONSOLE)
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.?), Json)
 import Network.HTTP.Affjax (AJAX, get)
@@ -27,27 +32,31 @@ import Text.Smolder.Markup ((!), (#!), text)
 import Pages.Components
 
 
-data Event = Ajax AjaxEvent
+
+data Event = Init
+  | Ajax AjaxEvent
   | Form FormEvent
 
 data AjaxEvent = AjaxError
   | RequestCategories
-  | ReceiveCategories (Array Category)
+  | ReceiveCategories (List Category)
 
 data FormEvent = Submit DOMEvent
   | DateChange DOMEvent
   | AmountChange DOMEvent
   | CategoryChange DOMEvent
+  | SetDate String
+
 
 
 type State =
-  { ajaxState :: AjaxState
-  , categories :: Array Category
+  { initState :: InitState
+  , categories :: List Category
   , formState :: FormState }
 
-data AjaxState = Initializing
+data InitState = Initializing
   | Getting
-  | HasData
+  | Initialized
   | Error
 
 newtype Category = Category
@@ -60,48 +69,24 @@ type FormState =
   , category :: String }
 
 
--- | this component will need a distinct init event to perform
--- | effectful initialization (fetching categories, finding out current date)
+-- | This component will need a distinct init event to perform
+-- | effectful initialization (fetching categories, finding out current date).
 init :: State
 init =
-  { ajaxState : Initializing
-  , categories : []
+  { initState : Initializing
+  , categories : Nil
   , formState : initFormState }
 
 initFormState :: FormState
-initFormState = 
-  { date : "1970-01-01"
+initFormState =
+  { date : ""
   , amount : "0.0"
-  , category: "Uni" }
+  , category: "" }
 
-
-foldp :: forall eff. Event -> State -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM | eff)
-foldp (Ajax AjaxError) state =
-  noEffects $ state { ajaxState = Error }
--- | Receive categories and store them sorted by their priority value
-foldp (Ajax (ReceiveCategories categories)) state =
-  noEffects $ state
-    { ajaxState = HasData
-    , categories = sortBy (comparing (\(Category x) -> x.priority)) categories
-    }
-foldp (Ajax RequestCategories) state =
-  { state: state { ajaxState = Getting }
-  , effects: [ fetchCategories ]
-  }
-foldp (Form (DateChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState {date = targetValue ev} }
-foldp (Form (AmountChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState {amount = targetValue ev} }
-foldp (Form (CategoryChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState {category = targetValue ev} }
-foldp (Form (Submit ev)) state =
-  { state: state
-  , effects: [ liftEff (preventDefault ev) >>= const (pure Nothing) ]
-  }
 
 
 view :: State -> HTML Event
-view { ajaxState, categories, formState } =
+view { initState, categories, formState } =
   container $ do
     smallBox $ do
       h1 $ text "Eingabe"
@@ -126,6 +111,54 @@ view { ajaxState, categories, formState } =
       img ! src "/generated/hoursofwork/chart_progress.png"
 
 
+
+foldp :: forall eff. Event -> State
+  -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
+foldp Init state =
+  { state : state
+  , effects :
+    [ do
+      localeDateTime <- liftEff $ nowDateTime
+      let dateTime = extract localeDateTime
+      -- formatDateTime returns a Left value if and only if the format string is invalid.
+      -- Therefore we may use fromRight here.
+      let dateString = unsafePartial $ fromRight $ formatDateTime "YYYY-MM-DD" dateTime
+      pure $ Just $ Form $ SetDate dateString
+    , pure $ Just $ Ajax RequestCategories
+    ]
+  }
+
+foldp (Ajax AjaxError) state =
+  noEffects $ state { initState = Error }
+-- Receive categories and store them sorted by their priority value
+foldp (Ajax (ReceiveCategories categories)) state@{ formState } =
+  noEffects $ case categories of
+    ((Category x) : xs) -> state
+      { initState = Initialized
+      , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
+      , formState = formState { category = x.category }
+      }
+    Nil -> state
+      { initState = Error }
+foldp (Ajax RequestCategories) state =
+  { state: state { initState = Getting }
+  , effects: [ fetchCategories ]
+  }
+
+foldp (Form (Submit ev)) state =
+  { state: state
+  , effects: [ liftEff (preventDefault ev) >>= const (pure Nothing) ]
+  }
+foldp (Form (DateChange ev)) state@{ formState } =
+  noEffects $ state { formState = formState { date = targetValue ev } }
+foldp (Form (AmountChange ev)) state@{ formState } =
+  noEffects $ state { formState = formState { amount = targetValue ev } }
+foldp (Form (CategoryChange ev)) state@{ formState } =
+  noEffects $ state { formState = formState { category = targetValue ev } }
+foldp (Form (SetDate d)) state@{ formState } =
+  noEffects $ state { formState = formState { date = d } }
+
+
 fetchCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 fetchCategories = do
   r <- attempt $ get "/backend/api/hoursofwork/categories.php"
@@ -147,7 +180,7 @@ fetchCategories = do
       pure $ Just (Ajax AjaxError)
 
   where
-    decodeCategoriesResponse :: Json -> Either String (Array Category)
+    decodeCategoriesResponse :: Json -> Either String (List Category)
     decodeCategoriesResponse r = do
       obj <- decodeJson r
       categories <- obj .? "categories"

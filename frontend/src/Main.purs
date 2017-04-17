@@ -3,15 +3,20 @@ module Main where
 import DOM (DOM)
 import DOM.HTML (window)
 import DOM.HTML.Types (HISTORY)
+
 import Control.Bind (bind, (=<<))
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Exception (EXCEPTION)
-import Control.Monad.Eff.Console (CONSOLE)
-import Network.HTTP.Affjax (AJAX)
 import Prelude ((<<<), Unit)
+
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Now (NOW)
+import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Exception (EXCEPTION)
+import Network.HTTP.Affjax (AJAX)
+
 import Pux (start)
 import Pux.Renderer.React (renderToDOM)
 import Pux.DOM.History (sampleURL)
+
 import Signal ((~>))
 import Signal.Channel
 
@@ -19,7 +24,16 @@ import Routes (match, Route(..))
 import App (Event(..), init, foldp, view)
 
 
-main :: Eff (history:: HISTORY, channel :: CHANNEL, dom :: DOM, err :: EXCEPTION, ajax :: AJAX, console :: CONSOLE ) Unit
+
+main :: Eff
+  ( history :: HISTORY
+  , channel :: CHANNEL
+  , dom :: DOM
+  , err :: EXCEPTION
+  , ajax :: AJAX
+  , console :: CONSOLE
+  , now :: NOW
+  ) Unit
 main = do
   urlSignal <- sampleURL =<< window
   let routeSignal = urlSignal ~> (PageView <<< match)
