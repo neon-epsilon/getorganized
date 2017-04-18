@@ -22,11 +22,13 @@ if GET:
     200, {entries: [ {(id: int, date: string, category:string, amount: float)} ]}
 elif POST:
   expect JSON payload:
-    {(id: int, date: string, category:string, amount: float)}
+    {(date: string, category:string, amount: float)}
   if payload malformed:
     400, {error: String}
+  if fields invalid:
+    400, {error: String, "invalid fields": [String]}
   elif processing didn't work:
-    500, {error: String, "invalid fields": [String]}
+    500, {error: String}
   else
     200, {id: int}
 elif DELETE:

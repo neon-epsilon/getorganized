@@ -16,6 +16,11 @@ function is_nonnegative_number($to_assert)
   return true;
 }
 
+function is_number($to_assert)
+{
+  return (is_float($to_assert) || is_int($to_assert) );
+}
+
 function is_date($date)
 {
     if(!is_string($date)) return false;

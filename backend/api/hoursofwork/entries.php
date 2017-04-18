@@ -4,14 +4,22 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
-// Handle posted input
+
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
   $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
+  if($data === NULL) // A request without body is accepted.
+  {
+    $start = NULL;
+    $limit = NULL;
+  }
+  else
+  {
+    $start = $data["start"];
+    $limit = $data["limit"];
+  }
 
-  $start = $data["start"];
-  $limit = $data["limit"];
   if($start === NULL) $start = 0;
   if($limit === NULL) $limit = 10;
 
@@ -54,15 +62,13 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 {
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-  if ($mysqli->connect_errno)
-  {
-      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-      exit;
-  }
-
   $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
+  if($data === NULL) 
+  {
+    bad_request("Could not decode JSON request.");
+    exit;
+  }
 
   $date = $data["date"];
   $amount = $data["amount"];
@@ -78,21 +84,28 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $invalid_fields[] = "date";
   }
   // Betrag validieren
-  if(! is_nonnegative_number($amount))
+  if(! is_number($amount))
   {
     $valid = false;
     $invalid_fields[] = "amount";
   }
   // validate category
   // Get list of categories
-  $categories = array();
+  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  if ($mysqli->connect_errno)
+  {
+      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
+      exit;
+  }
   if (! $result = $mysqli->query("SELECT category, priority from hoursofwork_categories ORDER BY priority ASC")) {
       internal_server_error( "Query failed: (" . $mysqli->connect_errno . ") " . $mysqli->error );
       exit;
   }
+  $categories = array();
   while( $row = $result->fetch_assoc() ) {
     $categories[] = $row["category"];
   }
+  $mysqli->close();
   if(! in_array($category, $categories) )
   {
     $valid = false;
@@ -110,6 +123,13 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
   else
   {
+    $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+    if ($mysqli->connect_errno)
+    {
+        internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
+        exit;
+    }
+
     $query = "INSERT INTO hoursofwork
       (date, amount, category)
       VALUES
@@ -136,6 +156,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     /* close statement */
     $stmt->close();
 
+    $mysqli->close();
+
     // Respond with id of new database entry
     $response = array(
       "id" => $mysqli->insert_id
@@ -145,16 +167,19 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     /* rebuild hoursofwork output */
     exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
   }
-
-  $mysqli->close();
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
 {
-  $request_body = file_get_contents('php://input');
-
   /* Expect JSON-list of ids, that is, non-negative integers as input. */
   $request_body = file_get_contents('php://input');
+  $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
+  if($data === NULL) 
+  {
+    bad_request("Could not decode JSON request.");
+    exit;
+  }
+
   $ids = $data["ids"];
 
   // Validate ids.
@@ -193,6 +218,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
       $not_found_ids[] = $id;
     }
   }
+  $mysqli->close();
+
   if(!empty($not_found_ids))
   {
     $response = array(
@@ -205,6 +232,12 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
 
   // Delete rows, respond 200 and a dummy JSON object
+  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  if ($mysqli->connect_errno)
+  {
+    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
+    exit;
+  }
   foreach($ids as $id)
   {
     if (! $mysqli->query("DELETE FROM hoursofwork WHERE id = {$id}" ) ) {
@@ -212,6 +245,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
       exit;
     }
   }
+  $mysqli->close();
+
   send_json( array(
     "ids" => $ids
   ));
