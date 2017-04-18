@@ -165,7 +165,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     send_json($response);
 
     /* rebuild hoursofwork output */
-    exec($_SERVER["DOCUMENT_ROOT"] . '/engine/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
+    exec($_SERVER["DOCUMENT_ROOT"] . '/backend/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -185,14 +185,14 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   // Validate ids.
   if($ids === NULL)
   {
-    bad_request("Was expecting a JSON-list of ids (non-negative integers).");
+    bad_request("Was expecting a JSON-object of the form '{\"ids\": [int]}'");
     exit;
   }
   foreach($ids as $id)
   {
     if(! is_nonnegative_int($id))
     {
-      bad_request("Was expecting a JSON-list of ids (non-negative integers).");
+      bad_request("Was expecting a JSON-object of the form '{\"ids\": [int]}'");
       exit;
     }
   }
@@ -250,6 +250,9 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   send_json( array(
     "ids" => $ids
   ));
+
+  /* rebuild hoursofwork output */
+  exec($_SERVER["DOCUMENT_ROOT"] . '/backend/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
 }
 else
 {
