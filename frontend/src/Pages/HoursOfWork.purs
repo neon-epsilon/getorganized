@@ -1,6 +1,6 @@
 module Pages.HoursOfWork where
 
-import Prelude (($), bind, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing, otherwise)
+import Prelude (($), bind, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing)
 import Global (readFloat, isFinite)
 
 import Data.List (List(..), (:), sortBy)
@@ -48,6 +48,7 @@ data FormEvent = Submit DOMEvent
   | AmountChange DOMEvent
   | CategoryChange DOMEvent
   | SetDate String
+  | ResetAmount
 
 
 
@@ -92,7 +93,7 @@ init =
 initFormState :: FormState
 initFormState =
   { date : ""
-  , amount : "0.0"
+  , amount : ""
   , category: "" }
 
 
@@ -180,6 +181,8 @@ foldp (Form (CategoryChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { category = targetValue ev } }
 foldp (Form (SetDate d)) state@{ formState } =
   noEffects $ state { formState = formState { date = d } }
+foldp (Form ResetAmount) state@{ formState } =
+  noEffects $ state { formState = formState { amount = "" } }
 
 
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
@@ -211,8 +214,9 @@ postEntry formState = do
       log $ show err
       pure $ Just $ Ajax AjaxError
     Right res | res.status == (StatusCode 200) -> do
-      pure Nothing
-    -- | If status is not 200, we expect an object of the form {error: String}
+      -- If we POSTed successfully, reset the amount in the form.
+      pure $ Just $ Form ResetAmount
+    -- If status is not 200, we expect an object of the form {error: String}
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       let err = decodeErrorResponse res.response
