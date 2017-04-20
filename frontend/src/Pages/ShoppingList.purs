@@ -15,7 +15,7 @@ view =
     box $ do
       h1 $ text "Einkaufsliste"
       h2 $ text "Einkäufe eingeben"
-      customForm $ ul $ do
+      customForm "Speichern" true $ ul $ do
         li $ do
           label $ text "Artikel:"
           textInput

@@ -20,7 +20,7 @@ import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), json
 import Network.HTTP.Affjax (AJAX, get, post)
 import Network.HTTP.StatusCode (StatusCode(..))
 
-import Pux (EffModel, noEffects)
+import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.HTML (HTML)
 import Pux.DOM.Events (DOMEvent, onChange, onSubmit, targetValue)
 
@@ -28,7 +28,7 @@ import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 
 import Text.Smolder.HTML (h1, h2, img, ul, li, label)
-import Text.Smolder.HTML.Attributes (src, value)
+import Text.Smolder.HTML.Attributes (src, value, disabled)
 import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Components
@@ -39,29 +39,33 @@ data Event = Init
   | Ajax AjaxEvent
   | Form FormEvent
 
-data AjaxEvent = AjaxError
-  | RequestCategories
-  | ReceiveCategories (List Category)
+data AjaxEvent =
+    GetCategories
+  | GetCategoriesSuccess (List Category)
+  | GetCategoriesError
+  | PostEntry
+  | PostEntrySuccess
+  | PostEntryError
 
 data FormEvent = Submit DOMEvent
   | DateChange DOMEvent
   | AmountChange DOMEvent
   | CategoryChange DOMEvent
   | SetDate String
-  | ResetAmount
 
 
 
 type State =
-  { initState :: InitState
+  { ajaxState :: AjaxState
   , categories :: List Category
   , formState :: FormState }
 
 
-data InitState = Initializing
-  | Getting
-  | Initialized
-  | Error
+data AjaxState = NoOp
+  | GettingCategories
+  | GettingCategoriesError
+  | PostingEntry
+  | PostingEntryError
 
 
 newtype Category = Category
@@ -82,11 +86,9 @@ type FormState =
   , category :: String }
 
 
--- | This component will need a distinct init event to perform
--- | effectful initialization (fetching categories, finding out current date).
 init :: State
 init =
-  { initState : Initializing
+  { ajaxState : NoOp
   , categories : Nil
   , formState : initFormState }
 
@@ -99,12 +101,12 @@ initFormState =
 
 
 view :: State -> HTML Event
-view { initState, categories, formState } =
+view { ajaxState, categories, formState } =
   container $ do
     smallBox $ do
       h1 $ text "Eingabe"
       h2 $ text "Arbeitszeit eingeben"
-      customForm #! onSubmit (Form <<< Submit) $ ul $ do
+      customForm buttonText isActive #! onSubmit (Form <<< Submit) $ ul $ do
         li $ do
           label $ text "Datum:"
           dateInput ! value formState.date #! onChange (Form <<< DateChange)
@@ -122,6 +124,16 @@ view { initState, categories, formState } =
     box $ do
       img ! src "/generated/hoursofwork/chart_7days.png"
       img ! src "/generated/hoursofwork/chart_progress.png"
+  where
+    buttonText = case ajaxState of
+      PostingEntry -> "Sende Daten..."
+      GettingCategories -> "Lade..."
+      GettingCategoriesError -> "Fehler"
+      _ -> "Speichern"
+    isActive = case ajaxState of
+      NoOp -> true
+      PostingEntryError -> true
+      _ -> false
 
 
 
@@ -145,34 +157,43 @@ foldp Init state =
                     $ In End
       let dateString = format isoFormat dateTime
       pure $ Just $ Form $ SetDate dateString
-    , pure $ Just $ Ajax RequestCategories
+    , pure $ Just $ Ajax GetCategories
     ]
   }
 
-foldp (Ajax AjaxError) state =
-  noEffects $ state { initState = Error }
--- Receive categories and store them sorted by their priority value
-foldp (Ajax (ReceiveCategories categories)) state@{ formState } =
+foldp (Ajax GetCategories) state =
+  { state: state { ajaxState = GettingCategories }
+  , effects: [ getCategories ]
+  }
+-- | Receive categories and store them sorted by their priority value
+-- | If the received list is empty, set ajaxState = GettingCategoriesError
+foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
   noEffects $ case categories of
     ((Category x) : xs) -> state
-      { initState = Initialized
+      { ajaxState = NoOp
       , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
       , formState = formState { category = x.category }
       }
     Nil -> state
-      { initState = Error }
-foldp (Ajax RequestCategories) state =
-  { state: state { initState = Getting }
-  , effects: [ getCategories ]
+      { ajaxState = GettingCategoriesError }
+foldp (Ajax GetCategoriesError) state =
+  noEffects $ state { ajaxState = GettingCategoriesError }
+foldp (Ajax PostEntry) state =
+  { state: state { ajaxState = PostingEntry }
+  , effects: [ postEntry state.formState ]
   }
+foldp (Ajax PostEntrySuccess) state@{ formState, ajaxState } =
+  noEffects $ state
+    { formState = formState { amount = "" }
+    , ajaxState = NoOp }
+foldp (Ajax PostEntryError) state =
+  noEffects $ state { ajaxState = PostingEntryError }
 
 foldp (Form (Submit ev)) state =
-  { state: state
-  , effects: [ do
+  onlyEffects state [ do
     liftEff (preventDefault ev)
-    postEntry state.formState
+    pure $ Just $ Ajax PostEntry
     ]
-  }
 foldp (Form (DateChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { date = targetValue ev } }
 foldp (Form (AmountChange ev)) state@{ formState } =
@@ -181,8 +202,6 @@ foldp (Form (CategoryChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { category = targetValue ev } }
 foldp (Form (SetDate d)) state@{ formState } =
   noEffects $ state { formState = formState { date = d } }
-foldp (Form ResetAmount) state@{ formState } =
-  noEffects $ state { formState = formState { amount = "" } }
 
 
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
@@ -191,19 +210,19 @@ getCategories = do
   case r of
     Left err -> do
       log $ show err
-      pure $ Just $ Ajax AjaxError
+      pure $ Just $ Ajax GetCategoriesError
     Right res | res.status == (StatusCode 200) -> do
       let categories = decodeCategories res.response
       either
-        (log >=> const (pure $ Just $ Ajax AjaxError))
-        (pure <<< Just <<< Ajax <<< ReceiveCategories)
+        (log >=> const (pure $ Just $ Ajax GetCategoriesError))
+        (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
         categories
     -- | If status is not 200, we expect an object of the form {error: String}
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       let err = decodeErrorResponse res.response
       either log log err
-      pure $ Just (Ajax AjaxError)
+      pure $ Just (Ajax GetCategoriesError)
 
 
 postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
@@ -212,16 +231,16 @@ postEntry formState = do
   case r of
     Left err -> do
       log $ show err
-      pure $ Just $ Ajax AjaxError
+      pure $ Just $ Ajax PostEntryError
     Right res | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, reset the amount in the form.
-      pure $ Just $ Form ResetAmount
+      pure $ Just $ Ajax PostEntrySuccess
     -- If status is not 200, we expect an object of the form {error: String}
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       let err = decodeErrorResponse res.response
       either log log err
-      pure $ Just (Ajax AjaxError)
+      pure $ Just (Ajax PostEntryError)
 
 
 decodeCategories :: Json -> Either String (List Category)

@@ -1,12 +1,12 @@
 module Pages.Components where
 
-import Prelude (($))
+import Prelude (($), otherwise)
 import Control.Bind (bind)
 import Data.List (List)
 import Data.Foldable (foldMap)
 
 import Text.Smolder.HTML (div, form, input, select, option, button)
-import Text.Smolder.HTML.Attributes (className, type', value, required, step)
+import Text.Smolder.HTML.Attributes (className, type', value, required, step, disabled)
 import Text.Smolder.Markup (Markup, text, (!))
 
 
@@ -20,12 +20,17 @@ smallBox :: forall e. Markup e -> Markup e
 smallBox = div ! className "small-box"
 
 
-customForm :: forall e. Markup e -> Markup e
-customForm children =
+customForm :: forall e. String -> Boolean -> Markup e -> Markup e
+customForm buttonText isActive children =
   form $ do
     children
     -- It is important to button and not input: With input, (p)react may create errors.
-    button ! type' "submit" ! className "form_button" $ text "Speichern"
+    formButton
+  where
+    formButton | isActive =
+                  button ! type' "submit" ! className "form_button" $ text buttonText
+               | otherwise =
+                  button ! type' "submit" ! className "form_button" ! disabled "true" $ text buttonText
 
 dateInput :: forall e. Markup e
 dateInput =
