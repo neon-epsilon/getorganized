@@ -51,4 +51,4 @@ main = do
   renderToDOM "#main" app.markup app.input
 
   send inputChannel (PageView Home)
-  send inputChannel FetchData
+  send inputChannel Init

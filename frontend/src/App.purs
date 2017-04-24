@@ -1,6 +1,6 @@
 module App where
 
-import Prelude (($), map, pure)
+import Prelude (($), map, bind, pure)
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Data.Maybe (Maybe(..))
@@ -10,18 +10,20 @@ import Network.HTTP.Affjax (AJAX)
 
 import Pux (EffModel, noEffects)
 import Pux.DOM.HTML (HTML, mapEvent)
-import Text.Smolder.HTML (div, h1)
+import Text.Smolder.HTML (h1)
 import Text.Smolder.Markup (text)
 
 import Routes (Route(..))
+import Menu (menu)
 import Pages.Home as Home
 import Pages.HoursOfWork as HoursOfWork
 import Pages.ShoppingList as ShoppingList
 
 
+
 data Event =
   PageView Route |
-  FetchData |
+  Init |
   HoursOfWorkEvent HoursOfWork.Event
 
 
@@ -40,7 +42,7 @@ init =
 foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp (PageView route) state = noEffects $ state { currentRoute = route }
-foldp FetchData state =
+foldp Init state =
   { state: state
   , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Init ]}
 foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
@@ -52,19 +54,25 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
     hoursOfWorkEffects = hoursOfWorkEffModel.effects
 
 
+
 view :: State -> HTML Event
-view { currentRoute: Home } =
-  div $ Home.view
+view { currentRoute: Home } = do
+  menu
+  Home.view
 view { currentRoute: Calories } =
   noPage
-view { currentRoute: HoursOfWork, hoursOfWorkState } =
-  div $ mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
+view { currentRoute: HoursOfWork, hoursOfWorkState } = do
+  menu
+  mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
 view { currentRoute: Spendings } =
   noPage
-view { currentRoute: ShoppingList } =
-  div $ ShoppingList.view
+view { currentRoute: ShoppingList } = do
+  menu
+  ShoppingList.view
 view { currentRoute: NotFound } =
   noPage
 
 noPage :: HTML Event
-noPage = h1 $ text "404, nix ist hier."
+noPage = do
+  menu
+  h1 $ text "404, nix ist hier."
