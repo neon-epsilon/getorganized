@@ -1,23 +1,34 @@
 module Menu where
 
-import Prelude (($))
+import Prelude (($), const)
 import Control.Bind (bind)
 
 import Text.Smolder.HTML (nav, span, input, label, ul, li, a)
 import Text.Smolder.HTML.Attributes (className, id, type', for, href)
-import Text.Smolder.Markup (Markup, text, (!))
+import Text.Smolder.Markup (text, (!), (#!))
+
+import Pux.DOM.HTML (HTML)
+import Pux.DOM.Events (onClick)
 
 
 
-menu :: forall e. Markup e
+data Route = Home | Calories | HoursOfWork | Spendings | ShoppingList
+
+
+
+menu :: HTML Route
 menu = nav do
   input ! type' "checkbox" ! id "nav-checkbox-0"
   label ! for "nav-checkbox-0" $ do
     span ! className "nav-name" $ text "GetOrganized"
     span ! className "nav-icon" $ text "≡"
   ul $ do
-    li $ a ! href "/" ! className "route-link" $ text "Übersicht"
-    li $ a ! href "/hoursofwork" ! className "route-link" $ text "Arbeitszeit"
-    li $ a ! href "/spendings" ! className "route-link" $ text "Ausgaben"
-    li $ a ! href "/calories" ! className "route-link" $ text "Kalorien"
-    li $ a ! href "/shoppinglist" ! className "route-link" $ text "Einkaufsliste"
+    routeLink Home "Übersicht"
+    routeLink HoursOfWork "Arbeitszeit"
+    routeLink Spendings "Ausgaben"
+    routeLink Calories "Kalorien"
+    routeLink ShoppingList "Einkaufsliste"
+
+routeLink :: Route -> String -> HTML Route
+routeLink r s =
+  li $ a ! className "route-link" #! onClick (const r) $ text s

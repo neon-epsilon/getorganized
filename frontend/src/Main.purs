@@ -1,11 +1,9 @@
 module Main where
 
-import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Types (HISTORY)
 
-import Control.Bind (bind, (=<<))
-import Prelude ((<<<), Unit)
+import Prelude (Unit, bind)
+
+import DOM (DOM)
 
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Now (NOW)
@@ -15,19 +13,15 @@ import Network.HTTP.Affjax (AJAX)
 
 import Pux (start)
 import Pux.Renderer.React (renderToDOM)
-import Pux.DOM.History (sampleURL)
 
-import Signal ((~>))
 import Signal.Channel
 
-import Routes (match, Route(..))
 import App (Event(..), init, foldp, view)
 
 
 
 main :: Eff
-  ( history :: HISTORY
-  , channel :: CHANNEL
+  ( channel :: CHANNEL
   , dom :: DOM
   , err :: EXCEPTION
   , ajax :: AJAX
@@ -35,20 +29,16 @@ main :: Eff
   , now :: NOW
   ) Unit
 main = do
-  urlSignal <- sampleURL =<< window
-  let routeSignal = urlSignal ~> (PageView <<< match)
-
-  inputChannel <- channel (PageView NotFound)
+  inputChannel <- channel (Init)
   let inputSignal = subscribe inputChannel
 
   app <- start
     { initialState: init
     , view
     , foldp
-    , inputs: [inputSignal, routeSignal]
+    , inputs: [inputSignal]
     }
 
   renderToDOM "#main" app.markup app.input
 
-  send inputChannel (PageView Home)
   send inputChannel Init

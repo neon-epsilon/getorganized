@@ -13,8 +13,7 @@ import Pux.DOM.HTML (HTML, mapEvent)
 import Text.Smolder.HTML (h1)
 import Text.Smolder.Markup (text)
 
-import Routes (Route(..))
-import Menu (menu)
+import Menu (Route (..), menu)
 import Pages.Home as Home
 import Pages.HoursOfWork as HoursOfWork
 import Pages.ShoppingList as ShoppingList
@@ -22,8 +21,8 @@ import Pages.ShoppingList as ShoppingList
 
 
 data Event =
-  PageView Route |
   Init |
+  NavigateTo Route |
   HoursOfWorkEvent HoursOfWork.Event
 
 
@@ -41,7 +40,7 @@ init =
 -- restricted which leads to a compiler error.
 foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
-foldp (PageView route) state = noEffects $ state { currentRoute = route }
+foldp (NavigateTo route) state = noEffects $ state { currentRoute = route }
 foldp Init state =
   { state: state
   , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Init ]}
@@ -57,22 +56,22 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
 
 view :: State -> HTML Event
 view { currentRoute: Home } = do
-  menu
-  Home.view
+  page $ Home.view
 view { currentRoute: Calories } =
   noPage
 view { currentRoute: HoursOfWork, hoursOfWorkState } = do
-  menu
-  mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
+  page $ mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
 view { currentRoute: Spendings } =
   noPage
 view { currentRoute: ShoppingList } = do
-  menu
-  ShoppingList.view
-view { currentRoute: NotFound } =
-  noPage
+  page $ ShoppingList.view
+
+page :: HTML Event -> HTML Event
+page h = do
+  mapEvent NavigateTo $ menu
+  h
 
 noPage :: HTML Event
 noPage = do
-  menu
+  mapEvent NavigateTo $ menu
   h1 $ text "404, nix ist hier."
