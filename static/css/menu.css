@@ -20,16 +20,22 @@
 
 */
 
+/* shared positioning */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 1; /* these two are important for positioning of children and shadows (z-index etc.) */
+}
+
+
 /* NORMAL SIZE MENU */
 @media (min-width: 751px) {
 /* positioning and drop-down logic */
-    nav {
+    nav label {
         display: flex;
         flex-direction: row;
 
-        position: sticky;
-        top: 0;
-        z-index: 1; /* these two are important for positioning of children and shadows (z-index etc.) */
+        justify-content: flex-end; /* everything to the right */
     }
 
     nav ul {
@@ -59,9 +65,21 @@
     }
 
     nav ul ul ul {
-        left: 100%; 
+        left: initial; /* has to be reset, otherwise the left:0 of ul ul will still hold */
         top: 0;
+        right: 100%
     }
+
+    nav .nav-header {
+        /* header should be to the left and take up any surplus space */
+        flex: 1 0 auto;
+        order: -1;
+    }
+
+    nav .nav-icon {
+        display: none;
+    }
+
 
 
 /* transition effects */
@@ -74,32 +92,13 @@
         opacity: 1;
     }
 
-    nav li {
+    nav * {
         transition: background-color 0.4s;
-    }
-
-    nav a, nav label {
-        transition: color 0.4s;
     }
 
 /* actual styling */
     nav {
         font-size: 1.3em;
-        justify-content: flex-end; /* everything to the right */
-    }
-
-    nav > label {
-        flex: 1 0 auto;
-        order: -1; /* top label should be to the left and take up any surplus space */
-    }
-
-    nav ul ul ul{
-        left: initial; /* has to be reset, otherwise the left:0 of ul ul will still hold */
-        right: 100%;
-    }
-
-    .nav-icon {
-        display: none;
     }
 
     /* reduce font size as screen goes smaller */
@@ -112,10 +111,7 @@
     /* colors */
     nav {
         background: #3877A7;
-    }
-
-    nav ul {
-        background: #3877A7;
+        color: #FFF;
     }
 
     nav li:hover, nav ul ul {
@@ -128,18 +124,6 @@
 
     nav li li li:hover {
         background: #88C7F7;
-    }
-
-    nav a, nav label {
-        color: #fff;
-    }
-
-    nav li:not(:hover) li a, nav li:not(:hover) li label {
-        color: #5897C7;
-    }
-
-    nav li li:not(:hover) li a, nav li li:not(:hover) li label {
-        color: #78B7E7;
     }
 
     /* shadows */
@@ -156,13 +140,23 @@
 /* SMALL MENU */
 @media (max-width: 750px) {
 /* positioning and drop-down logic */
-    nav {
+    nav label {
         display: flex; /* this makes sure that menu elements span the whole available width */
         flex-direction: column;
+    }
 
-        position: sticky;
-        top: 0;
-        z-index: 1; /* these two are important for positioning of children and shadows (z-index etc.) */
+    nav .nav-header {
+        display: flex;
+        flex-direction: row;
+    }
+
+    nav .nav-name {
+        flex: 1 0 auto;
+    }
+
+    nav .nav-icon {
+        flex: 0 1 auto;
+        order: 1; /* show icon after the nav-name */
     }
 
     nav li {
@@ -170,13 +164,7 @@
         flex-direction: column;
     }
 
-    nav input:not(:checked) + label + ul { /* don't show me if my checkbox isn't checked */
-        max-height: 0;
-        overflow: hidden;
-        /* better than setting height:0 and visibility:0 because both don't allow for transition effect */
-    }
-
-    nav input:not(:checked) + label + ul ul { /* also don't show me if any parent has an unchecked checkbox */
+    nav input:not(:checked) + label ul { /* don't show me if my checkbox isn't checked */
         max-height: 0;
         overflow: hidden;
         /* better than setting height:0 and visibility:0 because both don't allow for transition effect */
@@ -267,7 +255,7 @@ nav {
     text-align: left;
 }
 
-nav a, nav a:hover , .nav-name {
+nav a, nav a:hover , span {
     padding-left: 20px;
     padding-right: 20px;
     text-decoration: none;
@@ -275,22 +263,8 @@ nav a, nav a:hover , .nav-name {
     white-space: nowrap;
 }
 
-nav label {
-    display: flex;
-    flex-direction: row;
-
-    cursor: default;
-}
-
-nav .nav-name {
-    flex: 1 0 auto;
-}
-
 nav .nav-icon {
-    flex: 0 1 auto;
-    order: 1; /* show icon after the nav-name */
     width: 60px;
-
     text-align: center;
     font-size: 1.5em; /* unicode icons are too small */
 }
