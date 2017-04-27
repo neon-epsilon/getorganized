@@ -1,30 +1,89 @@
 /* General structure:
 
 <nav>
-    <input type="checkbox" id="main-id">
-    <label for="main-id"><span class="nav-name">menu title</span><span class="nav-icon">&equiv;</span></label>
+  <input type="checkbox" id="main-id">
+  <label for="main-id">
+    <span class="nav-header">
+      <span class="nav-name">Title</span>
+      <span class="nav-icon">&equiv;</span>
+    </span>
     <ul>
-        <li><a href="url1">menu item 1</a></li>
-        <li>
-            <input type="checkbox" id="sub-id">
-            <label for="sub-id"><span class="nav-name">sub menu title</span><span class="nav-icon">&#x25BE;</span></label>
-            <ul>
-                <li><a href="sub-url1">sub menu item 1</a></li>
-                <li><a href="sub-url2">sub menu item 2</a></li>
-                <li><a href="sub-url2">sub menu item 2</a></li>
-            </ul>
-        </li>
-        <li><a href="url2">menu item 2</a></li>
+      <li><a href="url1">menu item 1</a></li>
+      <li>
+        <span>Submenu 1</span>
+        <ul>
+          <li><a href="sub-url1">sub menu item 1</a></li>
+          <li><a href="sub-url2">sub menu item 2</a></li>
+          <li><a href="sub-url2">sub menu item 2</a></li>
+        </ul>
+      </li>
+      <li><a href="url2">menu item 2</a></li>
     </ul>
+  </label>
 </nav>
 
+Nesting lists up to three levels is allowed, i.e.
+<ul><span>menu</span>
+  <li><span>sub-menu</span><ul>
+    <li><span>sub-sub-menu</span><ul>
+        <li>some menu entry</li>
+      </ul>
+  </ul>
+</ul>
+
+It is important that at no time and window size the main menu list takes up more than one row.
+Otherwise the menu will look crappy.
 */
 
-/* shared positioning */
+/* SHARED POSITIONING */
 nav {
   position: sticky;
   top: 0;
   z-index: 1; /* these two are important for positioning of children and shadows (z-index etc.) */
+}
+
+
+/* SHARED STYLING */
+nav input {
+    display: none;
+}
+
+nav {
+    background: #3877A7;
+    color: #fff;
+
+    font-size: 20px;
+    line-height: 50px;
+    font-family: sans-serif;
+    font-weight: bold;
+
+    margin: 0 0 3px 0;
+    text-align: left;
+}
+
+nav a, nav a:hover , nav span {
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+nav span.nav-header {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav a {
+    cursor: pointer;
+}
+
+/* transition effects */
+nav * {
+    transition: background-color 0.4s;
 }
 
 
@@ -92,28 +151,21 @@ nav {
         opacity: 1;
     }
 
-    nav * {
-        transition: background-color 0.4s;
-    }
-
 /* actual styling */
-    nav {
-        font-size: 1.3em;
-    }
-
     /* reduce font size as screen goes smaller */
     @media (max-width: 900px) {
         nav {
-            font-size: 1em;
+            font-size: 15px;
         }
     }
 
-    /* colors */
-    nav {
-        background: #3877A7;
-        color: #FFF;
+    /* padding */
+    nav a, nav a:hover , nav span {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 
+    /* colors */
     nav li:hover, nav ul ul {
         background: #5897C7;
     }
@@ -171,106 +223,47 @@ nav {
     }
 
 /* transition effects */
-    nav li, nav label {
-        transition: color 0.4s, background-color 0.4s;
-    }
-
-    nav a {
-        transition: color 0.4s;
-    }
-
     nav ul {
-        /* transition: max-height 0.8s;
-        max-height: 999em; */
+        /* height does not work well (or at all) with the flex-box logic, so we use max-height instead for a transition.
+         * max-height should be set to a reasonably low value. For big values the transition looks jerky. */
+        max-height: 1024px;
+        transition: max-height 0.4s;
     }
 
 /* actual styling */
-    nav {
-        font-size: 1.3em;
+    nav span.nav-icon {
+        padding-left: 0;
+        padding-right: 0;
+
+        width: 60px;
+        text-align: center;
+        font-size: 135%; /* unicode icons are too small */
+    }
+
+    /* padding */
+    nav a, nav a:hover, nav span {
+        padding-left: 20px;
+    }
+
+    nav ul ul a, nav ul ul a:hover, nav ul ul span {
+        padding-left: 40px;
+    }
+
+    nav ul ul ul a, nav ul ul ul a:hover, nav ul ul ul span {
+        padding-left: 60px;
     }
 
     /* colors */
-    nav {
-        background: #3877A7;
-    }
-
-    nav ul, nav label:hover {
+    nav input:checked + label, nav label:hover {
         background: #5897C7;
     }
 
-    nav li:hover, nav li label:hover {
+    nav a:hover {
         background: #78B7E7;
-    }
-
-    nav li li:hover, nav li li label:hover {
-        background: #88C7F7;
-    }
-
-    nav input:checked + label {
-        background: #5897C7;
-    }
-
-    nav ul input:checked + label, nav ul ul {
-        background: #78B7E7;
-    }
-
-    nav ul ul input:checked + label, nav ul ul ul {
-        background: #88C7F7;
-    }
-
-    nav a, nav label {
-        color: #fff;
-    }
-
-    nav input:not(:checked) + label + ul a, nav input:not(:checked) + label + ul label {
-        color: #5897C7;
-    }
-
-    nav li input:not(:checked) + label + ul a, nav li input:not(:checked) + label + ul label {
-        color: #78B7E7;
-    }
-
-    nav li li input:not(:checked) + label + ul a, nav li li input:not(:checked) + label + ul label {
-        color: #88C7F7;
     }
 
     /* shadows */
     nav {
         box-shadow: 0 4px 4px 0 rgba(0,0,0,0.4);
     }
-}
-
-
-/* SHARED STYLING */
-nav input {
-    display: none;
-}
-
-nav {
-    line-height: 50px;
-    font-family: sans-serif;
-    font-weight: bold;
-
-    margin: 0 0 3px 0;
-    text-align: left;
-}
-
-nav a, nav a:hover , span {
-    padding-left: 20px;
-    padding-right: 20px;
-    text-decoration: none;
-
-    white-space: nowrap;
-}
-
-nav .nav-icon {
-    width: 60px;
-    text-align: center;
-    font-size: 1.5em; /* unicode icons are too small */
-}
-
-nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
 }
