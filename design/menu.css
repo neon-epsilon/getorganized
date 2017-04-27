@@ -192,8 +192,8 @@
     }
 
     nav ul {
-        /* transition: max-height 0.8s;
-        max-height: 999em; */
+        transition: max-height 0.4s;
+        max-height: 1024px;
     }
 
 /* actual styling */
