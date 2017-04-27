@@ -9,27 +9,10 @@
     </span>
     <ul>
       <li><a href="url1">menu item 1</a></li>
-      <li>
-        <span>Submenu 1</span>
-        <ul>
-          <li><a href="sub-url1">sub menu item 1</a></li>
-          <li><a href="sub-url2">sub menu item 2</a></li>
-          <li><a href="sub-url2">sub menu item 2</a></li>
-        </ul>
-      </li>
       <li><a href="url2">menu item 2</a></li>
     </ul>
   </label>
 </nav>
-
-Nesting lists up to three levels is allowed, i.e.
-<ul><span>menu</span>
-  <li><span>sub-menu</span><ul>
-    <li><span>sub-sub-menu</span><ul>
-        <li>some menu entry</li>
-      </ul>
-  </ul>
-</ul>
 
 It is important that at no time and window size the main menu list takes up more than one row.
 Otherwise the menu will look crappy.
@@ -55,18 +38,16 @@ nav {
     font-size: 20px;
     line-height: 50px;
     font-family: sans-serif;
-    font-weight: bold;
 
     margin: 0 0 3px 0;
-    text-align: left;
 }
 
-nav a, nav a:hover , nav span {
+nav a, nav a:hover {
     text-decoration: none;
     white-space: nowrap;
 }
 
-nav span.nav-header {
+nav .nav-header {
     padding-left: 0;
     padding-right: 0;
 }
@@ -103,32 +84,6 @@ nav * {
         flex-direction: row;
     }
 
-    nav li {
-        position: relative;
-        display: flex; /* this makes sure that these two are menu elements span the whole available width */
-        flex-direction: column;
-    }
-
-    nav ul ul {
-        position: absolute;
-        left: 0;
-        top: 100%;
-        flex-direction: column;
-        visibility: hidden;
-
-        z-index: 10; /* make sure the absolutely positioned list pops up on the top of anything else */
-    }
-
-    nav li:hover > ul {
-        visibility: visible;
-    }
-
-    nav ul ul ul {
-        left: initial; /* has to be reset, otherwise the left:0 of ul ul will still hold */
-        top: 0;
-        right: 100%
-    }
-
     nav .nav-header {
         /* header should be to the left and take up any surplus space */
         flex: 1 0 auto;
@@ -159,32 +114,25 @@ nav * {
         }
     }
 
+    nav .nav-name {
+      text-align: left;
+    }
+
+
     /* padding */
-    nav a, nav a:hover , nav span {
+    nav a, nav a:hover, nav .nav-name {
         padding-left: 20px;
         padding-right: 20px;
     }
 
     /* colors */
-    nav li:hover, nav ul ul {
+    nav li:hover {
         background: #5897C7;
-    }
-
-    nav li li:hover, nav ul ul ul {
-        background: #78B7E7;
-    }
-
-    nav li li li:hover {
-        background: #88C7F7;
     }
 
     /* shadows */
     nav {
         box-shadow: 0 4px 4px 0 rgba(0,0,0,0.2);
-    }
-    
-    nav ul ul {
-        box-shadow: -4px 4px 4px 0 rgba(0,0,0,0.2);
     }
 }
 
@@ -240,18 +188,19 @@ nav * {
         font-size: 135%; /* unicode icons are too small */
     }
 
-    /* padding */
-    nav a, nav a:hover, nav span {
+    nav .nav-name {
         padding-left: 20px;
     }
 
-    nav ul ul a, nav ul ul a:hover, nav ul ul span {
-        padding-left: 40px;
+    nav a, nav a:hover {
+        text-align: center;
     }
 
-    nav ul ul ul a, nav ul ul ul a:hover, nav ul ul ul span {
-        padding-left: 60px;
+    nav li {
+        line-height: 45px; /* smaller menu items than menu bar look better. */
+        border-top: 1px solid #3877A7;
     }
+
 
     /* colors */
     nav input:checked + label, nav label:hover {
