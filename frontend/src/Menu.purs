@@ -25,16 +25,6 @@ menu = nav do
       span ! className "nav-icon" $ text "≡"
     ul $ do
       routeLink Home "Übersicht"
-      li $ do
-        span $ text "Test 1"
-        ul $ do
-          routeLink HoursOfWork "Arbeitszeit"
-          routeLink Spendings "Ausgaben"
-          li $ do
-            span $ text "Test 2"
-            ul $ do 
-              routeLink HoursOfWork "Arbeitszeit"
-              routeLink Spendings "Ausgaben"
       routeLink HoursOfWork "Arbeitszeit"
       routeLink Spendings "Ausgaben"
       routeLink Calories "Kalorien"
