@@ -21,7 +21,7 @@
 */
 
 /* NORMAL SIZE MENU */
-@media (min-width: 551px) {
+@media (min-width: 801px) {
 /* positioning and drop-down logic */
     nav {
         display: flex;
@@ -102,10 +102,10 @@
         display: none;
     }
 
-    /* reduce font size as screen goes smaller */
-    @media (max-width: 800px) {
-        nav {
-            font-size: 1em;
+    /* reduce font size of menu elements as screen goes smaller */
+    @media (max-width: 1000px) {
+        nav ul {
+            font-size: 75%;
         }
     }
 
@@ -154,7 +154,7 @@
 
 
 /* SMALL MENU */
-@media (max-width: 550px) {
+@media (max-width: 800px) {
 /* positioning and drop-down logic */
     nav {
         display: flex; /* this makes sure that menu elements span the whole available width */
@@ -192,8 +192,8 @@
     }
 
     nav ul {
-        transition: max-height 0.4s;
-        max-height: 1024px;
+        /*transition: max-height 0.4s;*/
+        max-height: 99999px;
     }
 
 /* actual styling */
