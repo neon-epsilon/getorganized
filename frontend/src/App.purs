@@ -1,10 +1,10 @@
 module App where
 
 import Prelude (($), map, bind, pure)
-import Control.Monad.Eff.Console (CONSOLE)
-import Control.Monad.Eff.Now (NOW)
 import Data.Maybe (Maybe(..))
 
+import Control.Monad.Eff.Console (CONSOLE)
+import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 
