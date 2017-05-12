@@ -25,6 +25,11 @@ nav {
   z-index: 1; /* these two are important for positioning of children and shadows (z-index etc.) */
 }
 
+nav li {
+  display: flex; /* this makes sure that menu elements span the whole available width */
+  flex-direction: column;
+}
+
 
 /* SHARED STYLING */
 nav input {
@@ -157,11 +162,6 @@ nav * {
     nav .nav-icon {
         flex: 0 1 auto;
         order: 1; /* show icon after the nav-name */
-    }
-
-    nav li {
-        display: flex; /* this makes sure that menu elements span the whole available width */
-        flex-direction: column;
     }
 
     nav input:not(:checked) + label ul { /* don't show me if my checkbox isn't checked */
