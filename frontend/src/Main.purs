@@ -1,7 +1,7 @@
 module Main where
 
 
-import Prelude (Unit, bind)
+import Prelude (Unit, bind, discard)
 
 import DOM (DOM)
 
@@ -23,7 +23,7 @@ import App (Event(..), init, foldp, view)
 main :: Eff
   ( channel :: CHANNEL
   , dom :: DOM
-  , err :: EXCEPTION
+  , exception :: EXCEPTION
   , ajax :: AJAX
   , console :: CONSOLE
   , now :: NOW

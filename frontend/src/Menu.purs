@@ -1,7 +1,7 @@
 module Menu where
 
 import Prelude (($), const)
-import Control.Bind (bind)
+import Control.Bind (bind, discard)
 
 import Text.Smolder.HTML (nav, span, input, label, ul, li, a)
 import Text.Smolder.HTML.Attributes (className, id, type', for)

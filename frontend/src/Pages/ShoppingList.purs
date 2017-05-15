@@ -1,6 +1,6 @@
 module Pages.ShoppingList where
 
-import Prelude (($), bind)
+import Prelude (($), bind, discard)
 import Data.List (fromFoldable)
 
 import Text.Smolder.HTML (h1, h2, ul, li, label)

@@ -1,6 +1,6 @@
 module Pages.HoursOfWork where
 
-import Prelude (($), bind, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing)
+import Prelude (($), bind, discard, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing)
 import Global (readFloat, isFinite)
 
 import Data.List (List(..), (:), sortBy)

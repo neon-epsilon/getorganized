@@ -1,7 +1,7 @@
 module Pages.Components where
 
 import Prelude (($), otherwise)
-import Control.Bind (bind)
+import Control.Bind (bind, discard)
 import Data.List (List)
 import Data.Foldable (foldMap)
 

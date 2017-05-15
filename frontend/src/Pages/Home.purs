@@ -1,6 +1,6 @@
 module Pages.Home where
 
-import Prelude (($), bind)
+import Prelude (($), bind, discard)
 import Text.Smolder.HTML (h1, img)
 import Text.Smolder.HTML.Attributes (src)
 import Text.Smolder.Markup (Markup, (!), text)

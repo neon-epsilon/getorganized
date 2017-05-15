@@ -1,6 +1,6 @@
 module App where
 
-import Prelude (($), map, bind, pure)
+import Prelude (($), map, bind, discard, pure)
 import Data.Maybe (Maybe(..))
 
 import Control.Monad.Eff.Console (CONSOLE)
