@@ -1,8 +1,8 @@
 module Pages.HoursOfWork where
 
 import Prelude (($), bind, discard, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing)
-import Global (readFloat, isFinite)
 
+import Data.Number (fromString)
 import Data.List (List(..), (:), sortBy)
 import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
@@ -28,7 +28,7 @@ import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 
 import Text.Smolder.HTML (h1, h2, img, ul, li, label)
-import Text.Smolder.HTML.Attributes (src, value, disabled)
+import Text.Smolder.HTML.Attributes (src, value)
 import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Components
@@ -257,6 +257,6 @@ decodeErrorResponse r = do
 encodeFormState :: FormState -> Json
 encodeFormState formState =
   "date" := formState.date
-  ~> "amount" := readFloat formState.amount
+  ~> "amount" := fromString formState.amount
   ~> "category" := formState.category
   ~> jsonEmptyObject
