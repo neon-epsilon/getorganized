@@ -63,9 +63,8 @@ type State =
 
 data AjaxState = NoOp
   | GettingCategories
-  | GettingCategoriesError
   | PostingEntry
-  | PostingEntryError
+  | FatalError
 
 
 newtype Category = Category
@@ -88,7 +87,7 @@ type FormState =
 
 init :: State
 init =
-  { ajaxState : NoOp
+  { ajaxState : GettingCategories
   , categories : Nil
   , formState : initFormState }
 
@@ -126,13 +125,12 @@ view { ajaxState, categories, formState } =
       img ! src "/generated/hoursofwork/chart_progress.png"
   where
     buttonText = case ajaxState of
-      PostingEntry -> "Sende Daten..."
+      NoOp -> "Speichern"
       GettingCategories -> "Lade..."
-      GettingCategoriesError -> "Fehler"
-      _ -> "Speichern"
+      PostingEntry -> "Sende Daten..."
+      FatalError -> "Fehler"
     isActive = case ajaxState of
       NoOp -> true
-      PostingEntryError -> true
       _ -> false
 
 
@@ -166,7 +164,8 @@ foldp (Ajax GetCategories) state =
   , effects: [ getCategories ]
   }
 -- | Receive categories and store them sorted by their priority value
--- | If the received list is empty, set ajaxState = GettingCategoriesError
+-- | If the received list is empty, set ajaxState = FatalError as we
+-- | cannot recover from this state without action on the server side.
 foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
   noEffects $ case categories of
     ((Category x) : xs) -> state
@@ -175,9 +174,9 @@ foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
       , formState = formState { category = x.category }
       }
     Nil -> state
-      { ajaxState = GettingCategoriesError }
+      { ajaxState = FatalError }
 foldp (Ajax GetCategoriesError) state =
-  noEffects $ state { ajaxState = GettingCategoriesError }
+  noEffects $ state
 foldp (Ajax PostEntry) state =
   { state: state { ajaxState = PostingEntry }
   , effects: [ postEntry state.formState ]
@@ -187,7 +186,7 @@ foldp (Ajax PostEntrySuccess) state@{ formState, ajaxState } =
     { formState = formState { amount = "" }
     , ajaxState = NoOp }
 foldp (Ajax PostEntryError) state =
-  noEffects $ state { ajaxState = PostingEntryError }
+  noEffects $ state
 
 foldp (Form (Submit ev)) state =
   onlyEffects state [ do
