@@ -1,7 +1,7 @@
 module Main where
 
 
-import Prelude (Unit, bind, discard)
+import Prelude
 
 import DOM (DOM)
 
@@ -14,7 +14,7 @@ import Network.HTTP.Affjax (AJAX)
 import Pux (start)
 import Pux.Renderer.React (renderToDOM)
 
-import Signal.Channel
+import Signal.Channel (CHANNEL, channel, subscribe)
 
 import App (Event(..), init, foldp, view)
 
@@ -40,5 +40,3 @@ main = do
     }
 
   renderToDOM "#main" app.markup app.input
-
-  send inputChannel Init
