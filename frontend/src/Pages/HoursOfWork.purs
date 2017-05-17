@@ -1,20 +1,25 @@
 module Pages.HoursOfWork where
 
-import Prelude (($), bind, discard, map, show, pure, (>=>), (<<<), const, (==), (<>), comparing)
+import Prelude
 
 import Data.Number (fromString)
-import Data.List (List(..), (:), sortBy)
-import Data.Either (Either(..), either)
-import Data.Maybe (Maybe(..))
+import Data.List (List (..), (:), sortBy)
+import Data.Either (Either (..), either)
+import Data.Maybe (Maybe (..))
 
-import Data.Formatter.DateTime (FormatterF (..), format)
+import Control.Alt((<|>))
 import Data.Functor.Mu (Mu (..))
 import Control.Comonad (extract)
 
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Now (NOW, nowDateTime)
-import Control.Monad.Aff (attempt, Aff)
+import Control.Monad.Eff.Exception (Error)
+import Control.Monad.Aff (Aff, attempt, delay)
 import Control.Monad.Aff.Console (log, CONSOLE)
+import Control.Parallel (parallel, sequential)
+
+import Control.Monad.Eff.Now (NOW, nowDateTime)
+import Data.Time.Duration (Milliseconds (..))
+import Data.Formatter.DateTime (FormatterF (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits, End), format)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
 import Network.HTTP.Affjax (AJAX, get, post)
@@ -205,19 +210,22 @@ foldp (Form (SetDate d)) state@{ formState } =
 
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories = do
-  r <- attempt $ get "/backend/api/hoursofwork/categories.php"
-  case r of
-    Left err -> do
+  maybeRes <- attemptWithTimeout (get "/backend/api/hoursofwork/categories.php") 10000.0
+  case maybeRes of
+    Nothing -> do
+      log $ "Error: Ajax request timed out."
+      pure $ Just $ Ajax GetCategories
+    Just (Left err) -> do
       log $ show err
       pure $ Just $ Ajax GetCategoriesError
-    Right res | res.status == (StatusCode 200) -> do
+    Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories res.response
       either
         (log >=> const (pure $ Just $ Ajax GetCategoriesError))
         (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
         categories
     -- | If status is not 200, we expect an object of the form {error: String}
-    Right res -> do
+    Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       let err = decodeErrorResponse res.response
       either log log err
@@ -241,6 +249,12 @@ postEntry formState = do
       either log log err
       pure $ Just (Ajax PostEntryError)
 
+
+attemptWithTimeout :: forall eff a. Aff eff a -> Number -> Aff eff (Maybe (Either Error a))
+attemptWithTimeout request timeout = do
+  let att = attempt $ request
+  let to = delay (Milliseconds timeout)
+  sequential $ parallel (Just <$> att) <|> parallel (Nothing <$ to)
 
 decodeCategories :: Json -> Either String (List Category)
 decodeCategories r = do
