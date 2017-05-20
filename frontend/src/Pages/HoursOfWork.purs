@@ -22,6 +22,7 @@ import Data.Time.Duration (Milliseconds (..))
 import Data.Formatter.DateTime (FormatterF (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits, End), format)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
+import Data.Argonaut.Parser (jsonParser)
 import Network.HTTP.Affjax (AJAX, get, post)
 import Network.HTTP.StatusCode (StatusCode(..))
 
@@ -69,7 +70,7 @@ type State =
 data AjaxState = NoOp
   | GettingCategories
   | PostingEntry
-  | FatalError
+  | Error
 
 
 newtype Category = Category
@@ -133,7 +134,7 @@ view { ajaxState, categories, formState } =
       NoOp -> "Speichern"
       GettingCategories -> "Lade..."
       PostingEntry -> "Sende Daten..."
-      FatalError -> "Fehler"
+      Error -> "Fehler"
     isActive = case ajaxState of
       NoOp -> true
       _ -> false
@@ -169,19 +170,21 @@ foldp (Ajax GetCategories) state =
   , effects: [ getCategories ]
   }
 -- | Receive categories and store them sorted by their priority value
--- | If the received list is empty, set ajaxState = FatalError as we
+-- | If the received list is empty, set ajaxState = Error as we
 -- | cannot recover from this state without action on the server side.
 foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
-  noEffects $ case categories of
-    ((Category x) : xs) -> state
+  case categories of
+    ((Category x) : xs) -> noEffects $ state
       { ajaxState = NoOp
       , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
       , formState = formState { category = x.category }
       }
-    Nil -> state
-      { ajaxState = FatalError }
+    Nil -> onlyEffects state [ do
+      log "Error: Received empty list of categories from server."
+      pure $ Just $ Ajax GetCategoriesError
+      ]
 foldp (Ajax GetCategoriesError) state =
-  noEffects $ state
+  noEffects $ state { ajaxState = Error }
 foldp (Ajax PostEntry) state =
   { state: state { ajaxState = PostingEntry }
   , effects: [ postEntry state.formState ]
@@ -192,6 +195,7 @@ foldp (Ajax PostEntrySuccess) state@{ formState, ajaxState } =
     , ajaxState = NoOp }
 foldp (Ajax PostEntryError) state =
   noEffects $ state
+    { ajaxState = NoOp }
 
 foldp (Form (Submit ev)) state =
   onlyEffects state [ do
@@ -208,18 +212,15 @@ foldp (Form (SetDate d)) state@{ formState } =
   noEffects $ state { formState = formState { date = d } }
 
 
+-- | Get categories. If there is a recoverable error, wait a second and retry.
+-- | If no answer from server after ten seconds, retry.
+-- | Otherwise success or fatal error.
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories = do
   maybeRes <- attemptWithTimeout (get "/backend/api/hoursofwork/categories.php") 10000.0
   case maybeRes of
-    Nothing -> do
-      log $ "Error: Ajax request timed out."
-      pure $ Just $ Ajax GetCategories
-    Just (Left err) -> do
-      log $ show err
-      pure $ Just $ Ajax GetCategoriesError
     Just (Right res) | res.status == (StatusCode 200) -> do
-      let categories = decodeCategories res.response
+      let categories = decodeCategories =<< jsonParser res.response
       either
         (log >=> const (pure $ Just $ Ajax GetCategoriesError))
         (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
@@ -227,33 +228,40 @@ getCategories = do
     -- | If status is not 200, we expect an object of the form {error: String}
     Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
-      let err = decodeErrorResponse res.response
-      either log log err
+      log $ "Response from server:"
+      log res.response
       pure $ Just (Ajax GetCategoriesError)
+    Just (Left err) -> do
+      log $ show err
+      delay $ Milliseconds 1000.0
+      pure $ Just $ Ajax GetCategories
+    Nothing -> do
+      log $ "Error: Request timed out while getting categories."
+      pure $ Just $ Ajax GetCategories
 
 
 postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 postEntry formState = do
   r <- attempt $ post "/backend/api/hoursofwork/entries.php" $ encodeFormState formState
   case r of
-    Left err -> do
-      log $ show err
-      pure $ Just $ Ajax PostEntryError
     Right res | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, reset the amount in the form.
       pure $ Just $ Ajax PostEntrySuccess
     -- If status is not 200, we expect an object of the form {error: String}
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
-      let err = decodeErrorResponse res.response
-      either log log err
+      log $ "Response from server:"
+      log res.response
       pure $ Just (Ajax PostEntryError)
+    Left err -> do
+      log $ show err
+      pure $ Just $ Ajax PostEntryError
 
 
 attemptWithTimeout :: forall eff a. Aff eff a -> Number -> Aff eff (Maybe (Either Error a))
 attemptWithTimeout request timeout = do
   let att = attempt $ request
-  let to = delay (Milliseconds timeout)
+  let to = delay $ Milliseconds timeout
   sequential $ parallel (Just <$> att) <|> parallel (Nothing <$ to)
 
 decodeCategories :: Json -> Either String (List Category)
@@ -262,11 +270,11 @@ decodeCategories r = do
   categories <- obj .? "categories"
   decodeJson categories
 
-decodeErrorResponse :: Json -> Either String String
-decodeErrorResponse r = do
-  obj <- decodeJson r
-  err <- obj .? "error"
-  decodeJson err
+-- decodeErrorResponse :: Json -> Either String String
+-- decodeErrorResponse r = do
+--   obj <- decodeJson r
+--   err <- obj .? "error"
+--   decodeJson err
 
 encodeFormState :: FormState -> Json
 encodeFormState formState =
