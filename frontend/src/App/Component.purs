@@ -1,8 +1,7 @@
 module App.Component where
 
 data AppEvent = NoOp
-  | FatalError String
-  | Error String
+  | UserMessage String
 
 class ComponentEvent e where
   getAppEvent :: e -> AppEvent

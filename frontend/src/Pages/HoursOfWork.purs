@@ -38,6 +38,7 @@ import Text.Smolder.HTML.Attributes (src, value)
 import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Components
+import App.Component as AppComp
 
 
 
@@ -58,6 +59,11 @@ data FormEvent = Submit DOMEvent
   | AmountChange DOMEvent
   | CategoryChange DOMEvent
   | SetDate String
+
+instance appComponentEvent :: AppComp.ComponentEvent Event where
+  getAppEvent (Ajax GetCategoriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
+  getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent _ = AppComp.NoOp
 
 
 
