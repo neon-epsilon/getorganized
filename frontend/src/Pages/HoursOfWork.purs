@@ -19,7 +19,7 @@ import Control.Parallel (parallel, sequential)
 
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Data.Time.Duration (Milliseconds (..))
-import Data.Formatter.DateTime (FormatterF (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits, End), format)
+import Data.Formatter.DateTime (FormatterCommand (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits), format)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Parser (jsonParser)
@@ -155,16 +155,14 @@ foldp Init state =
     [ do
       localeDateTime <- liftEff $ nowDateTime
       let dateTime = extract localeDateTime
-      -- Formatter is a crazy functor fixpoint (Mu).
-      -- Therefore we construct the format using the Mu constructer "In".
       -- Alternative:
       -- let dateString = unsafePartial $ formRight $ formatDateTime "YYYY-MM-DD" dateTime
-      let isoFormat = In $ YearFull
-                    $ In $ Placeholder "-"
-                    $ In $ MonthTwoDigits
-                    $ In $ Placeholder "-"
-                    $ In $ DayOfMonthTwoDigits
-                    $ In End
+      let isoFormat =   YearFull
+                      : Placeholder "-"
+                      : MonthTwoDigits
+                      : Placeholder "-"
+                      : DayOfMonthTwoDigits
+                      : Nil
       let dateString = format isoFormat dateTime
       pure $ Just $ Form $ SetDate dateString
     , pure $ Just $ Ajax GetCategories

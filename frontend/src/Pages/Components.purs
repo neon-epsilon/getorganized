@@ -3,7 +3,7 @@ module Pages.Components where
 import Prelude (($), otherwise)
 import Control.Bind (bind, discard)
 import Data.List (List)
-import Data.Foldable (foldMap)
+import Data.Foldable (for_)
 
 import Text.Smolder.HTML (div, form, input, select, option, button)
 import Text.Smolder.HTML.Attributes (className, type', value, required, step, disabled)
@@ -52,6 +52,6 @@ textInput =
 
 customSelect :: forall e. List {value :: String, text :: String} -> Markup e
 customSelect options =
-  select $ foldMap makeOption options
+  select $ for_ options makeOption
   where
     makeOption o = option ! value o.value $ text o.text
