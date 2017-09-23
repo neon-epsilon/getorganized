@@ -5,6 +5,7 @@ import Data.Maybe (Maybe (..))
 
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
+import Control.Monad.Aff (delay)
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 
@@ -24,7 +25,7 @@ import Pages.ShoppingList as ShoppingList
 data Event =
   Init |
   NavigateTo Route |
-  SetMessage String |
+  SetMessage (Maybe String) |
   HoursOfWorkEvent HoursOfWork.Event
 
 
@@ -49,7 +50,7 @@ foldp Init state =
   { state: state
   , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Init ]}
 foldp (SetMessage s) state =
-  noEffects $ state { messageText = Just s }
+  noEffects $ state { messageText = s }
 foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
   { state: state {hoursOfWorkState = hoursOfWorkEffModel.state }
   , effects: effects }
@@ -58,7 +59,7 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
     hoursOfWorkEffects = map (map HoursOfWorkEvent) <$> hoursOfWorkEffModel.effects
     effects = case getAppEvent hoursOfWorkEvent of
       NoOp -> hoursOfWorkEffects
-      UserMessage s -> [pure $ Just $ SetMessage s] <> hoursOfWorkEffects
+      UserMessage s -> [pure $ Just $ SetMessage (Just s)] <> hoursOfWorkEffects
 
 
 
