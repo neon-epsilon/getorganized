@@ -6,6 +6,7 @@ import Data.Maybe (Maybe (..))
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Aff (delay)
+import Data.Time.Duration (Milliseconds (..))
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
 
@@ -25,19 +26,25 @@ import Pages.ShoppingList as ShoppingList
 data Event =
   Init |
   NavigateTo Route |
-  SetMessage (Maybe String) |
+  FlashMessage String |
+  UnFlashMessage Int |
   HoursOfWorkEvent HoursOfWork.Event
 
 
 type State =
   { currentRoute :: Route
-  , messageText :: Maybe String
+  , message :: Maybe Message
   , hoursOfWorkState :: HoursOfWork.State }
+
+newtype Message = Message
+  { messageText :: String
+  , messageId :: Int }
+  -- messageId is needed to correctly stop showing messages after a given time.
 
 init :: State
 init =
   { currentRoute : Home
-  , messageText : Nothing
+  , message : Nothing
   , hoursOfWorkState : HoursOfWork.init }
 
 
@@ -48,9 +55,25 @@ foldp :: forall eff. Event -> State
 foldp (NavigateTo route) state = noEffects $ state { currentRoute = route }
 foldp Init state =
   { state: state
-  , effects: [ pure $ Just $ HoursOfWorkEvent $ HoursOfWork.Init ]}
-foldp (SetMessage s) state =
-  noEffects $ state { messageText = s }
+  , effects: [ pure $ Just $ HoursOfWorkEvent HoursOfWork.Init ]}
+foldp (FlashMessage s) state@{message} =
+  { state: state { message = Just (Message {messageText : s, messageId: id}) }
+  , effects: [ timeout ] }
+  where
+    id = case message of
+      Nothing -> 0
+      Just (Message {messageId}) -> messageId + 1
+    timeout = do
+      delay $ Milliseconds 5000.0
+      pure $ Just $ UnFlashMessage id
+foldp (UnFlashMessage id) state@{message} =
+  noEffects $ state { message = newMessage }
+  where
+    newMessage = case message of
+      Just (Message {messageId}) -> if messageId == id
+        then Nothing
+        else message
+      _ -> message
 foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
   { state: state {hoursOfWorkState = hoursOfWorkEffModel.state }
   , effects: effects }
@@ -59,16 +82,16 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
     hoursOfWorkEffects = map (map HoursOfWorkEvent) <$> hoursOfWorkEffModel.effects
     effects = case getAppEvent hoursOfWorkEvent of
       NoOp -> hoursOfWorkEffects
-      UserMessage s -> [pure $ Just $ SetMessage (Just s)] <> hoursOfWorkEffects
+      UserMessage s -> [pure $ Just $ FlashMessage s] <> hoursOfWorkEffects
 
 
 
 view :: State -> HTML Event
 view s = do
-  let messageText = case s.messageText of
+  let message = case s.message of
                       Nothing -> "GetOrganized"
-                      Just msg -> msg
-  mapEvent NavigateTo $ menu messageText
+                      Just (Message { messageText }) -> messageText
+  mapEvent NavigateTo $ menu message
   viewContainer s
 
 viewContainer :: State -> HTML Event

@@ -11,10 +11,14 @@ import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Network.HTTP.Affjax (AJAX)
 
+import Control.Monad.Aff (launchAff, delay)
+import Data.Time.Duration (Milliseconds (..))
+import Control.Monad.Eff.Class (liftEff)
+
 import Pux (start)
 import Pux.Renderer.React (renderToDOM)
 
-import Signal.Channel (CHANNEL, channel, subscribe)
+import Signal.Channel (CHANNEL, channel, subscribe, send)
 
 import App (Event(..), init, foldp, view)
 
@@ -29,7 +33,7 @@ main :: Eff
   , now :: NOW
   ) Unit
 main = do
-  inputChannel <- channel (Init)
+  inputChannel <- channel Init
   let inputSignal = subscribe inputChannel
 
   app <- start
@@ -40,3 +44,8 @@ main = do
     }
 
   renderToDOM "#main" app.markup app.input
+
+  -- void <<< launchAff $ do
+  --   liftEff $ send inputChannel (FlashMessage "asdf")
+  --   delay $ Milliseconds 4000.0
+  --   liftEff $ send inputChannel (FlashMessage "fdsa")
