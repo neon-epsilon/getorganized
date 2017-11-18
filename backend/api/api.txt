@@ -1,7 +1,7 @@
 /hoursofwork/categories.php:
 if GET:
  try;
-   200, {categories: []}
+   200, {categories: [{category: String; priority: int}]}
  else:
    500, {error: String}
 else:
@@ -23,6 +23,52 @@ if GET:
 elif POST:
   expect JSON payload:
     {(date: string, category:string, amount: float)}
+  if payload malformed:
+    400, {error: String}
+  if fields invalid:
+    400, {error: String, "invalid fields": [String]}
+  elif processing didn't work:
+    500, {error: String}
+  else
+    200, {id: int}
+elif DELETE:
+  expect {ids: [int]}
+  if payload malformed:
+    400, {error: String}
+  elif processing didn't work:
+    500, {error: String}
+    else
+    200, {ids: [int]}
+else:
+  405, {error: String}
+
+
+
+/shoppinglist/categories.php:
+if GET:
+ try;
+   200, {categories: [{category: String; priority: int}]}
+ else:
+   500, {error: String}
+else:
+ 405, error message
+
+/shoppinglist/entries.php:
+if GET:
+  expect JSON payload:
+    {
+      limit: non-negative integer (default: 10)
+      start: non-negative integer (default: 0)
+    }
+  if payload malformed:
+    400, {error: String}
+  elif processing didn't work:
+    500, {error: String}
+  else
+    200, {entries: [ {(id: int, name: string, category:string)} ]}
+elif POST:
+  expect JSON payload:
+    {(name: string, category:string)}
   if payload malformed:
     400, {error: String}
   if fields invalid:
