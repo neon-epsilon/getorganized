@@ -35,6 +35,8 @@ elif DELETE:
   expect {ids: [int]}
   if payload malformed:
     400, {error: String}
+  elif could not find some ids:
+    404, {"error": String, "not found ids": [int]}
   elif processing didn't work:
     500, {error: String}
     else
@@ -81,6 +83,8 @@ elif DELETE:
   expect {ids: [int]}
   if payload malformed:
     400, {error: String}
+  elif could not find some ids:
+    404, {"error": String, "not found ids": [int]}
   elif processing didn't work:
     500, {error: String}
     else
