@@ -1,3 +1,6 @@
+-- TODO:
+-- schema is not consisten across tables which should be very similar
+
 -- ---------- calories --------------
 
 DROP TABLE IF EXISTS `calories_entries`;
@@ -11,7 +14,7 @@ DROP TABLE IF EXISTS `calories_goals`;
 
 CREATE TABLE `calories_categories` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) DEFAULT NULL,
+  `name` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `category` (`name`)
@@ -23,7 +26,7 @@ CREATE TABLE `calories_categories` (
 
 CREATE TABLE `calories_items` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) DEFAULT NULL,
+  `name` varchar(40),
   `unit` varchar(40) NOT NULL,
   `kcal_per_unit` float unsigned NOT NULL,
   `category_id` int(10) unsigned NOT NULL,
@@ -83,7 +86,7 @@ CREATE TABLE `hoursofwork` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
-  `category` varchar(40) DEFAULT NULL,
+  `category` varchar(40),
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
   CONSTRAINT `hoursofwork_ibfk_1` FOREIGN KEY (`category`) REFERENCES `hoursofwork_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
@@ -122,10 +125,11 @@ CREATE TABLE `shoppinglist_categories` (
 
 CREATE TABLE `shoppinglist` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) NOT NULL DEFAULT '',
+  `name` varchar(40) NOT NULL,
   `category` varchar(40) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  KEY `category` (`category`),
+  CONSTRAINT `shoppinglist_ibfk_1` FOREIGN KEY (`category`) REFERENCES `shoppinglist_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
