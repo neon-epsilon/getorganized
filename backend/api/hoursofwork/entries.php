@@ -156,13 +156,13 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     /* close statement */
     $stmt->close();
 
-    $mysqli->close();
-
     // Respond with id of new database entry
     $response = array(
       "id" => $mysqli->insert_id
     );
     send_json($response);
+
+    $mysqli->close();
 
     /* rebuild hoursofwork output */
     exec($_SERVER["DOCUMENT_ROOT"] . '/backend/reporting/build_hoursofwork_output.py > /dev/null 2> /dev/null &');
@@ -171,7 +171,6 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
 {
   /* Expect JSON-list of ids, that is, non-negative integers as input. */
-  $request_body = file_get_contents('php://input');
   $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
   if($data === NULL) 
