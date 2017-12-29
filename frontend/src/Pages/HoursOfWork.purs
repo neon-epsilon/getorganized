@@ -253,7 +253,7 @@ postEntry formState = do
       pure $ Just $ Ajax PostEntrySuccess
     -- If status is not 200, we expect an object of the form {error: String}
     Right res -> do
-      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while posting entry."
       log $ "Response from server:"
       log res.response
       pure $ Just (Ajax PostEntryError)
