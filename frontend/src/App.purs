@@ -28,13 +28,15 @@ data Event =
   NavigateTo Route |
   FlashMessage String |
   UnFlashMessage Int |
-  HoursOfWorkEvent HoursOfWork.Event
+  HoursOfWorkEvent HoursOfWork.Event |
+  ShoppingListEvent ShoppingList.Event
 
 
 type State =
   { currentRoute :: Route
   , message :: Maybe Message
-  , hoursOfWorkState :: HoursOfWork.State }
+  , hoursOfWorkState :: HoursOfWork.State
+  , shoppingListState :: ShoppingList.State }
 
 newtype Message = Message
   { messageText :: String
@@ -45,7 +47,8 @@ init :: State
 init =
   { currentRoute : Home
   , message : Nothing
-  , hoursOfWorkState : HoursOfWork.init }
+  , hoursOfWorkState : HoursOfWork.init
+  , shoppingListState : ShoppingList.init }
 
 
 -- The "forall eff" is important. Without it the effects in the main monad get
@@ -55,7 +58,10 @@ foldp :: forall eff. Event -> State
 foldp (NavigateTo route) state = noEffects $ state { currentRoute = route }
 foldp Init state =
   { state: state
-  , effects: [ pure $ Just $ HoursOfWorkEvent HoursOfWork.Init ]}
+  , effects:
+    [ pure $ Just $ HoursOfWorkEvent HoursOfWork.Init
+    , pure $ Just $ ShoppingListEvent ShoppingList.Init ]
+  }
 foldp (FlashMessage s) state@{message} =
   { state: state { message = Just (Message {messageText : s, messageId: id}) }
   , effects: [ timeout ] }
@@ -83,6 +89,15 @@ foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
     effects = case getAppEvent hoursOfWorkEvent of
       NoOp -> hoursOfWorkEffects
       UserMessage s -> [pure $ Just $ FlashMessage s] <> hoursOfWorkEffects
+foldp (ShoppingListEvent shoppingListEvent) state@{shoppingListState} = 
+  { state: state {shoppingListState = shoppingListEffModel.state }
+  , effects: effects }
+  where
+    shoppingListEffModel = ShoppingList.foldp shoppingListEvent shoppingListState
+    shoppingListEffects = map (map ShoppingListEvent) <$> shoppingListEffModel.effects
+    effects = case getAppEvent shoppingListEvent of
+      NoOp -> shoppingListEffects
+      UserMessage s -> [pure $ Just $ FlashMessage s] <> shoppingListEffects
 
 
 
@@ -103,8 +118,8 @@ viewContainer { currentRoute: HoursOfWork, hoursOfWorkState } =
   mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
 viewContainer { currentRoute: Spendings } =
   noPage
-viewContainer { currentRoute: ShoppingList } =
-  ShoppingList.view
+viewContainer { currentRoute: ShoppingList, shoppingListState } = 
+  mapEvent ShoppingListEvent $ ShoppingList.view shoppingListState
 
 noPage :: HTML Event
 noPage = do
