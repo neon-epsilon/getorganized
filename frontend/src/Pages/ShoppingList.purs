@@ -16,6 +16,7 @@ import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Aff (Aff, attempt, delay)
 import Control.Monad.Aff.Console (log, CONSOLE)
 import Control.Parallel (parallel, sequential)
+import Data.Foldable (for_)
 
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Data.Time.Duration (Milliseconds (..))
@@ -33,8 +34,8 @@ import Pux.DOM.Events (DOMEvent, onChange, onSubmit, targetValue)
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 
-import Text.Smolder.HTML (h1, h2, img, ul, li, label)
-import Text.Smolder.HTML.Attributes (src, value)
+import Text.Smolder.HTML (h1, h2, img, ul, li, label, table, th, tr, td, strong)
+import Text.Smolder.HTML.Attributes (src, value, style)
 import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Components
@@ -68,6 +69,7 @@ instance appComponentEvent :: AppComp.ComponentEvent Event where
 type State =
   { ajaxState :: AjaxState
   , categories :: List Category
+  , entries :: List Entry
   , formState :: FormState }
 
 
@@ -88,6 +90,19 @@ instance decodeJsonCategory :: DecodeJson Category where
     priority <- obj .? "priority"
     pure $ Category { category: category, priority: priority }
 
+newtype Entry = Entry
+  { id :: Int
+  , category :: String
+  , name :: String }
+
+instance decodeJsonEntry :: DecodeJson Entry where
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .? "id"
+    category <- obj .? "category"
+    name <- obj .? "name"
+    pure $ Entry { id: id, category: category, name: name }
+
 
 type FormState =
   { name :: String
@@ -98,6 +113,10 @@ init :: State
 init =
   { ajaxState : GettingCategories
   , categories : Nil
+  , entries :
+    Cons (Entry {id: 0, category: "testkategorie", name: "testname"}) $
+    Cons (Entry {id: 1, category: "testkategorie", name: "testname2"}) $
+    Nil
   , formState : initFormState }
 
 initFormState :: FormState
@@ -108,10 +127,10 @@ initFormState =
 
 
 view :: State -> HTML Event
-view { ajaxState, categories, formState } =
+view { ajaxState, categories, entries, formState } =
   container $ do
     smallBox $ do
-      h1 $ text "Eingabe"
+      h1 $ text "Einkaufsliste"
       h2 $ text "Artikel eingeben"
       customForm buttonText isActive #! onSubmit (Form <<< Submit) $ ul $ do
         li $ do
@@ -125,6 +144,13 @@ view { ajaxState, categories, formState } =
             categories)
             ! value formState.category
             #! onChange (Form <<< CategoryChange)
+      h2 $ text "Einkaufsliste"
+      customForm "buttonText" true $ table ! style "text-align: left;" $ do
+        tr $ do
+          th ! style "width: 1%;" $ text "Kategorie"
+          th $ text "Artikel"
+          th ! style "width: 1%;" $ pure unit
+        for_ entries entryRow
   where
     buttonText = case ajaxState of
       NoOp -> "Speichern"
@@ -134,6 +160,11 @@ view { ajaxState, categories, formState } =
     isActive = case ajaxState of
       NoOp -> true
       _ -> false
+    entryRow (Entry entry) =
+      tr $ do
+        td $ strong $ text entry.category
+        td $ text entry.name
+        td $ text (show entry.id)
 
 
 
