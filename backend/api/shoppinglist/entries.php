@@ -50,6 +50,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   $items = array();
   for( $i = 0; $row = $result->fetch_assoc(); ++$i ) {
     $items[$i] = $row;
+    $items[$i]["id"] = (int) $items[$i]["id"];
   }
 
   $mysqli->close();
