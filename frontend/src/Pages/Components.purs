@@ -50,6 +50,11 @@ textInput =
   input
     ! type' "text"
 
+checkbox :: forall e. Markup e
+checkbox =
+  input
+    ! type' "checkbox"
+
 customSelect :: forall e. List {value :: String, text :: String} -> Markup e
 customSelect options =
   select $ for_ options makeOption
