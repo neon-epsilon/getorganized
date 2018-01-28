@@ -8,7 +8,6 @@ import Data.Either (Either (..), either)
 import Data.Maybe (Maybe (..))
 
 import Control.Alt((<|>))
-import Data.Functor.Mu (Mu (..))
 import Control.Comonad (extract)
 
 import Control.Monad.Eff.Class (liftEff)
@@ -38,6 +37,7 @@ import Text.Smolder.HTML (h1, h2, img, ul, li, label, table, th, tr, td, strong)
 import Text.Smolder.HTML.Attributes (src, value, style)
 import Text.Smolder.Markup ((!), (#!), text)
 
+import Pages.Utilities
 import Pages.Components
 import App.Component as AppComp
 
@@ -110,22 +110,21 @@ initFormState =
 
 
 view :: State -> HTML Event
-view { ajaxState, categories, formState } =
-  smallBox $ do
-    h1 $ text "Einkaufsliste"
-    h2 $ text "Artikel eingeben"
-    customForm buttonText isActive #! onSubmit (Form <<< Submit) $ ul $ do
-      li $ do
-        label $ text "Artikel:"
-        textInput ! value formState.name #! onChange (Form <<< NameChange)
-      li $ do
-        label $ text "Kategorie:"
-        customSelect
-          (map
-          ( \(Category x) -> {value : x.category, text : x.category} )
-          categories)
-          ! value formState.category
-          #! onChange (Form <<< CategoryChange)
+view { ajaxState, categories, formState } = do
+  h1 $ text "Einkaufsliste"
+  h2 $ text "Artikel eingeben"
+  customForm buttonText isActive #! onSubmit (Form <<< Submit) $ ul $ do
+    li $ do
+      label $ text "Artikel:"
+      textInput ! value formState.name #! onChange (Form <<< NameChange)
+    li $ do
+      label $ text "Kategorie:"
+      customSelect
+        (map
+        ( \(Category x) -> {value : x.category, text : x.category} )
+        categories)
+        ! value formState.category
+        #! onChange (Form <<< CategoryChange)
   where
     buttonText = case ajaxState of
       NoOp -> "Speichern"
@@ -233,12 +232,6 @@ postEntry formState = do
       log $ show err
       pure $ Just $ Ajax PostEntryError
 
-
-attemptWithTimeout :: forall eff a. Aff eff a -> Number -> Aff eff (Maybe (Either Error a))
-attemptWithTimeout request timeout = do
-  let att = attempt $ request
-  let to = delay $ Milliseconds timeout
-  sequential $ parallel (Just <$> att) <|> parallel (Nothing <$ to)
 
 decodeCategories :: Json -> Either String (List Category)
 decodeCategories r = do

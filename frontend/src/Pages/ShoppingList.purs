@@ -15,40 +15,53 @@ import Pux.DOM.HTML (HTML, mapEvent)
 import Pages.Components
 import App.Component as AppComp
 import Pages.InputForm as IF
+import Pages.DeleteForm as DF
 
 
 
 data Event =
     Init
   | InputFormEvent IF.Event
+  | DeleteFormEvent DF.Event
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
   getAppEvent (InputFormEvent ev) = AppComp.getAppEvent ev
+  getAppEvent (DeleteFormEvent ev) = AppComp.getAppEvent ev
   getAppEvent _ = AppComp.NoOp
 
 
 
 type State =
-  { inputFormState :: IF.State }
+  { inputFormState :: IF.State 
+  , deleteFormState :: DF.State
+  }
 
 
 init :: State
 init =
-  { inputFormState : IF.init }
+  { inputFormState : IF.init
+  , deleteFormState : DF.init
+  }
 
 
 
 view :: State -> HTML Event
-view { inputFormState } =
+view { inputFormState, deleteFormState } =
   container $ do
-    mapEvent InputFormEvent $ IF.view inputFormState
+    smallBox $ do
+      mapEvent InputFormEvent $ IF.view inputFormState
+      mapEvent DeleteFormEvent $ DF.view deleteFormState
+
 
 
 foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp Init state =
   { state : state
-  , effects : [ pure $ Just $ InputFormEvent IF.Init ]
+  , effects :
+    [ pure $ Just $ InputFormEvent IF.Init
+    , pure $ Just $ DeleteFormEvent DF.Init
+    ]
   }
 foldp (InputFormEvent ev) state@{inputFormState} =
   { state: state { inputFormState = inputFormEffModel.state }
@@ -56,3 +69,9 @@ foldp (InputFormEvent ev) state@{inputFormState} =
   }
   where
     inputFormEffModel = IF.foldp ev inputFormState
+foldp (DeleteFormEvent ev) state@{deleteFormState} =
+  { state: state { deleteFormState = deleteFormEffModel.state }
+  , effects: map (map DeleteFormEvent) <$> deleteFormEffModel.effects
+  }
+  where
+    deleteFormEffModel = DF.foldp ev deleteFormState
