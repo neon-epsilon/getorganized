@@ -6,6 +6,7 @@ import Data.Number (fromString)
 import Data.List (List (..), (:), sortBy)
 import Data.Either (Either (..), either)
 import Data.Maybe (Maybe (..))
+import Data.Set (Set(..), empty, member, insert, delete)
 
 import Control.Alt((<|>))
 import Control.Comonad (extract)
@@ -28,13 +29,13 @@ import Network.HTTP.StatusCode (StatusCode(..))
 
 import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.HTML (HTML)
-import Pux.DOM.Events (DOMEvent, onChange, onSubmit, targetValue)
+import Pux.DOM.Events (DOMEvent, onClick, onSubmit, targetValue)
 
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 
 import Text.Smolder.HTML (h1, h2, img, ul, li, label, table, th, tr, td, strong)
-import Text.Smolder.HTML.Attributes (src, value, style)
+import Text.Smolder.HTML.Attributes (src, value, style, checked, disabled)
 import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Utilities
@@ -46,7 +47,7 @@ import App.Component as AppComp
 data Event =
     Init
   | Ajax AjaxEvent
---  | Form FormEvent
+  | Form FormEvent
 
 data AjaxEvent =
     GetEntries
@@ -56,8 +57,9 @@ data AjaxEvent =
 --  | DeleteEntriesSuccess
 --  | DeleteEntriesError
 
---data FormEvent =
---  Submit DOMEvent
+data FormEvent =
+    ToggleId Int DOMEvent
+--  | Submit DOMEvent
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
   getAppEvent (Ajax GetEntriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
@@ -69,8 +71,8 @@ instance appComponentEvent :: AppComp.ComponentEvent Event where
 type State =
   { ajaxState :: AjaxState
   , entries :: List Entry
+  , checkedIds :: Set Int    -- array with ids of checked entries
   }
---  , formState :: FormState }
 
 data AjaxState =
     NoOp
@@ -97,12 +99,13 @@ init :: State
 init =
   { ajaxState : GettingEntries
   , entries : Nil
+  , checkedIds : empty
   }
 
 
 
 view :: State -> HTML Event
-view { ajaxState, entries } = do
+view { ajaxState, entries, checkedIds } = do
   h2 $ text "Einkaufsliste"
   customForm "Löschen" false $ table ! style "text-align: left;" $ do
     tr $ do
@@ -112,10 +115,12 @@ view { ajaxState, entries } = do
     for_ entries entryRow
   where
     entryRow (Entry entry) =
-      tr $ do
+      tr #! onClick (Form <<< ToggleId entry.id) $ do
         td $ strong $ text entry.category
         td $ text entry.name
-        td $ checkbox ! value (show entry.id)
+        td $ if entry.id `member` checkedIds
+          then checkbox ! checked "true"
+          else checkbox ! checked ""
 -- TODO: Delete-Button-Logik
 
 
@@ -126,6 +131,7 @@ foldp Init state =
   { state : state
   , effects : [ pure $ Just $ Ajax GetEntries ]
   }
+
 foldp (Ajax GetEntries) state =
   { state: state { ajaxState = GettingEntries }
   , effects: [ getEntries ]
@@ -137,6 +143,14 @@ foldp (Ajax (GetEntriesSuccess entries)) state =
     }
 foldp (Ajax GetEntriesError) state =
   noEffects $ state { ajaxState = Error }
+
+foldp (Form (ToggleId id ev)) state@{checkedIds} =
+  noEffects $ state {checkedIds = toggledIds}
+  where
+    toggledIds = if id `member` checkedIds
+      then delete id checkedIds
+      else insert id checkedIds
+
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
