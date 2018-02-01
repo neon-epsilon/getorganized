@@ -3,7 +3,8 @@ module Pages.DeleteForm where
 import Prelude
 
 import Data.Number (fromString)
-import Data.List (List (..), (:), sortBy)
+import Data.List (List (..), (:), sortBy, filter)
+import Data.Array (fromFoldable)
 import Data.Either (Either (..), either)
 import Data.Maybe (Maybe (..))
 import Data.Set (Set(..), empty, member, insert, delete)
@@ -24,7 +25,8 @@ import Data.Formatter.DateTime (FormatterCommand (YearFull, Placeholder, MonthTw
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Parser (jsonParser)
-import Network.HTTP.Affjax (AJAX, get, post)
+import Data.HTTP.Method (Method(..))
+import Network.HTTP.Affjax (AJAX, get, affjax, defaultRequest) as AJ
 import Network.HTTP.StatusCode (StatusCode(..))
 
 import Pux (EffModel, noEffects, onlyEffects)
@@ -53,17 +55,17 @@ data AjaxEvent =
     GetEntries
   | GetEntriesSuccess (List Entry)
   | GetEntriesError
---  | DeleteEntries (List Int)
---  | DeleteEntriesSuccess
---  | DeleteEntriesError
+  | DeleteEntries
+  | DeleteEntriesSuccess
+  | DeleteEntriesError
 
 data FormEvent =
     ToggleId Int DOMEvent
---  | Submit DOMEvent
+  | Submit DOMEvent
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
   getAppEvent (Ajax GetEntriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
---  getAppEvent (Ajax DeleteEntriesError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent (Ajax DeleteEntriesError) = AppComp.UserMessage "Fehler beim Senden von Daten"
   getAppEvent _ = AppComp.NoOp
 
 
@@ -71,13 +73,13 @@ instance appComponentEvent :: AppComp.ComponentEvent Event where
 type State =
   { ajaxState :: AjaxState
   , entries :: List Entry
-  , checkedIds :: Set Int    -- array with ids of checked entries
+  , checkedIds :: Set Int    -- set with ids of checked entries
   }
 
 data AjaxState =
     NoOp
   | GettingEntries
---  | DeletingEntries
+  | DeletingEntries
   | Error
 
 
@@ -107,12 +109,13 @@ init =
 view :: State -> HTML Event
 view { ajaxState, entries, checkedIds } = do
   h2 $ text "Einkaufsliste"
-  customForm "Löschen" false $ table ! style "text-align: left;" $ do
-    tr $ do
-      th ! style "width: 1%;" $ text "Kategorie"
-      th $ text "Artikel"
-      th ! style "width: 1%;" $ pure unit
-    for_ entries entryRow
+  customForm buttonText isActive #! onSubmit (Form <<< Submit) $
+    table ! style "text-align: left;" $ do
+      tr $ do
+        th ! style "width: 1%;" $ text "Kategorie"
+        th $ text "Artikel"
+        th ! style "width: 1%;" $ pure unit
+      for_ entries entryRow
   where
     entryRow (Entry entry) =
       tr #! onClick (Form <<< ToggleId entry.id) $ do
@@ -121,12 +124,19 @@ view { ajaxState, entries, checkedIds } = do
         td $ if entry.id `member` checkedIds
           then checkbox ! checked "true"
           else checkbox ! checked ""
--- TODO: Delete-Button-Logik
+    buttonText = case ajaxState of
+      NoOp -> "Löschen"
+      GettingEntries -> "Lade..."
+      DeletingEntries -> "Lösche Einträge..."
+      Error -> "Fehler"
+    isActive = case ajaxState of
+      NoOp -> true
+      _ -> false
 
 
 
 foldp :: forall eff. Event -> State
-  -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
+  -> EffModel State Event (ajax :: AJ.AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp Init state =
   { state : state
   , effects : [ pure $ Just $ Ajax GetEntries ]
@@ -144,20 +154,38 @@ foldp (Ajax (GetEntriesSuccess entries)) state =
 foldp (Ajax GetEntriesError) state =
   noEffects $ state { ajaxState = Error }
 
+foldp (Ajax DeleteEntries) state@{checkedIds} =
+  { state: state { ajaxState = DeletingEntries }
+  , effects: [ deleteEntries checkedIds ]
+  }
+foldp (Ajax DeleteEntriesSuccess) state@{checkedIds, entries} =
+  noEffects $ state
+    { ajaxState = NoOp
+    , checkedIds = (empty :: Set Int)
+    , entries = filter (\(Entry x) -> not $ x.id `member` checkedIds) entries
+    }
+foldp (Ajax DeleteEntriesError) state =
+  noEffects $ state { ajaxState = NoOp }
+
 foldp (Form (ToggleId id ev)) state@{checkedIds} =
   noEffects $ state {checkedIds = toggledIds}
   where
     toggledIds = if id `member` checkedIds
       then delete id checkedIds
       else insert id checkedIds
+foldp (Form (Submit ev)) state =
+  onlyEffects state [ do
+    liftEff (preventDefault ev)
+    pure $ Just $ Ajax DeleteEntries
+    ]
 
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
 -- | Otherwise success or fatal error.
-getEntries :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+getEntries :: forall eff. Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries = do
-  maybeRes <- attemptWithTimeout (get "/backend/api/shoppinglist/entries.php") 10000.0
+  maybeRes <- attemptWithTimeout (AJ.get "/backend/api/shoppinglist/entries.php") 10000.0
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let entries = decodeEntries =<< jsonParser res.response
@@ -180,8 +208,39 @@ getEntries = do
       pure $ Just $ Ajax GetEntries
 
 
+deleteEntries :: forall eff. Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
+deleteEntries checkedIds = do
+  r <- attempt $ AJ.affjax deleteRequest
+  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
+  --      integrity of data. I.e.: reload entries.
+  case r of
+    Right res | res.status == (StatusCode 200) -> do
+      pure $ Just $ Ajax DeleteEntriesSuccess
+    -- If status is not 200, we expect an object of the form {error: String}
+    Right res -> do
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while deleting entries."
+      log $ "Response from server:"
+      log res.response
+      pure $ Just $ Ajax DeleteEntriesError
+    Left err -> do
+      log $ show err
+      pure $ Just $ Ajax DeleteEntriesError
+  where
+    deleteRequest = AJ.defaultRequest
+      { method = Left DELETE
+      , url = "/backend/api/shoppinglist/entries.php"
+      , content = Just $ encodeCheckedIds checkedIds
+      }
+
+
+
 decodeEntries :: Json -> Either String (List Entry)
 decodeEntries r = do
   obj <- decodeJson r
   entries <- obj .? "entries"
   decodeJson entries
+
+encodeCheckedIds :: Set Int -> Json
+encodeCheckedIds ids =
+  "ids" := fromFoldable ids
+  ~> jsonEmptyObject

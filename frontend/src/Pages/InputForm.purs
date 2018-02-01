@@ -218,6 +218,8 @@ getCategories = do
 postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 postEntry formState = do
   r <- attempt $ post "/backend/api/shoppinglist/entries.php" $ encodeFormState formState
+  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
+  --      integrity of data. I.e.: reload entries.
   case r of
     Right res | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, reset the amount in the form.
