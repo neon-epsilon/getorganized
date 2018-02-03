@@ -65,10 +65,13 @@ foldp Init state =
   }
 foldp (InputFormEvent ev) state@{inputFormState} =
   { state: state { inputFormState = inputFormEffModel.state }
-  , effects: map (map InputFormEvent) <$> inputFormEffModel.effects
+  , effects: effects
   }
   where
     inputFormEffModel = IF.foldp ev inputFormState
+    inputFormEffects = map (map InputFormEvent) <$> inputFormEffModel.effects
+    deleteFormEvent = DF.External $ DF.getExternalEvent ev
+    effects = [pure $ Just $ DeleteFormEvent deleteFormEvent] <> inputFormEffects
 foldp (DeleteFormEvent ev) state@{deleteFormState} =
   { state: state { deleteFormState = deleteFormEffModel.state }
   , effects: map (map DeleteFormEvent) <$> deleteFormEffModel.effects

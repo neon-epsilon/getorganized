@@ -39,7 +39,23 @@ import Text.Smolder.Markup ((!), (#!), text)
 
 import Pages.Utilities
 import Pages.Components
+
 import App.Component as AppComp
+import Pages.DeleteForm as DF
+
+
+
+instance appComponentEvent :: AppComp.ComponentEvent Event where
+  getAppEvent (Ajax GetCategoriesFatalError) = AppComp.UserMessage "Fehler beim Laden von Daten"
+  getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent (Ajax PostEntryFatalError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent _ = AppComp.NoOp
+
+
+instance deleteFormEvent :: DF.DeleteFormEventClass Event where
+  getExternalEvent (DeleteForm (AddEntry entry)) = DF.AddEntry entry
+  getExternalEvent (DeleteForm Reload) = DF.Reload
+  getExternalEvent _ = DF.NoOp
 
 
 
@@ -47,23 +63,25 @@ data Event =
     Init
   | Ajax AjaxEvent
   | Form FormEvent
+  | DeleteForm DeleteFormEvent
 
 data AjaxEvent =
     GetCategories
   | GetCategoriesSuccess (List Category)
-  | GetCategoriesError
+  | GetCategoriesFatalError
   | PostEntry
-  | PostEntrySuccess
+  | PostEntrySuccess Int
   | PostEntryError
+  | PostEntryFatalError
 
-data FormEvent = Submit DOMEvent
+data FormEvent =
+    Submit DOMEvent
   | NameChange DOMEvent
   | CategoryChange DOMEvent
 
-instance appComponentEvent :: AppComp.ComponentEvent Event where
-  getAppEvent (Ajax GetCategoriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
-  getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
-  getAppEvent _ = AppComp.NoOp
+data DeleteFormEvent =
+    AddEntry DF.Entry
+  | Reload
 
 
 
@@ -73,7 +91,7 @@ type State =
   , formState :: FormState }
 
 data AjaxState =
-    NoOp
+    Idle
   | GettingCategories
   | PostingEntry
   | Error
@@ -127,12 +145,12 @@ view { ajaxState, categories, formState } = do
         #! onChange (Form <<< CategoryChange)
   where
     buttonText = case ajaxState of
-      NoOp -> "Speichern"
+      Idle -> "Speichern"
       GettingCategories -> "Lade..."
       PostingEntry -> "Sende Daten..."
       Error -> "Fehler"
     isActive = case ajaxState of
-      NoOp -> true
+      Idle -> true
       _ -> false
 
 
@@ -154,27 +172,36 @@ foldp (Ajax GetCategories) state =
 foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
   case categories of
     ((Category x) : xs) -> noEffects $ state
-      { ajaxState = NoOp
+      { ajaxState = Idle
       , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
       , formState = formState { category = x.category }
       }
     Nil -> onlyEffects state [ do
       log "Error: Received empty list of categories from server."
-      pure $ Just $ Ajax GetCategoriesError
+      pure $ Just $ Ajax GetCategoriesFatalError
       ]
-foldp (Ajax GetCategoriesError) state =
+foldp (Ajax GetCategoriesFatalError) state =
   noEffects $ state { ajaxState = Error }
 foldp (Ajax PostEntry) state =
   { state: state { ajaxState = PostingEntry }
   , effects: [ postEntry state.formState ]
   }
-foldp (Ajax PostEntrySuccess) state@{ formState, ajaxState } =
-  noEffects $ state
+foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
+  { state: state
     { formState = formState { name = "" }
-    , ajaxState = NoOp }
+    , ajaxState = Idle
+    }
+  , effects:
+    [ pure $ Just $ DeleteForm $ AddEntry $
+      DF.Entry { id: id, name: formState.name, category: formState.category }
+    ]
+  }
 foldp (Ajax PostEntryError) state =
-  noEffects $ state
-    { ajaxState = NoOp }
+  { state: state { ajaxState = Idle }
+  , effects: [ pure $ Just $ DeleteForm Reload ]
+  }
+foldp (Ajax PostEntryFatalError) state =
+  noEffects $ state { ajaxState = Error }
 
 foldp (Form (Submit ev)) state =
   onlyEffects state [ do
@@ -185,6 +212,8 @@ foldp (Form (NameChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { name = targetValue ev } }
 foldp (Form (CategoryChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { category = targetValue ev } }
+
+foldp (DeleteForm _) state = noEffects state
 
 
 -- | Get categories. If there is a recoverable error, wait a second and retry.
@@ -197,7 +226,7 @@ getCategories = do
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
       either
-        (log >=> const (pure $ Just $ Ajax GetCategoriesError))
+        (log >=> const (pure $ Just $ Ajax GetCategoriesFatalError))
         (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
         categories
     -- | If status is not 200, we expect an object of the form {error: String}
@@ -205,7 +234,7 @@ getCategories = do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax GetCategoriesError)
+      pure $ Just (Ajax GetCategoriesFatalError)
     Just (Left err) -> do
       log $ show err
       delay $ Milliseconds 1000.0
@@ -222,14 +251,24 @@ postEntry formState = do
   --      integrity of data. I.e.: reload entries.
   case r of
     Right res | res.status == (StatusCode 200) -> do
-      -- If we POSTed successfully, reset the amount in the form.
-      pure $ Just $ Ajax PostEntrySuccess
-    -- If status is not 200, we expect an object of the form {error: String}
+      -- If we POSTed successfully, get the id assigned to the new entry,
+      -- reset the amount in the form and pass the new entry to the delete form.
+      let id = decodeId =<< jsonParser res.response
+      either
+        -- If we do not get a valid id back it's a server error and thus fatal.
+        (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
+        (pure <<< Just <<< Ajax <<< PostEntrySuccess)
+        id
+    -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
+    -- Therefore, this error is fatal.
+    -- We expect an object of the form {error: String}.
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while posting entry."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax PostEntryError)
+      pure $ Just (Ajax PostEntryFatalError)
+    -- Timed out or something. Possibly no fatal error.
+    -- Reload entries in delete form as data integrity is no more guaranteed.
     Left err -> do
       log $ show err
       pure $ Just $ Ajax PostEntryError
@@ -240,6 +279,11 @@ decodeCategories r = do
   obj <- decodeJson r
   categories <- obj .? "categories"
   decodeJson categories
+
+decodeId :: Json -> Either String Int
+decodeId r = do
+  obj <- decodeJson r
+  obj .? "id"
 
 -- decodeErrorResponse :: Json -> Either String String
 -- decodeErrorResponse r = do

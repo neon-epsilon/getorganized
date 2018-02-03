@@ -46,41 +46,13 @@ import App.Component as AppComp
 
 
 
-data Event =
-    Init
-  | Ajax AjaxEvent
-  | Form FormEvent
+data ExternalEvent =
+    AddEntry Entry
+  | Reload
+  | NoOp
 
-data AjaxEvent =
-    GetEntries
-  | GetEntriesSuccess (List Entry)
-  | GetEntriesError
-  | DeleteEntries
-  | DeleteEntriesSuccess
-  | DeleteEntriesError
-
-data FormEvent =
-    ToggleId Int DOMEvent
-  | Submit DOMEvent
-
-instance appComponentEvent :: AppComp.ComponentEvent Event where
-  getAppEvent (Ajax GetEntriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
-  getAppEvent (Ajax DeleteEntriesError) = AppComp.UserMessage "Fehler beim Senden von Daten"
-  getAppEvent _ = AppComp.NoOp
-
-
-
-type State =
-  { ajaxState :: AjaxState
-  , entries :: List Entry
-  , checkedIds :: Set Int    -- set with ids of checked entries
-  }
-
-data AjaxState =
-    NoOp
-  | GettingEntries
-  | DeletingEntries
-  | Error
+class DeleteFormEventClass e where
+  getExternalEvent :: e -> ExternalEvent
 
 
 newtype Entry = Entry
@@ -95,6 +67,47 @@ instance decodeJsonEntry :: DecodeJson Entry where
     category <- obj .? "category"
     name <- obj .? "name"
     pure $ Entry { id: id, category: category, name: name }
+
+
+instance appComponentEvent :: AppComp.ComponentEvent Event where
+  getAppEvent (Ajax GetEntriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
+  getAppEvent (Ajax DeleteEntriesError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent _ = AppComp.NoOp
+
+
+
+data Event =
+    Init
+  | Ajax AjaxEvent
+  | Form FormEvent
+  | External ExternalEvent
+
+data AjaxEvent =
+    GetEntries
+  | GetEntriesSuccess (List Entry)
+  | GetEntriesError
+  | DeleteEntries
+  | DeleteEntriesSuccess
+  | DeleteEntriesError
+
+data FormEvent =
+    ToggleId Int DOMEvent
+  | Submit DOMEvent
+
+
+
+type State =
+  { ajaxState :: AjaxState
+  , entries :: List Entry
+  , checkedIds :: Set Int    -- set with ids of checked entries
+  }
+
+data AjaxState =
+    Idle
+  | GettingEntries
+  | DeletingEntries
+  | Error
+
 
 
 init :: State
@@ -125,12 +138,12 @@ view { ajaxState, entries, checkedIds } = do
           then checkbox ! checked "true"
           else checkbox ! checked ""
     buttonText = case ajaxState of
-      NoOp -> "Löschen"
+      Idle -> "Löschen"
       GettingEntries -> "Lade..."
       DeletingEntries -> "Lösche Einträge..."
       Error -> "Fehler"
     isActive = case ajaxState of
-      NoOp -> true
+      Idle -> true
       _ -> false
 
 
@@ -148,7 +161,7 @@ foldp (Ajax GetEntries) state =
   }
 foldp (Ajax (GetEntriesSuccess entries)) state =
   noEffects $ state
-    { ajaxState = NoOp
+    { ajaxState = Idle
     , entries = entries
     }
 foldp (Ajax GetEntriesError) state =
@@ -160,12 +173,12 @@ foldp (Ajax DeleteEntries) state@{checkedIds} =
   }
 foldp (Ajax DeleteEntriesSuccess) state@{checkedIds, entries} =
   noEffects $ state
-    { ajaxState = NoOp
+    { ajaxState = Idle
     , checkedIds = (empty :: Set Int)
     , entries = filter (\(Entry x) -> not $ x.id `member` checkedIds) entries
     }
 foldp (Ajax DeleteEntriesError) state =
-  noEffects $ state { ajaxState = NoOp }
+  noEffects $ state { ajaxState = Idle }
 
 foldp (Form (ToggleId id ev)) state@{checkedIds} =
   noEffects $ state {checkedIds = toggledIds}
@@ -178,6 +191,15 @@ foldp (Form (Submit ev)) state =
     liftEff (preventDefault ev)
     pure $ Just $ Ajax DeleteEntries
     ]
+
+foldp (External (AddEntry entry)) state@{entries} =
+  noEffects state
+    { entries = entry `Cons` entries
+    }
+foldp (External Reload) state =
+  onlyEffects state [pure $ Just $ Ajax GetEntries]
+foldp (External NoOp) state =
+  noEffects state
 
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
