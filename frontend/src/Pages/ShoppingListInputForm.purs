@@ -1,4 +1,4 @@
-module Pages.InputForm where
+module Pages.ShoppingListInputForm where
 
 import Prelude
 
@@ -41,7 +41,7 @@ import Pages.Utilities
 import Pages.Components
 
 import App.Component as AppComp
-import Pages.DeleteForm as DF
+import Pages.ShoppingListDeleteForm as DF
 
 
 
@@ -76,9 +76,8 @@ data AjaxEvent =
 
 data FormEvent =
     Submit DOMEvent
-  | DateChange DOMEvent
+  | NameChange DOMEvent
   | CategoryChange DOMEvent
-  | AmountChange DOMEvent
 
 data DeleteFormEvent =
     AddEntry DF.Entry
@@ -111,9 +110,8 @@ instance decodeJsonCategory :: DecodeJson Category where
 
 
 type FormState =
-  { date :: String
-  , category :: String
-  , amount :: String }
+  { name :: String
+  , category :: String }
 
 
 init :: State
@@ -124,23 +122,19 @@ init =
 
 initFormState :: FormState
 initFormState =
-  { date : ""
-  , category: ""
-  , amount: "" }
+  { name : ""
+  , category: "" }
 
 
 
 view :: State -> HTML Event
 view { ajaxState, categories, formState } = do
-  h1 $ text "Eingabe"
-  h2 $ text "Eintrag eingeben"
+  h1 $ text "Einkaufsliste"
+  h2 $ text "Artikel eingeben"
   customForm buttonText isActive #! onSubmit (Form <<< Submit) $ ul $ do
     li $ do
-      label $ text "Datum:"
-      dateInput ! value formState.date #! onChange (Form <<< DateChange)
-    li $ do
-      label $ text "Menge:"
-      numberInput ! value formState.amount #! onChange (Form <<< AmountChange)
+      label $ text "Artikel:"
+      textInput ! value formState.name #! onChange (Form <<< NameChange)
     li $ do
       label $ text "Kategorie:"
       customSelect
@@ -194,12 +188,12 @@ foldp (Ajax PostEntry) state =
   }
 foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
   { state: state
-    { formState = formState { amount = "" }
+    { formState = formState { name = "" }
     , ajaxState = Idle
     }
   , effects:
     [ pure $ Just $ DeleteForm $ AddEntry $
-      DF.Entry { id: id, date: formState.date, category: formState.category, amount: formState.amount }
+      DF.Entry { id: id, name: formState.name, category: formState.category }
     ]
   }
 foldp (Ajax PostEntryError) state =
@@ -214,12 +208,10 @@ foldp (Form (Submit ev)) state =
     liftEff (preventDefault ev)
     pure $ Just $ Ajax PostEntry
     ]
-foldp (Form (DateChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState { date = targetValue ev } }
+foldp (Form (NameChange ev)) state@{ formState } =
+  noEffects $ state { formState = formState { name = targetValue ev } }
 foldp (Form (CategoryChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { category = targetValue ev } }
-foldp (Form (AmountChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState { amount = targetValue ev } }
 
 foldp (DeleteForm _) state = noEffects state
 
@@ -229,7 +221,7 @@ foldp (DeleteForm _) state = noEffects state
 -- | Otherwise success or fatal error.
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories = do
-  maybeRes <- attemptWithTimeout (get "/backend/api/hoursofwork/categories.php") 10000.0
+  maybeRes <- attemptWithTimeout (get "/backend/api/shoppinglist/categories.php") 10000.0
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
@@ -254,7 +246,7 @@ getCategories = do
 
 postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 postEntry formState = do
-  r <- attempt $ post "/backend/api/hoursofwork/entries.php" $ encodeFormState formState
+  r <- attempt $ post "/backend/api/shoppinglist/entries.php" $ encodeFormState formState
   --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
   --      integrity of data. I.e.: reload entries.
   case r of
@@ -301,7 +293,6 @@ decodeId r = do
 
 encodeFormState :: FormState -> Json
 encodeFormState formState =
-  "date" := formState.date
+  "name" := formState.name
   ~> "category" := formState.category
-  ~> "amount" := formState.amount
   ~> jsonEmptyObject

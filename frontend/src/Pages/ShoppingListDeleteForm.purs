@@ -1,4 +1,4 @@
-module Pages.DeleteForm where
+module Pages.ShoppingListDeleteForm where
 
 import Prelude
 
@@ -21,6 +21,7 @@ import Data.Foldable (for_)
 
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Data.Time.Duration (Milliseconds (..))
+import Data.Formatter.DateTime (FormatterCommand (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits), format)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Parser (jsonParser)
@@ -44,6 +45,7 @@ import Pages.Components
 import App.Component as AppComp
 
 
+
 data ExternalEvent =
     AddEntry Entry
   | Reload
@@ -56,17 +58,15 @@ class DeleteFormEventClass e where
 newtype Entry = Entry
   { id :: Int
   , category :: String
-  , date :: String
-  , amount :: Number }
+  , name :: String }
 
 instance decodeJsonEntry :: DecodeJson Entry where
   decodeJson json = do
     obj <- decodeJson json
     id <- obj .? "id"
-    date <- obj .? "date"
     category <- obj .? "category"
-    amount <- obj .? "amount"
-    pure $ Entry { id: id, date: date, category: category, amount: amount }
+    name <- obj .? "name"
+    pure $ Entry { id: id, category: category, name: name }
 
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
@@ -121,21 +121,19 @@ init =
 
 view :: State -> HTML Event
 view { ajaxState, entries, checkedIds } = do
-  h2 $ text "Einträge löschen"
+  h2 $ text "Einkaufsliste"
   customForm buttonText isActive #! onSubmit (Form <<< Submit) $
     table ! style "text-align: left;" $ do
       tr $ do
-        th $ text "Datum"
-        th $ text "Kategorie"
-        th $ text "Menge"
+        th ! style "width: 1%;" $ text "Kategorie"
+        th $ text "Artikel"
         th ! style "width: 1%;" $ pure unit
       for_ entries entryRow
   where
     entryRow (Entry entry) =
       tr #! onClick (Form <<< ToggleId entry.id) $ do
-        td $ text entry.date
-        td $ text entry.category
-        td $ text $ show entry.amount
+        td $ strong $ text entry.category
+        td $ text entry.name
         td $ if entry.id `member` checkedIds
           then checkbox ! checked "true"
           else checkbox ! checked ""
@@ -209,7 +207,7 @@ foldp (External NoOp) state =
 -- | Otherwise success or fatal error.
 getEntries :: forall eff. Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries = do
-  maybeRes <- attemptWithTimeout (AJ.get "/backend/api/hoursofwork/entries.php") 10000.0
+  maybeRes <- attemptWithTimeout (AJ.get "/backend/api/shoppinglist/entries.php") 10000.0
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let entries = decodeEntries =<< jsonParser res.response
@@ -252,7 +250,7 @@ deleteEntries checkedIds = do
   where
     deleteRequest = AJ.defaultRequest
       { method = Left DELETE
-      , url = "/backend/api/hoursofwork/entries.php"
+      , url = "/backend/api/shoppinglist/entries.php"
       , content = Just $ encodeCheckedIds checkedIds
       }
 

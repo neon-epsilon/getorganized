@@ -14,8 +14,8 @@ import Pux.DOM.HTML (HTML, mapEvent)
 
 import Pages.Components
 import App.Component as AppComp
-import Pages.InputForm as IF
-import Pages.DeleteForm as DF
+import Pages.ShoppingListInputForm as IF
+import Pages.ShoppingListDeleteForm as DF
 
 
 
