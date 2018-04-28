@@ -50,6 +50,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   $items = array();
   for( $i = 0; $row = $result->fetch_assoc(); ++$i ) {
     // cast 'amount' field to right data type: float
+    $row['id'] = (int) $row['id'];
     $row['amount'] = (float) $row['amount'];
     $items[$i] = $row;
   }

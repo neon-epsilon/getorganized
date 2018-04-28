@@ -2,10 +2,10 @@ module Pages.InputForm where
 
 import Prelude
 
-import Data.Number (fromString)
+import Data.Number (fromString, nan)
 import Data.List (List (..), (:), sortBy)
 import Data.Either (Either (..), either)
-import Data.Maybe (Maybe (..))
+import Data.Maybe (Maybe (..), fromMaybe)
 
 import Control.Alt((<|>))
 import Control.Comonad (extract)
@@ -79,6 +79,7 @@ data FormEvent =
   | DateChange DOMEvent
   | CategoryChange DOMEvent
   | AmountChange DOMEvent
+  | SetDate String
 
 data DeleteFormEvent =
     AddEntry DF.Entry
@@ -165,7 +166,21 @@ foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp Init state =
   { state : state
-  , effects : [ pure $ Just $ Ajax GetCategories ]
+  , effects :
+    [ do
+      localeDateTime <- liftEff $ nowDateTime
+      let dateTime = extract localeDateTime
+      -- Alternative:
+      -- let dateString = unsafePartial $ fromRight $ formatDateTime "YYYY-MM-DD" dateTime
+      let isoFormat =   YearFull
+                      : Placeholder "-"
+                      : MonthTwoDigits
+                      : Placeholder "-"
+                      : DayOfMonthTwoDigits
+                      : Nil
+      let dateString = format isoFormat dateTime
+      pure $ Just $ Form $ SetDate dateString
+    , pure $ Just $ Ajax GetCategories ]
   }
 
 foldp (Ajax GetCategories) state =
@@ -199,7 +214,7 @@ foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
     }
   , effects:
     [ pure $ Just $ DeleteForm $ AddEntry $
-      DF.Entry { id: id, date: formState.date, category: formState.category, amount: formState.amount }
+      DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
     ]
   }
 foldp (Ajax PostEntryError) state =
@@ -220,6 +235,8 @@ foldp (Form (CategoryChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { category = targetValue ev } }
 foldp (Form (AmountChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { amount = targetValue ev } }
+foldp (Form (SetDate d)) state@{ formState } =
+  noEffects $ state { formState = formState { date = d } }
 
 foldp (DeleteForm _) state = noEffects state
 
@@ -303,5 +320,5 @@ encodeFormState :: FormState -> Json
 encodeFormState formState =
   "date" := formState.date
   ~> "category" := formState.category
-  ~> "amount" := formState.amount
+  ~> "amount" := (fromMaybe nan $ fromString formState.amount)
   ~> jsonEmptyObject

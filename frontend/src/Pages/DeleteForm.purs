@@ -2,7 +2,6 @@ module Pages.DeleteForm where
 
 import Prelude
 
-import Data.Number (fromString)
 import Data.List (List (..), (:), sortBy, filter)
 import Data.Array (fromFoldable)
 import Data.Either (Either (..), either)
@@ -173,12 +172,13 @@ foldp (Ajax DeleteEntries) state@{checkedIds} =
   { state: state { ajaxState = DeletingEntries }
   , effects: [ deleteEntries checkedIds ]
   }
-foldp (Ajax DeleteEntriesSuccess) state@{checkedIds, entries} =
-  noEffects $ state
-    { ajaxState = Idle
+foldp (Ajax DeleteEntriesSuccess) state =
+  { state: state
+    { ajaxState = GettingEntries
     , checkedIds = (empty :: Set Int)
-    , entries = filter (\(Entry x) -> not $ x.id `member` checkedIds) entries
     }
+  , effects: [pure $ Just $ Ajax GetEntries]
+  }
 foldp (Ajax DeleteEntriesError) state =
   noEffects $ state { ajaxState = Idle }
 
