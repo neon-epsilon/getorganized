@@ -1,38 +1,16 @@
--- TODO:
--- schema is not consisten across tables which should be very similar
-
 -- ---------- calories --------------
 
 DROP TABLE IF EXISTS `calories_entries`;
-DROP TABLE IF EXISTS `calories_items`;
 DROP TABLE IF EXISTS `calories_categories`;
-
 DROP TABLE IF EXISTS `calories_goals`;
 --
 -- Table structure for table `calories_categories`
 --
 
 CREATE TABLE `calories_categories` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40) NOT NULL,
+  `category` varchar(40) NOT NULL,
   `priority` tinyint(4) NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `category` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Table structure for table `calories_items`
---
-
-CREATE TABLE `calories_items` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(40),
-  `unit` varchar(40) NOT NULL,
-  `kcal_per_unit` float unsigned NOT NULL,
-  `category_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `category_id` (`category_id`),
-  CONSTRAINT `calories_items_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `calories_categories` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  PRIMARY KEY (`category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -41,12 +19,12 @@ CREATE TABLE `calories_items` (
 
 CREATE TABLE `calories_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
-  `item_id` int(10) unsigned NOT NULL,
-  `quantity` float NOT NULL,
+  `category` varchar(40),
   PRIMARY KEY (`id`),
-  KEY `item_id` (`item_id`),
-  CONSTRAINT `calories_entries_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `calories_items` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
+  KEY `category` (`category`),
+  CONSTRAINT `calories_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `calories_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -64,9 +42,8 @@ CREATE TABLE `calories_goals` (
 
 -- ---------- hoursofwork --------------
 
-DROP TABLE IF EXISTS `hoursofwork`;
+DROP TABLE IF EXISTS `hoursofwork_entries`;
 DROP TABLE IF EXISTS `hoursofwork_categories`;
-
 DROP TABLE IF EXISTS `hoursofwork_goals`;
 --
 -- Table structure for table `hoursofwork_categories`
@@ -79,17 +56,17 @@ CREATE TABLE `hoursofwork_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Table structure for table `hoursofwork`
+-- Table structure for table `hoursofwork_entries`
 --
 
-CREATE TABLE `hoursofwork` (
+CREATE TABLE `hoursofwork_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
   `category` varchar(40),
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
-  CONSTRAINT `hoursofwork_ibfk_1` FOREIGN KEY (`category`) REFERENCES `hoursofwork_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
+  CONSTRAINT `hoursofwork_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `hoursofwork_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -107,7 +84,7 @@ CREATE TABLE `hoursofwork_goals` (
 
 -- ---------- shoppinglist --------------
 
-DROP TABLE IF EXISTS `shoppinglist`;
+DROP TABLE IF EXISTS `shoppinglist_entries`;
 DROP TABLE IF EXISTS `shoppinglist_categories`;
 --
 -- Table structure for table `shoppinglist_categories`
@@ -120,24 +97,23 @@ CREATE TABLE `shoppinglist_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Table structure for table `shoppinglist`
+-- Table structure for table `shoppinglist_entries`
 --
 
-CREATE TABLE `shoppinglist` (
+CREATE TABLE `shoppinglist_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(40) NOT NULL,
   `category` varchar(40) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
-  CONSTRAINT `shoppinglist_ibfk_1` FOREIGN KEY (`category`) REFERENCES `shoppinglist_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
+  CONSTRAINT `shoppinglist_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `shoppinglist_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 -- ---------- spendings --------------
 
-DROP TABLE IF EXISTS `spendings`;
+DROP TABLE IF EXISTS `spendings_entries`;
 DROP TABLE IF EXISTS `spendings_categories`;
-
 DROP TABLE IF EXISTS `spendings_goals`;
 --
 -- Table structure for table `spendings_categories`
@@ -150,10 +126,10 @@ CREATE TABLE `spendings_categories` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Table structure for table `spendings`
+-- Table structure for table `spendings_entries`
 --
 
-CREATE TABLE `spendings` (
+CREATE TABLE `spendings_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
@@ -161,7 +137,7 @@ CREATE TABLE `spendings` (
   `comment` varchar(40) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
-  CONSTRAINT `spendings_ibfk_1` FOREIGN KEY (`category`) REFERENCES `spendings_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
+  CONSTRAINT `spendings_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `spendings_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -174,34 +150,4 @@ CREATE TABLE `spendings_goals` (
   `value` float NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `property` (`property`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ---------- workout --------------
-
-DROP TABLE IF EXISTS `workout`;
-DROP TABLE IF EXISTS `workout_categories`;
---
--- Table structure for table `workout_categories`
---
-
-CREATE TABLE `workout_categories` (
-  `category` varchar(40) NOT NULL,
-  `priority` tinyint(4) NOT NULL,
-  `unit` varchar(40) NOT NULL,
-  `fitnessscore_multiplier` decimal(5,2) DEFAULT NULL,
-  PRIMARY KEY (`category`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Table structure for table `workout`
---
-
-CREATE TABLE `workout` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `amount` smallint(5) unsigned NOT NULL,
-  `date` date NOT NULL,
-  `category` varchar(40) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `category` (`category`),
-  CONSTRAINT `workout_ibfk_1` FOREIGN KEY (`category`) REFERENCES `workout_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
