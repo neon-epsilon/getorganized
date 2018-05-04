@@ -42,7 +42,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   }
 
   // query for entries
-  if (! $result = $mysqli->query("SELECT id, name, category FROM shoppinglist ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
+  if (! $result = $mysqli->query("SELECT id, name, category FROM shoppinglist_entries ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
     internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
     exit;
   }
@@ -116,7 +116,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
         exit;
     }
 
-    $query = "INSERT INTO shoppinglist
+    $query = "INSERT INTO shoppinglist_entries
       (name, category)
       VALUES
       (?,?)";
@@ -191,7 +191,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   $not_found_ids = array();
   foreach($ids as $id)
   {
-    if (! $result = $mysqli->query("SELECT id FROM shoppinglist WHERE id = {$id}" ) ) {
+    if (! $result = $mysqli->query("SELECT id FROM shoppinglist_entries WHERE id = {$id}" ) ) {
       internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
       exit;
     }
@@ -223,7 +223,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
   foreach($ids as $id)
   {
-    if (! $mysqli->query("DELETE FROM shoppinglist WHERE id = {$id}" ) ) {
+    if (! $mysqli->query("DELETE FROM shoppinglist_entries WHERE id = {$id}" ) ) {
       internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
       exit;
     }
