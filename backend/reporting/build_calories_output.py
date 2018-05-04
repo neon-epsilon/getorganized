@@ -37,14 +37,12 @@ con = MySQLdb.connect(host=config.db_host,user=config.db_user,passwd=config.db_p
 # fetch money to be spent in one month
 daily_goal = pd.io.sql.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=con)['value'][0]
 #fetch categories
-db_categories = pd.io.sql.read_sql('SELECT name FROM calories_categories ORDER BY priority', con=con)
+db_categories = pd.io.sql.read_sql('SELECT category FROM calories_categories ORDER BY priority', con=con)
 #fetch data from last 30 days
 db = pd.io.sql.read_sql("""
-    SELECT a.id, a.date, (a.quantity * b.kcal_per_unit) as kcals, c.name AS category
-    FROM calories_entries a
-    LEFT JOIN calories_items b ON a.item_id = b.id
-    LEFT JOIN calories_categories c ON b.category_id = c.id
-    WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    select id, amount, date, category
+    from calories_entries
+    where date >= date_sub(curdate(), interval 30 day)
     """, con=con, parse_dates=True, index_col="id")
 con.close()
 
@@ -61,7 +59,7 @@ index = pd.date_range(start = today-datetime.timedelta(30), end = today)
 per_day = pd.DataFrame(index = index)
 number_of_categories = db_categories.shape[0]
 for i in range(0,number_of_categories):
-    category = db_categories['name'][i]
+    category = db_categories['category'][i]
     temp = db[db['category'] == category] # select appropriate category
     temp.drop('category', axis=1, inplace=True) # drop 'category' column (if dataframe is empty, taking the sum over the groupby object created next otherwise doesn't work)
     temp = temp.groupby(['date']).sum() # calculate sum over each date

@@ -41,7 +41,7 @@ db_categories = pd.io.sql.read_sql('select category from hoursofwork_categories 
 #fetch data from last 30 days
 db = pd.io.sql.read_sql("""
     select id, amount, date, category
-    from hoursofwork
+    from hoursofwork_entries
     where date >= date_sub(curdate(), interval 30 day)
     """, con=con, parse_dates=True, index_col="id")
 con.close()
