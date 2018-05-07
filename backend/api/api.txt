@@ -1,4 +1,4 @@
-/hoursofwork/categories.php:
+/$db_name/categories.php:
 if GET:
  try;
    200, {categories: [{category: String; priority: int}]}
@@ -7,7 +7,7 @@ if GET:
 else:
  405, error message
 
-/hoursofwork/entries.php:
+/$db_name/entries.php:
 if GET:
   expect JSON payload:
     {
