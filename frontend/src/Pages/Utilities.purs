@@ -20,4 +20,3 @@ attemptWithTimeout request timeout = do
   let att = attempt $ request
   let to = delay $ Milliseconds timeout
   sequential $ parallel (Just <$> att) <|> parallel (Nothing <$ to)
-

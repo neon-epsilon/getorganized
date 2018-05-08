@@ -17,8 +17,8 @@ import Text.Smolder.HTML.Attributes (src)
 
 import Pages.Components
 import App.Component as AppComp
-import Pages.InputForm as IF
-import Pages.DeleteForm as DF
+import Pages.Components.InputForm as IF
+import Pages.Components.DeleteForm as DF
 
 
 

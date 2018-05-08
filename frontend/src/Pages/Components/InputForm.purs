@@ -1,4 +1,4 @@
-module Pages.InputForm where
+module Pages.Components.InputForm where
 
 import Prelude
 
@@ -41,7 +41,7 @@ import Pages.Utilities
 import Pages.Components
 
 import App.Component as AppComp
-import Pages.DeleteForm as DF
+import Pages.Components.DeleteForm as DF
 
 
 

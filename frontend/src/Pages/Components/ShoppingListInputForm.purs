@@ -1,4 +1,4 @@
-module Pages.ShoppingListInputForm where
+module Pages.Components.ShoppingListInputForm where
 
 import Prelude
 
@@ -41,7 +41,7 @@ import Pages.Utilities
 import Pages.Components
 
 import App.Component as AppComp
-import Pages.ShoppingListDeleteForm as DF
+import Pages.Components.ShoppingListDeleteForm as DF
 
 
 
