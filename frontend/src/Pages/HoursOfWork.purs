@@ -21,6 +21,8 @@ import Pages.Components.InputForm as IF
 import Pages.Components.DeleteForm as DF
 
 
+resourceName = "hoursofwork"
+
 
 data Event =
     Init
@@ -74,7 +76,7 @@ foldp (InputFormEvent ev) state@{inputFormState} =
   , effects: effects
   }
   where
-    inputFormEffModel = IF.foldp ev inputFormState
+    inputFormEffModel = (IF.makeFoldp resourceName) ev inputFormState
     inputFormEffects = map (map InputFormEvent) <$> inputFormEffModel.effects
     deleteFormEvent = DF.External $ DF.getExternalEvent ev
     effects = [pure $ Just $ DeleteFormEvent deleteFormEvent] <> inputFormEffects
@@ -83,4 +85,4 @@ foldp (DeleteFormEvent ev) state@{deleteFormState} =
   , effects: map (map DeleteFormEvent) <$> deleteFormEffModel.effects
   }
   where
-    deleteFormEffModel = DF.foldp ev deleteFormState
+    deleteFormEffModel = (DF.makeFoldp resourceName) ev deleteFormState

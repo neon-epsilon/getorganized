@@ -43,6 +43,7 @@ import Pages.Components
 import App.Component as AppComp
 
 
+
 data ExternalEvent =
     AddEntry Entry
   | Reload
@@ -149,67 +150,69 @@ view { ajaxState, entries, checkedIds } = do
 
 
 
-foldp :: forall eff. Event -> State
+makeFoldp :: forall eff. String -> Event -> State
   -> EffModel State Event (ajax :: AJ.AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
-foldp Init state =
-  { state : state
-  , effects : [ pure $ Just $ Ajax GetEntries ]
-  }
-
-foldp (Ajax GetEntries) state =
-  { state: state { ajaxState = GettingEntries }
-  , effects: [ getEntries ]
-  }
-foldp (Ajax (GetEntriesSuccess entries)) state =
-  noEffects $ state
-    { ajaxState = Idle
-    , entries = entries
-    }
-foldp (Ajax GetEntriesError) state =
-  noEffects $ state { ajaxState = Error }
-
-foldp (Ajax DeleteEntries) state@{checkedIds} =
-  { state: state { ajaxState = DeletingEntries }
-  , effects: [ deleteEntries checkedIds ]
-  }
-foldp (Ajax DeleteEntriesSuccess) state =
-  { state: state
-    { ajaxState = GettingEntries
-    , checkedIds = (empty :: Set Int)
-    }
-  , effects: [pure $ Just $ Ajax GetEntries]
-  }
-foldp (Ajax DeleteEntriesError) state =
-  noEffects $ state { ajaxState = Idle }
-
-foldp (Form (ToggleId id ev)) state@{checkedIds} =
-  noEffects $ state {checkedIds = toggledIds}
+makeFoldp resourceName = foldp
   where
-    toggledIds = if id `member` checkedIds
-      then delete id checkedIds
-      else insert id checkedIds
-foldp (Form (Submit ev)) state =
-  onlyEffects state [ do
-    liftEff (preventDefault ev)
-    pure $ Just $ Ajax DeleteEntries
-    ]
-
-foldp (External (AddEntry entry)) state@{entries} =
-  noEffects state
-    { entries = entry `Cons` entries
+  foldp Init state =
+    { state : state
+    , effects : [ pure $ Just $ Ajax GetEntries ]
     }
-foldp (External Reload) state =
-  onlyEffects state [pure $ Just $ Ajax GetEntries]
-foldp (External NoOp) state =
-  noEffects state
+
+  foldp (Ajax GetEntries) state =
+    { state: state { ajaxState = GettingEntries }
+    , effects: [ getEntries resourceName ]
+    }
+  foldp (Ajax (GetEntriesSuccess entries)) state =
+    noEffects $ state
+      { ajaxState = Idle
+      , entries = entries
+      }
+  foldp (Ajax GetEntriesError) state =
+    noEffects $ state { ajaxState = Error }
+
+  foldp (Ajax DeleteEntries) state@{checkedIds} =
+    { state: state { ajaxState = DeletingEntries }
+    , effects: [ deleteEntries resourceName checkedIds ]
+    }
+  foldp (Ajax DeleteEntriesSuccess) state =
+    { state: state
+      { ajaxState = GettingEntries
+      , checkedIds = (empty :: Set Int)
+      }
+    , effects: [pure $ Just $ Ajax GetEntries]
+    }
+  foldp (Ajax DeleteEntriesError) state =
+    noEffects $ state { ajaxState = Idle }
+
+  foldp (Form (ToggleId id ev)) state@{checkedIds} =
+    noEffects $ state {checkedIds = toggledIds}
+    where
+      toggledIds = if id `member` checkedIds
+        then delete id checkedIds
+        else insert id checkedIds
+  foldp (Form (Submit ev)) state =
+    onlyEffects state [ do
+      liftEff (preventDefault ev)
+      pure $ Just $ Ajax DeleteEntries
+      ]
+
+  foldp (External (AddEntry entry)) state@{entries} =
+    noEffects state
+      { entries = entry `Cons` entries
+      }
+  foldp (External Reload) state =
+    onlyEffects state [pure $ Just $ Ajax GetEntries]
+  foldp (External NoOp) state =
+    noEffects state
 
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
 -- | Otherwise success or fatal error.
-getEntries :: forall eff. Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
-getEntries = do
-  maybeRes <- attemptWithTimeout (AJ.get "/backend/api/hoursofwork/entries.php") 10000.0
+getEntries :: forall eff. String -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
+getEntries resourceName = do
+  maybeRes <- attemptWithTimeout (AJ.get $ "/backend/api/" <> resourceName <> "/entries.php") 10000.0
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let entries = decodeEntries =<< jsonParser res.response
@@ -232,8 +235,8 @@ getEntries = do
       pure $ Just $ Ajax GetEntries
 
 
-deleteEntries :: forall eff. Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
-deleteEntries checkedIds = do
+deleteEntries :: forall eff. String -> Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
+deleteEntries resourceName checkedIds = do
   r <- attempt $ AJ.affjax deleteRequest
   --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
   --      integrity of data. I.e.: reload entries.
@@ -252,7 +255,7 @@ deleteEntries checkedIds = do
   where
     deleteRequest = AJ.defaultRequest
       { method = Left DELETE
-      , url = "/backend/api/hoursofwork/entries.php"
+      , url = "/backend/api/" <> resourceName <> "/entries.php"
       , content = Just $ encodeCheckedIds checkedIds
       }
 

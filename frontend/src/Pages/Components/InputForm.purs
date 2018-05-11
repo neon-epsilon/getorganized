@@ -162,91 +162,93 @@ view { ajaxState, categories, formState } = do
 
 
 
-foldp :: forall eff. Event -> State
+makeFoldp :: forall eff. String -> Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
-foldp Init state =
-  { state : state
-  , effects :
-    [ do
-      localeDateTime <- liftEff $ nowDateTime
-      let dateTime = extract localeDateTime
-      -- Alternative:
-      -- let dateString = unsafePartial $ fromRight $ formatDateTime "YYYY-MM-DD" dateTime
-      let isoFormat =   YearFull
-                      : Placeholder "-"
-                      : MonthTwoDigits
-                      : Placeholder "-"
-                      : DayOfMonthTwoDigits
-                      : Nil
-      let dateString = format isoFormat dateTime
-      pure $ Just $ Form $ SetDate dateString
-    , pure $ Just $ Ajax GetCategories ]
-  }
-
-foldp (Ajax GetCategories) state =
-  { state: state { ajaxState = GettingCategories }
-  , effects: [ getCategories ]
-  }
--- | Receive categories and store them sorted by their priority value
--- | If the received list is empty, set ajaxState = Error as we
--- | cannot recover from this state without action on the server side.
-foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
-  case categories of
-    ((Category x) : xs) -> noEffects $ state
-      { ajaxState = Idle
-      , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
-      , formState = formState { category = x.category }
-      }
-    Nil -> onlyEffects state [ do
-      log "Error: Received empty list of categories from server."
-      pure $ Just $ Ajax GetCategoriesFatalError
-      ]
-foldp (Ajax GetCategoriesFatalError) state =
-  noEffects $ state { ajaxState = Error }
-foldp (Ajax PostEntry) state =
-  { state: state { ajaxState = PostingEntry }
-  , effects: [ postEntry state.formState ]
-  }
-foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
-  { state: state
-    { formState = formState { amount = "" }
-    , ajaxState = Idle
+makeFoldp resourceName = foldp
+  where
+  foldp Init state =
+    { state : state
+    , effects :
+      [ do
+        localeDateTime <- liftEff $ nowDateTime
+        let dateTime = extract localeDateTime
+        -- Alternative:
+        -- let dateString = unsafePartial $ fromRight $ formatDateTime "YYYY-MM-DD" dateTime
+        let isoFormat =   YearFull
+                        : Placeholder "-"
+                        : MonthTwoDigits
+                        : Placeholder "-"
+                        : DayOfMonthTwoDigits
+                        : Nil
+        let dateString = format isoFormat dateTime
+        pure $ Just $ Form $ SetDate dateString
+      , pure $ Just $ Ajax GetCategories ]
     }
-  , effects:
-    [ pure $ Just $ DeleteForm $ AddEntry $
-      DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
-    ]
-  }
-foldp (Ajax PostEntryError) state =
-  { state: state { ajaxState = Idle }
-  , effects: [ pure $ Just $ DeleteForm Reload ]
-  }
-foldp (Ajax PostEntryFatalError) state =
-  noEffects $ state { ajaxState = Error }
 
-foldp (Form (Submit ev)) state =
-  onlyEffects state [ do
-    liftEff (preventDefault ev)
-    pure $ Just $ Ajax PostEntry
-    ]
-foldp (Form (DateChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState { date = targetValue ev } }
-foldp (Form (CategoryChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState { category = targetValue ev } }
-foldp (Form (AmountChange ev)) state@{ formState } =
-  noEffects $ state { formState = formState { amount = targetValue ev } }
-foldp (Form (SetDate d)) state@{ formState } =
-  noEffects $ state { formState = formState { date = d } }
+  foldp (Ajax GetCategories) state =
+    { state: state { ajaxState = GettingCategories }
+    , effects: [ getCategories resourceName ]
+    }
+  -- | Receive categories and store them sorted by their priority value
+  -- | If the received list is empty, set ajaxState = Error as we
+  -- | cannot recover from this state without action on the server side.
+  foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
+    case categories of
+      ((Category x) : xs) -> noEffects $ state
+        { ajaxState = Idle
+        , categories = sortBy (comparing (\(Category c) -> c.priority)) categories
+        , formState = formState { category = x.category }
+        }
+      Nil -> onlyEffects state [ do
+        log "Error: Received empty list of categories from server."
+        pure $ Just $ Ajax GetCategoriesFatalError
+        ]
+  foldp (Ajax GetCategoriesFatalError) state =
+    noEffects $ state { ajaxState = Error }
+  foldp (Ajax PostEntry) state =
+    { state: state { ajaxState = PostingEntry }
+    , effects: [ postEntry resourceName state.formState ]
+    }
+  foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
+    { state: state
+      { formState = formState { amount = "" }
+      , ajaxState = Idle
+      }
+    , effects:
+      [ pure $ Just $ DeleteForm $ AddEntry $
+        DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
+      ]
+    }
+  foldp (Ajax PostEntryError) state =
+    { state: state { ajaxState = Idle }
+    , effects: [ pure $ Just $ DeleteForm Reload ]
+    }
+  foldp (Ajax PostEntryFatalError) state =
+    noEffects $ state { ajaxState = Error }
 
-foldp (DeleteForm _) state = noEffects state
+  foldp (Form (Submit ev)) state =
+    onlyEffects state [ do
+      liftEff (preventDefault ev)
+      pure $ Just $ Ajax PostEntry
+      ]
+  foldp (Form (DateChange ev)) state@{ formState } =
+    noEffects $ state { formState = formState { date = targetValue ev } }
+  foldp (Form (CategoryChange ev)) state@{ formState } =
+    noEffects $ state { formState = formState { category = targetValue ev } }
+  foldp (Form (AmountChange ev)) state@{ formState } =
+    noEffects $ state { formState = formState { amount = targetValue ev } }
+  foldp (Form (SetDate d)) state@{ formState } =
+    noEffects $ state { formState = formState { date = d } }
+
+  foldp (DeleteForm _) state = noEffects state
 
 
 -- | Get categories. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
 -- | Otherwise success or fatal error.
-getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-getCategories = do
-  maybeRes <- attemptWithTimeout (get "/backend/api/hoursofwork/categories.php") 10000.0
+getCategories :: forall eff. String -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+getCategories resourceName = do
+  maybeRes <- attemptWithTimeout (get $ "/backend/api/" <> resourceName <> "/categories.php") 10000.0
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
@@ -269,9 +271,9 @@ getCategories = do
       pure $ Just $ Ajax GetCategories
 
 
-postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-postEntry formState = do
-  r <- attempt $ post "/backend/api/hoursofwork/entries.php" $ encodeFormState formState
+postEntry :: forall eff. String -> FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+postEntry resourceName formState = do
+  r <- attempt $ (post $ "/backend/api/" <> resourceName <> "/entries.php") $ encodeFormState formState
   --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
   --      integrity of data. I.e.: reload entries.
   case r of
