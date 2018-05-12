@@ -40,7 +40,7 @@ import Text.Smolder.HTML (h1, h2, img, ul, li, label, table, th, tr, td, strong)
 import Text.Smolder.HTML.Attributes (src, value, style, checked, disabled)
 import Text.Smolder.Markup ((!), (#!), text)
 
-import Pages.Utilities
+import Utilities
 import Pages.Components
 import App.Component as AppComp
 
@@ -121,7 +121,7 @@ init =
 
 view :: State -> HTML Event
 view { ajaxState, entries, checkedIds } = do
-  h2 $ text "Einkaufsliste"
+  h1 $ text "Einkaufsliste"
   customForm buttonText isActive #! onSubmit (Form <<< Submit) $
     table ! style "text-align: left;" $ do
       tr $ do

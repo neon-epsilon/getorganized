@@ -1,4 +1,4 @@
-module Pages.Utilities where
+module Utilities where
 
 import Prelude
 

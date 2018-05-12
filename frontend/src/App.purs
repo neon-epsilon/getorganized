@@ -18,8 +18,14 @@ import Text.Smolder.Markup (text)
 import App.Component
 import Menu (Route (..), menu)
 import Pages.Home as Home
-import Pages.HoursOfWork as HoursOfWork
+import Pages.StandardPage as StandardPage
 import Pages.ShoppingList as ShoppingList
+
+
+
+hoursOfWorkResource = "hoursofwork"
+spendingsResource = "spendings"
+caloriesResource = "calories"
 
 
 
@@ -28,14 +34,18 @@ data Event =
   NavigateTo Route |
   FlashMessage String |
   UnFlashMessage Int |
-  HoursOfWorkEvent HoursOfWork.Event |
+  HoursOfWorkEvent StandardPage.Event |
+  SpendingsEvent StandardPage.Event |
+  CaloriesEvent StandardPage.Event |
   ShoppingListEvent ShoppingList.Event
 
 
 type State =
   { currentRoute :: Route
   , message :: Maybe Message
-  , hoursOfWorkState :: HoursOfWork.State
+  , hoursOfWorkState :: StandardPage.State
+  , spendingsState :: StandardPage.State
+  , caloriesState :: StandardPage.State
   , shoppingListState :: ShoppingList.State }
 
 newtype Message = Message
@@ -47,19 +57,23 @@ init :: State
 init =
   { currentRoute : Home
   , message : Nothing
-  , hoursOfWorkState : HoursOfWork.init
+  , hoursOfWorkState : StandardPage.init
+  , spendingsState : StandardPage.init
+  , caloriesState : StandardPage.init
   , shoppingListState : ShoppingList.init }
 
 
--- The "forall eff" is important. Without it the effects in the main monad get
--- restricted which leads to a compiler error.
+-- The "forall eff" is important. Without it the effects available to
+-- the main monad get restricted which leads to a compiler error.
 foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp (NavigateTo route) state = noEffects $ state { currentRoute = route }
 foldp Init state =
   { state: state
   , effects:
-    [ pure $ Just $ HoursOfWorkEvent HoursOfWork.Init
+    [ pure $ Just $ HoursOfWorkEvent StandardPage.Init
+    , pure $ Just $ SpendingsEvent StandardPage.Init
+    , pure $ Just $ CaloriesEvent StandardPage.Init
     , pure $ Just $ ShoppingListEvent ShoppingList.Init ]
   }
 foldp (FlashMessage s) state@{message} =
@@ -80,16 +94,34 @@ foldp (UnFlashMessage id) state@{message} =
         then Nothing
         else message
       _ -> message
-foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} = 
+foldp (HoursOfWorkEvent hoursOfWorkEvent) state@{hoursOfWorkState} =
   { state: state {hoursOfWorkState = hoursOfWorkEffModel.state }
   , effects: effects }
   where
-    hoursOfWorkEffModel = HoursOfWork.foldp hoursOfWorkEvent hoursOfWorkState
+    hoursOfWorkEffModel = (StandardPage.makeFoldp hoursOfWorkResource) hoursOfWorkEvent hoursOfWorkState
     hoursOfWorkEffects = map (map HoursOfWorkEvent) <$> hoursOfWorkEffModel.effects
     effects = case getAppEvent hoursOfWorkEvent of
       NoOp -> hoursOfWorkEffects
       UserMessage s -> [pure $ Just $ FlashMessage s] <> hoursOfWorkEffects
-foldp (ShoppingListEvent shoppingListEvent) state@{shoppingListState} = 
+foldp (SpendingsEvent spendingsEvent) state@{spendingsState} =
+  { state: state {spendingsState = spendingsEffModel.state }
+  , effects: effects }
+  where
+    spendingsEffModel = (StandardPage.makeFoldp spendingsResource) spendingsEvent spendingsState
+    spendingsEffects = map (map SpendingsEvent) <$> spendingsEffModel.effects
+    effects = case getAppEvent spendingsEvent of
+      NoOp -> spendingsEffects
+      UserMessage s -> [pure $ Just $ FlashMessage s] <> spendingsEffects
+foldp (CaloriesEvent caloriesEvent) state@{caloriesState} =
+  { state: state {caloriesState = caloriesEffModel.state }
+  , effects: effects }
+  where
+    caloriesEffModel = (StandardPage.makeFoldp caloriesResource) caloriesEvent caloriesState
+    caloriesEffects = map (map CaloriesEvent) <$> caloriesEffModel.effects
+    effects = case getAppEvent caloriesEvent of
+      NoOp -> caloriesEffects
+      UserMessage s -> [pure $ Just $ FlashMessage s] <> caloriesEffects
+foldp (ShoppingListEvent shoppingListEvent) state@{shoppingListState} =
   { state: state {shoppingListState = shoppingListEffModel.state }
   , effects: effects }
   where
@@ -114,11 +146,11 @@ viewContainer { currentRoute: Home } =
   Home.view
 viewContainer { currentRoute: Calories } =
   noPage
-viewContainer { currentRoute: HoursOfWork, hoursOfWorkState } = 
-  mapEvent HoursOfWorkEvent $ HoursOfWork.view hoursOfWorkState
+viewContainer { currentRoute: HoursOfWork, hoursOfWorkState } =
+  mapEvent HoursOfWorkEvent $ (StandardPage.makeView hoursOfWorkResource) hoursOfWorkState
 viewContainer { currentRoute: Spendings } =
   noPage
-viewContainer { currentRoute: ShoppingList, shoppingListState } = 
+viewContainer { currentRoute: ShoppingList, shoppingListState } =
   mapEvent ShoppingListEvent $ ShoppingList.view shoppingListState
 
 noPage :: HTML Event
