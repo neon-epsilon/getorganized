@@ -144,15 +144,15 @@ view s = do
 viewContainer :: State -> HTML Event
 viewContainer { currentRoute: Home } =
   Home.view
-viewContainer { currentRoute: Calories } =
-  noPage
 viewContainer { currentRoute: HoursOfWork, hoursOfWorkState } =
   mapEvent HoursOfWorkEvent $ (StandardPage.makeView hoursOfWorkResource) hoursOfWorkState
-viewContainer { currentRoute: Spendings } =
-  noPage
+viewContainer { currentRoute: Spendings, spendingsState } =
+  mapEvent SpendingsEvent $ (StandardPage.makeView spendingsResource) spendingsState
+viewContainer { currentRoute: Calories, caloriesState } =
+  mapEvent CaloriesEvent $ (StandardPage.makeView caloriesResource) caloriesState
 viewContainer { currentRoute: ShoppingList, shoppingListState } =
   mapEvent ShoppingListEvent $ ShoppingList.view shoppingListState
 
-noPage :: HTML Event
-noPage = do
-  h1 $ text "404, nix ist hier."
+-- noPage :: HTML Event
+-- noPage = do
+--   h1 $ text "404, nix ist hier."
