@@ -166,7 +166,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $mysqli->close();
 
     /* rebuild output */
-    exec($_SERVER["DOCUMENT_ROOT"] . '/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &');
+    exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &");
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -252,7 +252,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   ));
 
   /* rebuild output */
-  exec($_SERVER["DOCUMENT_ROOT"] . '/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &');
+  exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &");
 }
 else
 {
