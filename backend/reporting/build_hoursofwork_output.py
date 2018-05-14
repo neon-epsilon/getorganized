@@ -169,19 +169,3 @@ axmonth.set_position([boxmonth.x0, boxmonth.y0 + boxmonth.height*0.5, boxmonth.w
 axmonth.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_month.columns), bbox_to_anchor=(0.5,-1.6))
 
 figprogress.savefig(config.www_root + chart_progress_outputpath)
-
-
-### create html files and save them
-# the ? creates a query with a random string which is given by time.time()
-#  to make sure the browser doesn't cache images even though new ones have been generated
-
-output = u"""
-<h1>Arbeitszeitenübersicht</h1>
-<img src="{}?{!s}" alt="" />
-<img src="{}?{!s}" alt="" />""".format(chart_7days_outputpath, time.time(), chart_progress_outputpath, time.time())
-
-
-### write to file
-f = open(config.www_root + summary_outputpath, 'w')
-f.write(output.encode('utf-8'))
-f.close
