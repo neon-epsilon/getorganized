@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # absolute outputpaths regarding www_root as root (just like the server does)
-summary_outputpath = '/generated/hoursofwork/summary.html'
+timestamp_outputpath = '/generated/hoursofwork/timestamp'
 chart_7days_outputpath = '/generated/hoursofwork/chart_7days.png'
 chart_progress_outputpath = '/generated/hoursofwork/chart_progress.png'
 
@@ -11,7 +11,7 @@ max_categories_progress = 5  # max number of categories to show for progress plo
 plot_style = u'ggplot'
 
 # import module ../config/config.py and turn www_root into string
-import pathlib, sys
+import pathlib, sys, time
 file_name = pathlib.Path.cwd() / pathlib.Path(__file__)
 sys.path.append(str(file_name.parent.parent / 'config'))
 import config
@@ -30,6 +30,13 @@ import matplotlib.style as style
 style.use(plot_style)
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
+
+
+# generate timestamp if it is not given via command line arguments
+if len(sys.argv) > 1:
+    timestamp = sys.argv[1]
+else:
+    timestamp = str (time.time())
 
 
 # fetch from database
@@ -156,7 +163,7 @@ axmonth.grid(zorder=0, which='major', linewidth=0.8)
 axmonth.grid(zorder=0, which='minor', linewidth=0.4)
 axmonth.set_yticklabels([''])
 
-### adjust and save figure
+### adjust legends and save figure
 figprogress.tight_layout()
 plt.setp(axweek.get_xticklabels(), visible=True) # otherwise the upper xtick labels will be unvisible...
 
@@ -169,3 +176,8 @@ axmonth.set_position([boxmonth.x0, boxmonth.y0 + boxmonth.height*0.5, boxmonth.w
 axmonth.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_month.columns), bbox_to_anchor=(0.5,-1.6))
 
 figprogress.savefig(config.www_root + chart_progress_outputpath)
+
+
+### save timestamp to file
+with open(config.www_root + timestamp_outputpath, 'w') as f:
+    f.write(timestamp.encode('utf-8'))
