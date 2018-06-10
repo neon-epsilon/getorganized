@@ -157,16 +157,19 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     /* close statement */
     $stmt->close();
 
-    // Respond with id of new database entry
+    $timestamp = time(); //timestamp of generated charts
+
+    /* Respond with id of new database entry */
     $response = array(
-      "id" => $mysqli->insert_id
+      "id" => $mysqli->insert_id,
+      "timestamp" => $timestamp
     );
     send_json($response);
 
     $mysqli->close();
 
     /* rebuild output */
-    exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &");
+    exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py " . strval($timestamp) . " > /dev/null 2> /dev/null &");
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -247,12 +250,15 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
   $mysqli->close();
 
+  $timestamp = time(); //timestamp of generated charts
+
   send_json( array(
-    "ids" => $ids
+    "ids" => $ids,
+    "timestamp" => $timestamp
   ));
 
   /* rebuild output */
-  exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py > /dev/null 2> /dev/null &");
+  exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py " . strval($timestamp) . " > /dev/null 2> /dev/null &");
 }
 else
 {
