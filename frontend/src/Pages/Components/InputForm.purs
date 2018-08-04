@@ -279,12 +279,16 @@ postEntry resourceName formState = do
     Right res | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, get the id assigned to the new entry,
       -- reset the amount in the form and pass the new entry to the delete form.
-      let id = decodeId =<< jsonParser res.response
+      let psr = decodenPostSuccessResponse =<< jsonParser res.response
       either
         -- If we do not get a valid id back it's a server error and thus fatal.
         (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
-        (pure <<< Just <<< Ajax <<< PostEntrySuccess)
-        id
+        (\x -> do
+-- TODO: actually use timestamp
+          log $ show x.timestamp
+          pure $ Just $ Ajax $ PostEntrySuccess x.id
+          )
+        psr
     -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
     -- Therefore, this error is fatal.
     -- We expect an object of the form {error: String}.
@@ -306,10 +310,12 @@ decodeCategories r = do
   categories <- obj .? "categories"
   decodeJson categories
 
-decodeId :: Json -> Either String Int
-decodeId r = do
+decodenPostSuccessResponse :: Json -> Either String {id:: Int, timestamp:: Int}
+decodenPostSuccessResponse r = do
   obj <- decodeJson r
-  obj .? "id"
+  id <- obj .? "id"
+  timestamp <- obj .? "timestamp"
+  pure {id, timestamp}
 
 -- decodeErrorResponse :: Json -> Either String String
 -- decodeErrorResponse r = do
