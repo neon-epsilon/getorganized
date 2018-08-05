@@ -70,7 +70,7 @@ data AjaxEvent =
   | GetCategoriesSuccess (List Category)
   | GetCategoriesFatalError
   | PostEntry
-  | PostEntrySuccess Int
+  | PostEntrySuccess {id:: Int, timestamp:: Int}
   | PostEntryError
   | PostEntryFatalError
 
@@ -208,7 +208,7 @@ makeFoldp resourceName = foldp
     { state: state { ajaxState = PostingEntry }
     , effects: [ postEntry resourceName state.formState ]
     }
-  foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
+  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState } =
     { state: state
       { formState = formState { amount = "" }
       , ajaxState = Idle
@@ -283,11 +283,7 @@ postEntry resourceName formState = do
       either
         -- If we do not get a valid id back it's a server error and thus fatal.
         (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
-        (\x -> do
--- TODO: actually use timestamp
-          log $ show x.timestamp
-          pure $ Just $ Ajax $ PostEntrySuccess x.id
-          )
+        (pure <<< Just <<< Ajax <<< PostEntrySuccess)
         psr
     -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
     -- Therefore, this error is fatal.
