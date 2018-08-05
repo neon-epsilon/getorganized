@@ -59,9 +59,14 @@ instance deleteFormEvent :: DF.DeleteFormEventClass Event where
 
 
 
+newtype TimeStamp = TimeStamp Int
+
+
+
 data Event =
     Init
   | Ajax AjaxEvent
+  | ReloadPicture TimeStamp
   | Form FormEvent
   | DeleteForm DeleteFormEvent
 
@@ -88,15 +93,10 @@ data DeleteFormEvent =
 
 
 type State =
-  { ajaxState :: AjaxState
-  , categories :: List Category
+  { categories :: List Category
+  , ajaxState :: AjaxState
+  , pictureReloadState :: PictureReloadState
   , formState :: FormState }
-
-data AjaxState =
-    Idle
-  | GettingCategories
-  | PostingEntry
-  | Error
 
 
 newtype Category = Category
@@ -111,6 +111,18 @@ instance decodeJsonCategory :: DecodeJson Category where
     pure $ Category { category: category, priority: priority }
 
 
+data AjaxState =
+    Idle
+  | GettingCategories
+  | PostingEntry
+  | Error
+
+
+data PictureReloadState =
+    UpToDate
+  | Loading TimeStamp
+
+
 type FormState =
   { date :: String
   , category :: String
@@ -119,8 +131,9 @@ type FormState =
 
 init :: State
 init =
-  { ajaxState : GettingCategories
-  , categories : Nil
+  { categories : Nil
+  , ajaxState : GettingCategories
+  , pictureReloadState : UpToDate
   , formState : initFormState }
 
 initFormState :: FormState
@@ -208,14 +221,16 @@ makeFoldp resourceName = foldp
     { state: state { ajaxState = PostingEntry }
     , effects: [ postEntry resourceName state.formState ]
     }
-  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState } =
+  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState, pictureReloadState } =
     { state: state
       { formState = formState { amount = "" }
       , ajaxState = Idle
+      , pictureReloadState = Loading $ TimeStamp timestamp
       }
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $
         DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
+      , pure $ Just $ ReloadPicture $ TimeStamp timestamp
       ]
     }
   foldp (Ajax PostEntryError) state =
@@ -247,7 +262,7 @@ makeFoldp resourceName = foldp
 -- | Otherwise success or fatal error.
 getCategories :: forall eff. String -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories resourceName = do
-  maybeRes <- attemptWithTimeout (get $ "/backend/api/" <> resourceName <> "/categories.php") 10000.0
+  maybeRes <- attemptWithTimeout 10000.0 (get $ "/backend/api/" <> resourceName <> "/categories.php")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
