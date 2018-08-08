@@ -5,7 +5,7 @@ import Prelude
 import Data.Number (fromString, nan)
 import Data.List (List (..), (:), sortBy)
 import Data.Either (Either (..), either)
-import Data.Maybe (Maybe (..), fromMaybe)
+import Data.Maybe (Maybe (..), maybe, fromMaybe)
 
 import Control.Alt((<|>))
 import Control.Comonad (extract)
@@ -59,7 +59,7 @@ instance deleteFormEvent :: DF.DeleteFormEventClass Event where
 
 
 
-newtype TimeStamp = TimeStamp Int
+newtype TimeStamp = TimeStamp Number
 
 
 
@@ -75,7 +75,7 @@ data AjaxEvent =
   | GetCategoriesSuccess (List Category)
   | GetCategoriesFatalError
   | PostEntry
-  | PostEntrySuccess {id:: Int, timestamp:: Int}
+  | PostEntrySuccess {id:: Int, timestamp:: TimeStamp}
   | PostEntryError
   | PostEntryFatalError
 
@@ -225,12 +225,12 @@ makeFoldp resourceName = foldp
     { state: state
       { formState = formState { amount = "" }
       , ajaxState = Idle
-      , pictureReloadState = Loading $ TimeStamp timestamp
+      , pictureReloadState = Loading $ timestamp
       }
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $
         DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
-      , pure $ Just $ ReloadPicture $ TimeStamp timestamp
+      , pure $ Just $ ReloadPicture $ timestamp
       ]
     }
   foldp (Ajax PostEntryError) state =
@@ -239,6 +239,12 @@ makeFoldp resourceName = foldp
     }
   foldp (Ajax PostEntryFatalError) state =
     noEffects $ state { ajaxState = Error }
+
+  foldp (ReloadPicture (TimeStamp t)) state@{pictureReloadState} =
+    case pictureReloadState of
+      Loading (TimeStamp l) | l > t -> noEffects state
+      -- If l > t, a newer ReloadPicture must have been triggered in the meantiime.
+      _ -> noEffects state -- TODO
 
   foldp (Form (Submit ev)) state =
     onlyEffects state [ do
@@ -294,7 +300,7 @@ postEntry resourceName formState = do
     Right res | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, get the id assigned to the new entry,
       -- reset the amount in the form and pass the new entry to the delete form.
-      let psr = decodenPostSuccessResponse =<< jsonParser res.response
+      let psr = decodePostSuccessResponse =<< jsonParser res.response
       either
         -- If we do not get a valid id back it's a server error and thus fatal.
         (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
@@ -315,18 +321,44 @@ postEntry resourceName formState = do
       pure $ Just $ Ajax PostEntryError
 
 
+-- TODO
+getTimeStamp :: forall eff. String -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+getTimeStamp resourceName = do
+  maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp")
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
+      let timestamp = fromString res.response
+      maybe
+        (pure Nothing)
+        (const $ pure Nothing)
+        timestamp
+    -- | If status is not 200, we expect an object of the form {error: String}
+    Just (Right res) -> do
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
+      log $ "Response from server:"
+      log res.response
+      pure $ Nothing
+    Just (Left err) -> do
+      log $ show err
+      delay $ Milliseconds 1000.0
+      pure $ Nothing
+    Nothing -> do
+      log $ "Error: Request timed out while getting categories."
+      pure $ Nothing
+
+
 decodeCategories :: Json -> Either String (List Category)
 decodeCategories r = do
   obj <- decodeJson r
   categories <- obj .? "categories"
   decodeJson categories
 
-decodenPostSuccessResponse :: Json -> Either String {id:: Int, timestamp:: Int}
-decodenPostSuccessResponse r = do
+decodePostSuccessResponse :: Json -> Either String {id:: Int, timestamp:: TimeStamp}
+decodePostSuccessResponse r = do
   obj <- decodeJson r
   id <- obj .? "id"
-  timestamp <- obj .? "timestamp"
-  pure {id, timestamp}
+  t <- obj .? "timestamp"
+  pure {id, timestamp: TimeStamp t}
 
 -- decodeErrorResponse :: Json -> Either String String
 -- decodeErrorResponse r = do
