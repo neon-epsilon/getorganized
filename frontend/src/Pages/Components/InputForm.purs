@@ -66,7 +66,7 @@ newtype TimeStamp = TimeStamp Number
 data Event =
     Init
   | Ajax AjaxEvent
-  | ReloadPicture TimeStamp
+  | Picture PictureEvent
   | Form FormEvent
   | DeleteForm DeleteFormEvent
 
@@ -78,6 +78,10 @@ data AjaxEvent =
   | PostEntrySuccess {id:: Int, timestamp:: TimeStamp}
   | PostEntryError
   | PostEntryFatalError
+
+data PictureEvent =
+    CheckIfReady TimeStamp
+  | UpdateLink TimeStamp
 
 data FormEvent =
     Submit DOMEvent
@@ -95,7 +99,7 @@ data DeleteFormEvent =
 type State =
   { categories :: List Category
   , ajaxState :: AjaxState
-  , pictureReloadState :: PictureReloadState
+  , pictureState :: PictureState
   , formState :: FormState }
 
 
@@ -118,9 +122,9 @@ data AjaxState =
   | Error
 
 
-data PictureReloadState =
+data PictureState =
     UpToDate
-  | Loading TimeStamp
+  | WaitingForUpdate TimeStamp
 
 
 type FormState =
@@ -133,7 +137,7 @@ init :: State
 init =
   { categories : Nil
   , ajaxState : GettingCategories
-  , pictureReloadState : UpToDate
+  , pictureState : UpToDate
   , formState : initFormState }
 
 initFormState :: FormState
@@ -221,16 +225,16 @@ makeFoldp resourceName = foldp
     { state: state { ajaxState = PostingEntry }
     , effects: [ postEntry resourceName state.formState ]
     }
-  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState, pictureReloadState } =
+  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState, pictureState } =
     { state: state
       { formState = formState { amount = "" }
       , ajaxState = Idle
-      , pictureReloadState = Loading $ timestamp
+      , pictureState = WaitingForUpdate timestamp
       }
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $
         DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
-      , pure $ Just $ ReloadPicture $ timestamp
+      , pure $ Just $ Picture $ CheckIfReady timestamp
       ]
     }
   foldp (Ajax PostEntryError) state =
@@ -240,11 +244,12 @@ makeFoldp resourceName = foldp
   foldp (Ajax PostEntryFatalError) state =
     noEffects $ state { ajaxState = Error }
 
-  foldp (ReloadPicture (TimeStamp t)) state@{pictureReloadState} =
-    case pictureReloadState of
-      Loading (TimeStamp l) | l > t -> noEffects state
-      -- If l > t, a newer ReloadPicture must have been triggered in the meantiime.
+  foldp (Picture (CheckIfReady (TimeStamp t))) state@{pictureState} =
+    case pictureState of
+      WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
+      -- If l > t, a newer CheckIfReady must have been triggered in the meantiime.
       _ -> noEffects state -- TODO
+  foldp (Picture (UpdateLink (TimeStamp t))) state = noEffects state -- TODO: Use to actually update link.
 
   foldp (Form (Submit ev)) state =
     onlyEffects state [ do
@@ -330,7 +335,10 @@ getTimeStamp resourceName = do
       let timestamp = fromString res.response
       maybe
         (pure Nothing)
+      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
         (const $ pure Nothing)
+      -- TODO: See, if timestamp is greater or equal to the expected timestamp.
+      --       If so, issue reload. Otherwise wait a second and try again.
         timestamp
     -- | If status is not 200, we expect an object of the form {error: String}
     Just (Right res) -> do
@@ -338,12 +346,13 @@ getTimeStamp resourceName = do
       log $ "Response from server:"
       log res.response
       pure $ Nothing
+      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
     Just (Left err) -> do
       log $ show err
-      delay $ Milliseconds 1000.0
       pure $ Nothing
+      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
     Nothing -> do
-      log $ "Error: Request timed out while getting categories."
+      log $ "Error: Request timed out while reloading picture."
       pure $ Nothing
 
 
