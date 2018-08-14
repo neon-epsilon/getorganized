@@ -157,7 +157,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     /* close statement */
     $stmt->close();
 
-    $timestamp = time(); //timestamp of generated charts
+    $timestamp = microtime(true); //timestamp of generated charts
 
     /* Respond with id of new database entry */
     $response = array(
@@ -250,7 +250,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
   $mysqli->close();
 
-  $timestamp = time(); //timestamp of generated charts
+  $timestamp = microtime(true); //timestamp of generated charts
 
   send_json( array(
     "ids" => $ids,

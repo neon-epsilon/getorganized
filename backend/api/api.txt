@@ -30,7 +30,7 @@ elif POST:
   elif processing didn't work:
     500, {error: String}
   else
-    200, {id: int, timestamp: int} //timestamp of generated charts
+    200, {id: int, timestamp: Number} //timestamp of generated charts
 elif DELETE:
   expect {ids: [int]}
   if payload malformed:
@@ -40,7 +40,7 @@ elif DELETE:
   elif processing didn't work:
     500, {error: String}
   else
-    200, {ids: [int], timestamp: int} //timestamp of generated charts
+    200, {ids: [int], timestamp: Number} //timestamp of generated charts
 else:
   405, {error: String}
 
