@@ -246,10 +246,19 @@ makeFoldp resourceName = foldp
 
   foldp (Picture (CheckIfReady (TimeStamp t))) state@{pictureState} =
     case pictureState of
-      WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
       -- If l > t, a newer CheckIfReady must have been triggered in the meantiime.
-      _ -> noEffects state -- TODO
-  foldp (Picture (UpdateLink (TimeStamp t))) state = noEffects state -- TODO: Use to actually update link.
+      WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
+      _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) ]
+  foldp (Picture (UpdateLink (TimeStamp t))) state =
+    -- TODO: Use to actually update link.
+    -- noEffects state{pictureState = UpToDate}
+    { state: state{pictureState = UpToDate}
+    , effects:
+      [ do
+        log $ "Picture should be ready. Timestamp: " <> show t
+        pure Nothing
+      ]
+    }
 
   foldp (Form (Submit ev)) state =
     onlyEffects state [ do
@@ -326,34 +335,45 @@ postEntry resourceName formState = do
       pure $ Just $ Ajax PostEntryError
 
 
--- TODO
-getTimeStamp :: forall eff. String -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-getTimeStamp resourceName = do
+getTimeStamp :: forall eff. String -> TimeStamp -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+getTimeStamp resourceName stateTimestamp = do
   maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let timestamp = fromString res.response
       maybe
-        (pure Nothing)
-      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
-        (const $ pure Nothing)
-      -- TODO: See, if timestamp is greater or equal to the expected timestamp.
-      --       If so, issue reload. Otherwise wait a second and try again.
+        -- Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
+        ( do
+          log $ "Error: Timestamp is not of type Number."
+          reloadAnywayAfterDelay
+        )
+        -- See, if received timestamp is greater or equal than stateTimestamp.
+        -- If so, issue reload. Otherwise wait a second and try again.
+        ( \x -> case stateTimestamp of
+          TimeStamp t | x >= t ->
+            pure $ Just $ Picture $ UpdateLink $ TimeStamp x
+          _ -> do
+            delay $ Milliseconds 1000.0
+            pure $ Just $ Picture $ CheckIfReady $ stateTimestamp
+        )
+        -- TODO: After, like, ten retries we should issue an reloadAnywayAfterDelay.
         timestamp
     -- | If status is not 200, we expect an object of the form {error: String}
     Just (Right res) -> do
-      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while GETting timestamp."
       log $ "Response from server:"
       log res.response
-      pure $ Nothing
-      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
+      reloadAnywayAfterDelay
     Just (Left err) -> do
       log $ show err
-      pure $ Nothing
-      -- TODO: Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
+      reloadAnywayAfterDelay
     Nothing -> do
-      log $ "Error: Request timed out while reloading picture."
-      pure $ Nothing
+      log $ "Error: Request timed out while GETting timestamp."
+      reloadAnywayAfterDelay -- maybe it is smarter to try to GET the timestamp again?
+  where
+    reloadAnywayAfterDelay = do
+      delay $ Milliseconds 5000.0
+      pure $ Just $ Picture $ UpdateLink stateTimestamp
 
 
 decodeCategories :: Json -> Either String (List Category)
