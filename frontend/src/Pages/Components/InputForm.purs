@@ -80,7 +80,7 @@ data AjaxEvent =
   | PostEntryFatalError
 
 data PictureEvent =
-    CheckIfReady TimeStamp
+    CheckIfReady { timestamp:: TimeStamp, retries:: Int}
   | UpdateLink TimeStamp
 
 data FormEvent =
@@ -234,7 +234,7 @@ makeFoldp resourceName = foldp
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $
         DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
-      , pure $ Just $ Picture $ CheckIfReady timestamp
+      , pure $ Just $ Picture $ CheckIfReady { timestamp, retries:0 }
       ]
     }
   foldp (Ajax PostEntryError) state =
@@ -244,11 +244,11 @@ makeFoldp resourceName = foldp
   foldp (Ajax PostEntryFatalError) state =
     noEffects $ state { ajaxState = Error }
 
-  foldp (Picture (CheckIfReady (TimeStamp t))) state@{pictureState} =
+  foldp (Picture (CheckIfReady {timestamp: (TimeStamp t), retries})) state@{pictureState} =
     case pictureState of
       -- If l > t, a newer CheckIfReady must have been triggered in the meantiime.
       WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
-      _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) ]
+      _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) retries ]
   foldp (Picture (UpdateLink (TimeStamp t))) state =
     -- TODO: Use to actually update link.
     -- noEffects state{pictureState = UpToDate}
@@ -335,8 +335,8 @@ postEntry resourceName formState = do
       pure $ Just $ Ajax PostEntryError
 
 
-getTimeStamp :: forall eff. String -> TimeStamp -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-getTimeStamp resourceName stateTimestamp = do
+getTimeStamp :: forall eff. String -> TimeStamp -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+getTimeStamp resourceName stateTimestamp retries = do
   maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
@@ -349,14 +349,17 @@ getTimeStamp resourceName stateTimestamp = do
         )
         -- See, if received timestamp is greater or equal than stateTimestamp.
         -- If so, issue reload. Otherwise wait a second and try again.
+        -- If number of retries is too high, just reload.
         ( \x -> case stateTimestamp of
           TimeStamp t | x >= t ->
             pure $ Just $ Picture $ UpdateLink $ TimeStamp x
-          _ -> do
+          _ | retries < 30 -> do
             delay $ Milliseconds 1000.0
-            pure $ Just $ Picture $ CheckIfReady $ stateTimestamp
+            pure $ Just $ Picture $ CheckIfReady { timestamp: stateTimestamp, retries: retries + 1 }
+          _ | otherwise -> do
+            log $ "Error: Timestamp does not update on server."
+            reloadAnywayAfterDelay
         )
-        -- TODO: After, like, ten retries we should issue an reloadAnywayAfterDelay.
         timestamp
     -- | If status is not 200, we expect an object of the form {error: String}
     Just (Right res) -> do
