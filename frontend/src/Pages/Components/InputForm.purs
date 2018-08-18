@@ -355,7 +355,6 @@ getTimeStamp resourceName (TimeStamp t) retries = do
           if x >= t then
             pure $ Just $ Picture $ UpdateLink $ TimeStamp x
           else if retries < 30 then do
-            log $ "Timestamp not yet ready. ts on server: " <> show x <> " expected ts: " <> show t -- TODO: only for debug
             delay $ Milliseconds 1000.0
             pure $ Just $ Picture $ CheckIfReady { timestamp: (TimeStamp t), retries: retries + 1 }
           else do
