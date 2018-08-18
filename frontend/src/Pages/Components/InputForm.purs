@@ -336,8 +336,9 @@ postEntry resourceName formState = do
 
 
 getTimeStamp :: forall eff. String -> TimeStamp -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-getTimeStamp resourceName stateTimestamp retries = do
-  maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp")
+getTimeStamp resourceName (TimeStamp t) retries = do
+  -- query string at the end makes sure the timestamp is not being cached (cache buster).
+  maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp?" <> show t <> "r" <> show retries)
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let timestamp = fromString res.response
@@ -347,16 +348,17 @@ getTimeStamp resourceName stateTimestamp retries = do
           log $ "Error: Timestamp is not of type Number."
           reloadAnywayAfterDelay
         )
-        -- See, if received timestamp is greater or equal than stateTimestamp.
+        -- See, if received timestamp is greater or equal than t.
         -- If so, issue reload. Otherwise wait a second and try again.
         -- If number of retries is too high, just reload.
-        ( \x -> case stateTimestamp of
-          TimeStamp t | x >= t ->
+        ( \x ->
+          if x >= t then
             pure $ Just $ Picture $ UpdateLink $ TimeStamp x
-          _ | retries < 30 -> do
+          else if retries < 30 then do
+            log $ "Timestamp not yet ready. ts on server: " <> show x <> " expected ts: " <> show t -- TODO: only for debug
             delay $ Milliseconds 1000.0
-            pure $ Just $ Picture $ CheckIfReady { timestamp: stateTimestamp, retries: retries + 1 }
-          _ | otherwise -> do
+            pure $ Just $ Picture $ CheckIfReady { timestamp: (TimeStamp t), retries: retries + 1 }
+          else do
             log $ "Error: Timestamp does not update on server."
             reloadAnywayAfterDelay
         )
@@ -376,7 +378,7 @@ getTimeStamp resourceName stateTimestamp retries = do
   where
     reloadAnywayAfterDelay = do
       delay $ Milliseconds 5000.0
-      pure $ Just $ Picture $ UpdateLink stateTimestamp
+      pure $ Just $ Picture $ UpdateLink (TimeStamp t)
 
 
 decodeCategories :: Json -> Either String (List Category)
