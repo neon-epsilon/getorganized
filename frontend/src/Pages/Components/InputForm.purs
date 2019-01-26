@@ -251,7 +251,6 @@ makeFoldp resourceName = foldp
       _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) retries ]
   foldp (Picture (UpdateLink (TimeStamp t))) state =
     -- TODO: Use to actually update link.
-    -- noEffects state{pictureState = UpToDate}
     { state: state{pictureState = UpToDate}
     , effects:
       [ do
@@ -282,7 +281,7 @@ makeFoldp resourceName = foldp
 -- | Otherwise success or fatal error.
 getCategories :: forall eff. String -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories resourceName = do
-  maybeRes <- attemptWithTimeout 10000.0 (get $ "/backend/api/" <> resourceName <> "/categories.php")
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/backend/api/" <> resourceName <> "/categories.php")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
@@ -338,7 +337,7 @@ postEntry resourceName formState = do
 getTimeStamp :: forall eff. String -> TimeStamp -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getTimeStamp resourceName (TimeStamp t) retries = do
   -- query string at the end makes sure the timestamp is not being cached (cache buster).
-  maybeRes <- attemptWithTimeout 10000.0 (get $ "/generated/" <> resourceName <> "/timestamp?" <> show t <> "r" <> show retries)
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/generated/" <> resourceName <> "/timestamp")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let timestamp = fromString res.response

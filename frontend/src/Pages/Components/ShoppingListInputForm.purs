@@ -220,7 +220,7 @@ foldp (DeleteForm _) state = noEffects state
 -- | Otherwise success or fatal error.
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories = do
-  maybeRes <- attemptWithTimeout 10000.0 (get "/backend/api/shoppinglist/categories.php")
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/backend/api/shoppinglist/categories.php")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response

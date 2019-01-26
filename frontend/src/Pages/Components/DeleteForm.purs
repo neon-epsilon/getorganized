@@ -212,7 +212,7 @@ makeFoldp resourceName = foldp
 -- | Otherwise success or fatal error.
 getEntries :: forall eff. String -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries resourceName = do
-  maybeRes <- attemptWithTimeout 10000.0 (AJ.get $ "/backend/api/" <> resourceName <> "/entries.php")
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/backend/api/" <> resourceName <> "/entries.php")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let entries = decodeEntries =<< jsonParser res.response

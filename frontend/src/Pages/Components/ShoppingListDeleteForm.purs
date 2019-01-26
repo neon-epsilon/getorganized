@@ -207,7 +207,7 @@ foldp (External NoOp) state =
 -- | Otherwise success or fatal error.
 getEntries :: forall eff. Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries = do
-  maybeRes <- attemptWithTimeout 10000.0 (AJ.get "/backend/api/shoppinglist/entries.php")
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/backend/api/shoppinglist/entries.php")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
       let entries = decodeEntries =<< jsonParser res.response
