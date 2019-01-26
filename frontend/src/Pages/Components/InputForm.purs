@@ -52,10 +52,10 @@ instance appComponentEvent :: AppComp.ComponentEvent Event where
   getAppEvent _ = AppComp.NoOp
 
 
-instance deleteFormEvent :: DF.DeleteFormEventClass Event where
-  getExternalEvent (DeleteForm (AddEntry entry)) = DF.AddEntry entry
-  getExternalEvent (DeleteForm Reload) = DF.Reload
-  getExternalEvent _ = DF.NoOp
+deleteFormEvent :: Event -> Maybe DF.Event
+deleteFormEvent (DeleteForm (AddEntry entry)) = Just $ DF.External $ DF.AddEntry entry
+deleteFormEvent (DeleteForm Reload) = Just $ DF.External $ DF.Reload
+deleteFormEvent _ = Nothing
 
 
 
@@ -81,7 +81,7 @@ data AjaxEvent =
 
 data PictureEvent =
     CheckIfReady { timestamp:: TimeStamp, retries:: Int}
-  | UpdateLink TimeStamp
+  | UpdatePicture
 
 data FormEvent =
     Submit DOMEvent
@@ -249,16 +249,8 @@ makeFoldp resourceName = foldp
       -- If l > t, a newer CheckIfReady must have been triggered in the meantiime.
       WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
       _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) retries ]
-  foldp (Picture (UpdateLink (TimeStamp t))) state =
-    -- TODO: Use to actually update link.
-    { state: state{pictureState = UpToDate}
-    , effects:
-      [ do
-        log $ "Picture should be ready. Timestamp: " <> show t
-        pure Nothing
-      ]
-    }
-
+  foldp (Picture UpdatePicture) state =
+    noEffects state{pictureState = UpToDate}
   foldp (Form (Submit ev)) state =
     onlyEffects state [ do
       liftEff (preventDefault ev)
@@ -352,7 +344,7 @@ getTimeStamp resourceName (TimeStamp t) retries = do
         -- If number of retries is too high, just reload.
         ( \x ->
           if x >= t then
-            pure $ Just $ Picture $ UpdateLink $ TimeStamp x
+            pure $ Just $ Picture $ UpdatePicture
           else if retries < 30 then do
             delay $ Milliseconds 1000.0
             pure $ Just $ Picture $ CheckIfReady { timestamp: (TimeStamp t), retries: retries + 1 }
@@ -376,7 +368,7 @@ getTimeStamp resourceName (TimeStamp t) retries = do
   where
     reloadAnywayAfterDelay = do
       delay $ Milliseconds 5000.0
-      pure $ Just $ Picture $ UpdateLink (TimeStamp t)
+      pure $ Just $ Picture $ UpdatePicture
 
 
 decodeCategories :: Json -> Either String (List Category)

@@ -47,10 +47,6 @@ import App.Component as AppComp
 data ExternalEvent =
     AddEntry Entry
   | Reload
-  | NoOp
-
-class DeleteFormEventClass e where
-  getExternalEvent :: e -> ExternalEvent
 
 
 newtype Entry = Entry
@@ -203,8 +199,6 @@ makeFoldp resourceName = foldp
       }
   foldp (External Reload) state =
     onlyEffects state [pure $ Just $ Ajax GetEntries]
-  foldp (External NoOp) state =
-    noEffects state
 
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
