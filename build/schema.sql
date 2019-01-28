@@ -1,3 +1,5 @@
+-- TODO: add "comment" field to hoursofwork, calories
+
 -- ---------- calories --------------
 
 DROP TABLE IF EXISTS `calories_entries`;

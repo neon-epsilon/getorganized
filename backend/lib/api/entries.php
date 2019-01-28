@@ -5,6 +5,9 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
 
+// TODO: use "comment" property of POST requests
+
+
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
   $request_body = file_get_contents('php://input');
@@ -65,7 +68,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 {
   $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
-  if($data === NULL) 
+  if($data === NULL)
   {
     bad_request("Could not decode JSON request.");
     exit;
@@ -177,7 +180,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   /* Expect JSON-list of ids, that is, non-negative integers as input. */
   $request_body = file_get_contents('php://input');
   $data = json_decode($request_body, true);
-  if($data === NULL) 
+  if($data === NULL)
   {
     bad_request("Could not decode JSON request.");
     exit;

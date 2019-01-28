@@ -43,6 +43,8 @@ import Pages.Components
 import App.Component as AppComp
 
 
+-- TODO: add updating of pictures after successful delete
+
 
 data ExternalEvent =
     AddEntry Entry

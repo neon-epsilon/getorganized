@@ -44,6 +44,8 @@ import App.Component as AppComp
 import Pages.Components.DeleteForm as DF
 
 
+-- TODO: add "comment" field
+
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
   getAppEvent (Ajax GetCategoriesFatalError) = AppComp.UserMessage "Fehler beim Laden von Daten"
