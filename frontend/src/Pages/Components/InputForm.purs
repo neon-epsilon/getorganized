@@ -19,6 +19,7 @@ import Data.Foldable (for_)
 
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Data.Time.Duration (Milliseconds (..))
+import Data.DateTime.Instant (Instant, unInstant, instant)
 import Data.Formatter.DateTime (FormatterCommand (YearFull, Placeholder, MonthTwoDigits, DayOfMonthTwoDigits), format)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
@@ -61,10 +62,6 @@ deleteFormEvent _ = Nothing
 
 
 
-newtype TimeStamp = TimeStamp Number
-
-
-
 data Event =
     Init
   | Ajax AjaxEvent
@@ -77,12 +74,12 @@ data AjaxEvent =
   | GetCategoriesSuccess (List Category)
   | GetCategoriesFatalError
   | PostEntry
-  | PostEntrySuccess {id:: Int, timestamp:: TimeStamp}
+  | PostEntrySuccess {id:: Int, timestamp:: Instant}
   | PostEntryError
   | PostEntryFatalError
 
 data PictureEvent =
-    CheckIfReady { timestamp:: TimeStamp, retries:: Int}
+    CheckIfReady { timestamp:: Instant, retries:: Int}
   | UpdatePicture
 
 data FormEvent =
@@ -126,7 +123,7 @@ data AjaxState =
 
 data PictureState =
     UpToDate
-  | WaitingForUpdate TimeStamp
+  | WaitingForUpdate Instant
 
 
 type FormState =
@@ -246,11 +243,11 @@ makeFoldp resourceName = foldp
   foldp (Ajax PostEntryFatalError) state =
     noEffects $ state { ajaxState = Error }
 
-  foldp (Picture (CheckIfReady {timestamp: (TimeStamp t), retries})) state@{pictureState} =
+  foldp (Picture (CheckIfReady {timestamp, retries})) state@{pictureState} =
     case pictureState of
-      -- If l > t, a newer CheckIfReady must have been triggered in the meantiime.
-      WaitingForUpdate (TimeStamp l) | l > t -> noEffects state
-      _ -> onlyEffects state [ getTimeStamp resourceName (TimeStamp t) retries ]
+      -- If l > timestamp, a newer CheckIfReady must have been triggered in the meantiime.
+      WaitingForUpdate l | l > timestamp -> noEffects state
+      _ -> onlyEffects state [ checkTimeStamp resourceName timestamp retries ]
   foldp (Picture UpdatePicture) state =
     noEffects state{pictureState = UpToDate}
   foldp (Form (Submit ev)) state =
@@ -328,13 +325,13 @@ postEntry resourceName formState = do
       pure $ Just $ Ajax PostEntryError
 
 
-getTimeStamp :: forall eff. String -> TimeStamp -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-getTimeStamp resourceName (TimeStamp t) retries = do
+checkTimeStamp :: forall eff. String -> Instant -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+checkTimeStamp resourceName stateTimestamp retries = do
   -- query string at the end makes sure the timestamp is not being cached (cache buster).
   maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/generated/" <> resourceName <> "/timestamp")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
-      let timestamp = fromString res.response
+      let ts = fromString res.response
       maybe
         -- Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
         ( do
@@ -345,16 +342,16 @@ getTimeStamp resourceName (TimeStamp t) retries = do
         -- If so, issue reload. Otherwise wait a second and try again.
         -- If number of retries is too high, just reload.
         ( \x ->
-          if x >= t then
+          if (Milliseconds x) >= (unInstant stateTimestamp) then
             pure $ Just $ Picture $ UpdatePicture
           else if retries < 30 then do
             delay $ Milliseconds 1000.0
-            pure $ Just $ Picture $ CheckIfReady { timestamp: (TimeStamp t), retries: retries + 1 }
+            pure $ Just $ Picture $ CheckIfReady { timestamp: stateTimestamp, retries: retries + 1 }
           else do
             log $ "Error: Timestamp does not update on server."
             reloadAnywayAfterDelay
         )
-        timestamp
+        ts
     -- | If status is not 200, we expect an object of the form {error: String}
     Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while GETting timestamp."
@@ -379,12 +376,14 @@ decodeCategories r = do
   categories <- obj .? "categories"
   decodeJson categories
 
-decodePostSuccessResponse :: Json -> Either String {id:: Int, timestamp:: TimeStamp}
+decodePostSuccessResponse :: Json -> Either String {id:: Int, timestamp:: Instant}
 decodePostSuccessResponse r = do
   obj <- decodeJson r
   id <- obj .? "id"
   t <- obj .? "timestamp"
-  pure {id, timestamp: TimeStamp t}
+  case (instant (Milliseconds t)) of
+    Nothing -> Left "Error: Timestamp received from server is out of range."
+    Just timestamp -> Right {id, timestamp}
 
 -- decodeErrorResponse :: Json -> Either String String
 -- decodeErrorResponse r = do

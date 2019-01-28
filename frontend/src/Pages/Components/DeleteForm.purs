@@ -234,7 +234,7 @@ getEntries resourceName = do
 deleteEntries :: forall eff. String -> Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 deleteEntries resourceName checkedIds = do
   r <- attempt $ AJ.affjax deleteRequest
-  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
+  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check
   --      integrity of data. I.e.: reload entries.
   case r of
     Right res | res.status == (StatusCode 200) -> do
