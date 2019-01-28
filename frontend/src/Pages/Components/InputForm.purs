@@ -49,9 +49,9 @@ import Pages.Components.DeleteForm as DF
 
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
-  getAppEvent (Ajax GetCategoriesFatalError) = AppComp.UserMessage "Fehler beim Laden von Daten"
+  getAppEvent (Ajax GetCategoriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
   getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
-  getAppEvent (Ajax PostEntryFatalError) = AppComp.UserMessage "Fehler beim Senden von Daten"
+  getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
   getAppEvent _ = AppComp.NoOp
 
 
@@ -65,22 +65,17 @@ deleteFormEvent _ = Nothing
 data Event =
     Init
   | Ajax AjaxEvent
-  | Picture PictureEvent
   | Form FormEvent
+  | UpdatePicture Instant
   | DeleteForm DeleteFormEvent
 
 data AjaxEvent =
     GetCategories
   | GetCategoriesSuccess (List Category)
-  | GetCategoriesFatalError
+  | GetCategoriesError
   | PostEntry
   | PostEntrySuccess {id:: Int, timestamp:: Instant}
   | PostEntryError
-  | PostEntryFatalError
-
-data PictureEvent =
-    CheckIfReady { timestamp:: Instant, retries:: Int}
-  | UpdatePicture
 
 data FormEvent =
     Submit DOMEvent
@@ -98,7 +93,6 @@ data DeleteFormEvent =
 type State =
   { categories :: List Category
   , ajaxState :: AjaxState
-  , pictureState :: PictureState
   , formState :: FormState }
 
 
@@ -118,12 +112,6 @@ data AjaxState =
     Idle
   | GettingCategories
   | PostingEntry
-  | Error
-
-
-data PictureState =
-    UpToDate
-  | WaitingForUpdate Instant
 
 
 type FormState =
@@ -136,7 +124,6 @@ init :: State
 init =
   { categories : Nil
   , ajaxState : GettingCategories
-  , pictureState : UpToDate
   , formState : initFormState }
 
 initFormState :: FormState
@@ -170,7 +157,6 @@ view { ajaxState, categories, formState } = do
       Idle -> "Speichern"
       GettingCategories -> "Lade..."
       PostingEntry -> "Sende Daten..."
-      Error -> "Fehler"
     isActive = case ajaxState of
       Idle -> true
       _ -> false
@@ -216,40 +202,26 @@ makeFoldp resourceName = foldp
         }
       Nil -> onlyEffects state [ do
         log "Error: Received empty list of categories from server."
-        pure $ Just $ Ajax GetCategoriesFatalError
+        pure $ Just $ Ajax GetCategoriesError
         ]
-  foldp (Ajax GetCategoriesFatalError) state =
-    noEffects $ state { ajaxState = Error }
+  foldp (Ajax GetCategoriesError) state =
+    onlyEffects state [pure $ Just $ Ajax $ GetCategories]
   foldp (Ajax PostEntry) state =
     { state: state { ajaxState = PostingEntry }
     , effects: [ postEntry resourceName state.formState ]
     }
-  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{ formState, pictureState } =
+  foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{formState} =
     { state: state
       { formState = formState { amount = "" }
-      , ajaxState = Idle
-      , pictureState = WaitingForUpdate timestamp
-      }
+      , ajaxState = Idle }
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $
         DF.Entry { id: id, date: formState.date, category: formState.category, amount: fromMaybe nan $ fromString formState.amount }
-      , pure $ Just $ Picture $ CheckIfReady { timestamp, retries:0 }
-      ]
-    }
+      , pure $ Just $ UpdatePicture timestamp ] }
   foldp (Ajax PostEntryError) state =
     { state: state { ajaxState = Idle }
-    , effects: [ pure $ Just $ DeleteForm Reload ]
-    }
-  foldp (Ajax PostEntryFatalError) state =
-    noEffects $ state { ajaxState = Error }
+    , effects: [ pure $ Just $ DeleteForm Reload ] }
 
-  foldp (Picture (CheckIfReady {timestamp, retries})) state@{pictureState} =
-    case pictureState of
-      -- If l > timestamp, a newer CheckIfReady must have been triggered in the meantiime.
-      WaitingForUpdate l | l > timestamp -> noEffects state
-      _ -> onlyEffects state [ checkTimeStamp resourceName timestamp retries ]
-  foldp (Picture UpdatePicture) state =
-    noEffects state{pictureState = UpToDate}
   foldp (Form (Submit ev)) state =
     onlyEffects state [ do
       liftEff (preventDefault ev)
@@ -264,6 +236,8 @@ makeFoldp resourceName = foldp
   foldp (Form (SetDate d)) state@{ formState } =
     noEffects $ state { formState = formState { date = d } }
 
+  foldp (UpdatePicture _) state = noEffects state
+
   foldp (DeleteForm _) state = noEffects state
 
 
@@ -277,7 +251,7 @@ getCategories resourceName = do
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
       either
-        (log >=> const (pure $ Just $ Ajax GetCategoriesFatalError))
+        (log >=> const (pure $ Just $ Ajax GetCategoriesError))
         (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
         categories
     -- | If status is not 200, we expect an object of the form {error: String}
@@ -285,14 +259,14 @@ getCategories resourceName = do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax GetCategoriesFatalError)
+      pure $ Just $ Ajax GetCategoriesError
     Just (Left err) -> do
       log $ show err
       delay $ Milliseconds 1000.0
-      pure $ Just $ Ajax GetCategories
+      pure $ Just $ Ajax GetCategoriesError
     Nothing -> do
       log $ "Error: Request timed out while getting categories."
-      pure $ Just $ Ajax GetCategories
+      pure $ Just $ Ajax GetCategoriesError
 
 
 postEntry :: forall eff. String -> FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
@@ -307,67 +281,22 @@ postEntry resourceName formState = do
       let psr = decodePostSuccessResponse =<< jsonParser res.response
       either
         -- If we do not get a valid id back it's a server error and thus fatal.
-        (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
+        (log >=> const (pure $ Just $ Ajax PostEntryError))
         (pure <<< Just <<< Ajax <<< PostEntrySuccess)
         psr
     -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
-    -- Therefore, this error is fatal.
     -- We expect an object of the form {error: String}.
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while posting entry."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax PostEntryFatalError)
-    -- Timed out or something. Possibly no fatal error.
+      pure $ Just (Ajax PostEntryError)
+    -- Timed out or something.
     -- Reload entries in delete form as data integrity is no more guaranteed.
     Left err -> do
       log $ show err
       pure $ Just $ Ajax PostEntryError
 
-
-checkTimeStamp :: forall eff. String -> Instant -> Int -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
-checkTimeStamp resourceName stateTimestamp retries = do
-  -- query string at the end makes sure the timestamp is not being cached (cache buster).
-  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/generated/" <> resourceName <> "/timestamp")
-  case maybeRes of
-    Just (Right res) | res.status == (StatusCode 200) -> do
-      let ts = fromString res.response
-      maybe
-        -- Just wait a few seconds and reload the picture with the most recent timestamp if we cannot read the generated timestamp.
-        ( do
-          log $ "Error: Timestamp is not of type Number."
-          reloadAnywayAfterDelay
-        )
-        -- See, if received timestamp is greater or equal than t.
-        -- If so, issue reload. Otherwise wait a second and try again.
-        -- If number of retries is too high, just reload.
-        ( \x ->
-          if (Milliseconds x) >= (unInstant stateTimestamp) then
-            pure $ Just $ Picture $ UpdatePicture
-          else if retries < 30 then do
-            delay $ Milliseconds 1000.0
-            pure $ Just $ Picture $ CheckIfReady { timestamp: stateTimestamp, retries: retries + 1 }
-          else do
-            log $ "Error: Timestamp does not update on server."
-            reloadAnywayAfterDelay
-        )
-        ts
-    -- | If status is not 200, we expect an object of the form {error: String}
-    Just (Right res) -> do
-      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while GETting timestamp."
-      log $ "Response from server:"
-      log res.response
-      reloadAnywayAfterDelay
-    Just (Left err) -> do
-      log $ show err
-      reloadAnywayAfterDelay
-    Nothing -> do
-      log $ "Error: Request timed out while GETting timestamp."
-      reloadAnywayAfterDelay -- maybe it is smarter to try to GET the timestamp again?
-  where
-    reloadAnywayAfterDelay = do
-      delay $ Milliseconds 5000.0
-      pure $ Just $ Picture $ UpdatePicture
 
 
 decodeCategories :: Json -> Either String (List Category)

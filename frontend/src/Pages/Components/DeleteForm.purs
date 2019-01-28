@@ -20,6 +20,7 @@ import Data.Foldable (for_)
 
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Data.Time.Duration (Milliseconds (..))
+import Data.DateTime.Instant (Instant, unInstant, instant)
 
 import Data.Argonaut (Json, class DecodeJson, decodeJson, (.?), (:=), (~>), jsonEmptyObject)
 import Data.Argonaut.Parser (jsonParser)
@@ -42,8 +43,6 @@ import Utilities
 import Pages.Components
 import App.Component as AppComp
 
-
--- TODO: add updating of pictures after successful delete
 
 
 data ExternalEvent =
@@ -78,6 +77,7 @@ data Event =
     Init
   | Ajax AjaxEvent
   | Form FormEvent
+  | UpdatePicture Instant
   | External ExternalEvent
 
 data AjaxEvent =
@@ -85,7 +85,7 @@ data AjaxEvent =
   | GetEntriesSuccess (List Entry)
   | GetEntriesError
   | DeleteEntries
-  | DeleteEntriesSuccess
+  | DeleteEntriesSuccess Instant
   | DeleteEntriesError
 
 data FormEvent =
@@ -104,7 +104,6 @@ data AjaxState =
     Idle
   | GettingEntries
   | DeletingEntries
-  | Error
 
 
 
@@ -141,7 +140,6 @@ view { ajaxState, entries, checkedIds } = do
       Idle -> "Löschen"
       GettingEntries -> "Lade..."
       DeletingEntries -> "Lösche Einträge..."
-      Error -> "Fehler"
     isActive = case ajaxState of
       Idle -> true
       _ -> false
@@ -154,34 +152,28 @@ makeFoldp resourceName = foldp
   where
   foldp Init state =
     { state : state
-    , effects : [ pure $ Just $ Ajax GetEntries ]
-    }
+    , effects : [ pure $ Just $ Ajax GetEntries ] }
 
   foldp (Ajax GetEntries) state =
     { state: state { ajaxState = GettingEntries }
-    , effects: [ getEntries resourceName ]
-    }
+    , effects: [ getEntries resourceName ] }
   foldp (Ajax (GetEntriesSuccess entries)) state =
     noEffects $ state
       { ajaxState = Idle
-      , entries = entries
-      }
+      , entries = entries }
   foldp (Ajax GetEntriesError) state =
-    noEffects $ state { ajaxState = Error }
-
+    onlyEffects state [ pure $ Just (Ajax GetEntries) ]
   foldp (Ajax DeleteEntries) state@{checkedIds} =
     { state: state { ajaxState = DeletingEntries }
-    , effects: [ deleteEntries resourceName checkedIds ]
-    }
-  foldp (Ajax DeleteEntriesSuccess) state =
-    { state: state
-      { ajaxState = GettingEntries
-      , checkedIds = (empty :: Set Int)
-      }
-    , effects: [pure $ Just $ Ajax GetEntries]
-    }
+    , effects: [ deleteEntries resourceName checkedIds ] }
+  foldp (Ajax (DeleteEntriesSuccess timestamp)) state =
+    { state: state { checkedIds = (empty :: Set Int) }
+    , effects:
+      [ pure $ Just $ Ajax GetEntries
+      , pure $ Just $ UpdatePicture timestamp ] }
   foldp (Ajax DeleteEntriesError) state =
-    noEffects $ state { ajaxState = Idle }
+    { state: state{ checkedIds = (empty :: Set Int) }
+    , effects: [ pure $ Just (Ajax GetEntries) ] }
 
   foldp (Form (ToggleId id ev)) state@{checkedIds} =
     noEffects $ state {checkedIds = toggledIds}
@@ -195,6 +187,9 @@ makeFoldp resourceName = foldp
       pure $ Just $ Ajax DeleteEntries
       ]
 
+  foldp (UpdatePicture _) state =
+    noEffects state
+
   foldp (External (AddEntry entry)) state@{entries} =
     noEffects state
       { entries = entry `Cons` entries
@@ -205,7 +200,6 @@ makeFoldp resourceName = foldp
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
--- | Otherwise success or fatal error.
 getEntries :: forall eff. String -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries resourceName = do
   maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching $ "/backend/api/" <> resourceName <> "/entries.php")
@@ -221,14 +215,14 @@ getEntries resourceName = do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching entries."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax GetEntriesError)
+      pure $ Just $ Ajax GetEntriesError
     Just (Left err) -> do
       log $ show err
       delay $ Milliseconds 1000.0
-      pure $ Just $ Ajax GetEntries
+      pure $ Just $ Ajax GetEntriesError
     Nothing -> do
       log $ "Error: Request timed out while getting entries."
-      pure $ Just $ Ajax GetEntries
+      pure $ Just $ Ajax GetEntriesError
 
 
 deleteEntries :: forall eff. String -> Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
@@ -238,7 +232,11 @@ deleteEntries resourceName checkedIds = do
   --      integrity of data. I.e.: reload entries.
   case r of
     Right res | res.status == (StatusCode 200) -> do
-      pure $ Just $ Ajax DeleteEntriesSuccess
+      let dsr = decodeDeleteSuccessResponse =<< jsonParser res.response
+      either
+        (log >=> const (pure $ Just $ Ajax DeleteEntriesError))
+        (pure <<< Just <<< Ajax <<< DeleteEntriesSuccess)
+        dsr
     -- If status is not 200, we expect an object of the form {error: String}
     Right res -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while deleting entries."
@@ -267,3 +265,11 @@ encodeCheckedIds :: Set Int -> Json
 encodeCheckedIds ids =
   "ids" := fromFoldable ids
   ~> jsonEmptyObject
+
+decodeDeleteSuccessResponse :: Json -> Either String Instant
+decodeDeleteSuccessResponse r = do
+  obj <- decodeJson r
+  t <- obj .? "timestamp"
+  case (instant (Milliseconds t)) of
+    Nothing -> Left "Error: Timestamp received from server is out of range."
+    Just timestamp -> Right timestamp

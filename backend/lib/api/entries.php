@@ -237,7 +237,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
     exit;
   }
 
-  // Delete rows, respond 200 and a dummy JSON object
+  // Delete rows, respond 200 and a JSON object with the timestamp of the new picture
   $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
   if ($mysqli->connect_errno)
   {
