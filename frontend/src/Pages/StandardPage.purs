@@ -112,13 +112,13 @@ makeFoldp resourceName = foldp
     where
       inputFormEffModel = (IF.makeFoldp resourceName) ev inputFormState
       inputFormEffects = map (map InputFormEvent) <$> inputFormEffModel.effects
-      deleteFormEvent = IF.deleteFormEvent ev
+      deleteFormEvent = map DeleteFormEvent $ IF.deleteFormEvent ev
       pictureEvent = case ev of
         (IF.UpdatePicture timestamp) -> Just $ Picture $ CheckIfReady {timestamp, retries:0}
         _ -> Nothing
       effects =
         inputFormEffects <>
-        [ pure $ map DeleteFormEvent deleteFormEvent
+        [ pure deleteFormEvent
         , pure pictureEvent ]
 
   foldp (DeleteFormEvent ev) state@{deleteFormState} =

@@ -271,11 +271,9 @@ getCategories resourceName = do
 
 postEntry :: forall eff. String -> FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 postEntry resourceName formState = do
-  r <- attempt $ (post $ "/backend/api/" <> resourceName <> "/entries.php") $ encodeFormState formState
-  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
-  --      integrity of data. I.e.: reload entries.
-  case r of
-    Right res | res.status == (StatusCode 200) -> do
+  maybeRes <- attemptWithTimeout 10000.0 $ post ("/backend/api/" <> resourceName <> "/entries.php") (encodeFormState formState)
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, get the id assigned to the new entry,
       -- reset the amount in the form and pass the new entry to the delete form.
       let psr = decodePostSuccessResponse =<< jsonParser res.response
@@ -286,15 +284,18 @@ postEntry resourceName formState = do
         psr
     -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
     -- We expect an object of the form {error: String}.
-    Right res -> do
+    Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while posting entry."
       log $ "Response from server:"
       log res.response
       pure $ Just (Ajax PostEntryError)
     -- Timed out or something.
     -- Reload entries in delete form as data integrity is no more guaranteed.
-    Left err -> do
+    Just (Left err) -> do
       log $ show err
+      pure $ Just $ Ajax PostEntryError
+    Nothing -> do
+      log $ "Error: Request timed out while posting entries."
       pure $ Just $ Ajax PostEntryError
 
 

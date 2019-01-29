@@ -227,24 +227,25 @@ getEntries resourceName = do
 
 deleteEntries :: forall eff. String -> Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 deleteEntries resourceName checkedIds = do
-  r <- attempt $ AJ.affjax deleteRequest
-  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check
-  --      integrity of data. I.e.: reload entries.
-  case r of
-    Right res | res.status == (StatusCode 200) -> do
+  maybeRes <- attemptWithTimeout 10000.0 $ AJ.affjax deleteRequest
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
       let dsr = decodeDeleteSuccessResponse =<< jsonParser res.response
       either
         (log >=> const (pure $ Just $ Ajax DeleteEntriesError))
         (pure <<< Just <<< Ajax <<< DeleteEntriesSuccess)
         dsr
     -- If status is not 200, we expect an object of the form {error: String}
-    Right res -> do
+    Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while deleting entries."
       log $ "Response from server:"
       log res.response
       pure $ Just $ Ajax DeleteEntriesError
-    Left err -> do
+    Just (Left err) -> do
       log $ show err
+      pure $ Just $ Ajax DeleteEntriesError
+    Nothing -> do
+      log $ "Error: Request timed out while deleting entries."
       pure $ Just $ Ajax DeleteEntriesError
   where
     deleteRequest = AJ.defaultRequest

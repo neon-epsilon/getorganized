@@ -46,16 +46,15 @@ import Pages.Components.ShoppingListDeleteForm as DF
 
 
 instance appComponentEvent :: AppComp.ComponentEvent Event where
-  getAppEvent (Ajax GetCategoriesFatalError) = AppComp.UserMessage "Fehler beim Laden von Daten"
+  getAppEvent (Ajax GetCategoriesError) = AppComp.UserMessage "Fehler beim Laden von Daten"
   getAppEvent (Ajax PostEntryError) = AppComp.UserMessage "Fehler beim Senden von Daten"
-  getAppEvent (Ajax PostEntryFatalError) = AppComp.UserMessage "Fehler beim Senden von Daten"
   getAppEvent _ = AppComp.NoOp
 
 
-instance deleteFormEvent :: DF.DeleteFormEventClass Event where
-  getExternalEvent (DeleteForm (AddEntry entry)) = DF.AddEntry entry
-  getExternalEvent (DeleteForm Reload) = DF.Reload
-  getExternalEvent _ = DF.NoOp
+deleteFormEvent :: Event -> Maybe DF.Event
+deleteFormEvent (DeleteForm (AddEntry entry)) = Just $ DF.External $ DF.AddEntry entry
+deleteFormEvent (DeleteForm Reload) = Just $ DF.External DF.Reload
+deleteFormEvent _ = Nothing
 
 
 
@@ -68,11 +67,10 @@ data Event =
 data AjaxEvent =
     GetCategories
   | GetCategoriesSuccess (List Category)
-  | GetCategoriesFatalError
+  | GetCategoriesError
   | PostEntry
   | PostEntrySuccess Int
   | PostEntryError
-  | PostEntryFatalError
 
 data FormEvent =
     Submit DOMEvent
@@ -94,7 +92,6 @@ data AjaxState =
     Idle
   | GettingCategories
   | PostingEntry
-  | Error
 
 
 newtype Category = Category
@@ -147,7 +144,6 @@ view { ajaxState, categories, formState } = do
       Idle -> "Speichern"
       GettingCategories -> "Lade..."
       PostingEntry -> "Sende Daten..."
-      Error -> "Fehler"
     isActive = case ajaxState of
       Idle -> true
       _ -> false
@@ -158,13 +154,11 @@ foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp Init state =
   { state : state
-  , effects : [ pure $ Just $ Ajax GetCategories ]
-  }
+  , effects : [ pure $ Just $ Ajax GetCategories ] }
 
 foldp (Ajax GetCategories) state =
   { state: state { ajaxState = GettingCategories }
-  , effects: [ getCategories ]
-  }
+  , effects: [ getCategories ] }
 -- | Receive categories and store them sorted by their priority value
 -- | If the received list is empty, set ajaxState = Error as we
 -- | cannot recover from this state without action on the server side.
@@ -177,36 +171,28 @@ foldp (Ajax (GetCategoriesSuccess categories)) state@{ formState } =
       }
     Nil -> onlyEffects state [ do
       log "Error: Received empty list of categories from server."
-      pure $ Just $ Ajax GetCategoriesFatalError
+      pure $ Just $ Ajax GetCategoriesError
       ]
-foldp (Ajax GetCategoriesFatalError) state =
-  noEffects $ state { ajaxState = Error }
+foldp (Ajax GetCategoriesError) state =
+  onlyEffects state [pure $ Just $ Ajax GetCategories]
 foldp (Ajax PostEntry) state =
   { state: state { ajaxState = PostingEntry }
-  , effects: [ postEntry state.formState ]
-  }
+  , effects: [ postEntry state.formState ] }
 foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
   { state: state
     { formState = formState { name = "" }
-    , ajaxState = Idle
-    }
+    , ajaxState = Idle }
   , effects:
     [ pure $ Just $ DeleteForm $ AddEntry $
-      DF.Entry { id: id, name: formState.name, category: formState.category }
-    ]
-  }
+      DF.Entry { id: id, name: formState.name, category: formState.category } ] }
 foldp (Ajax PostEntryError) state =
   { state: state { ajaxState = Idle }
-  , effects: [ pure $ Just $ DeleteForm Reload ]
-  }
-foldp (Ajax PostEntryFatalError) state =
-  noEffects $ state { ajaxState = Error }
+  , effects: [ pure $ Just $ DeleteForm Reload ] }
 
 foldp (Form (Submit ev)) state =
   onlyEffects state [ do
     liftEff (preventDefault ev)
-    pure $ Just $ Ajax PostEntry
-    ]
+    pure $ Just $ Ajax PostEntry ]
 foldp (Form (NameChange ev)) state@{ formState } =
   noEffects $ state { formState = formState { name = targetValue ev } }
 foldp (Form (CategoryChange ev)) state@{ formState } =
@@ -217,7 +203,6 @@ foldp (DeleteForm _) state = noEffects state
 
 -- | Get categories. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
--- | Otherwise success or fatal error.
 getCategories :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 getCategories = do
   maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/backend/api/shoppinglist/categories.php")
@@ -225,7 +210,7 @@ getCategories = do
     Just (Right res) | res.status == (StatusCode 200) -> do
       let categories = decodeCategories =<< jsonParser res.response
       either
-        (log >=> const (pure $ Just $ Ajax GetCategoriesFatalError))
+        (log >=> const (pure $ Just $ Ajax GetCategoriesError))
         (pure <<< Just <<< Ajax <<< GetCategoriesSuccess)
         categories
     -- | If status is not 200, we expect an object of the form {error: String}
@@ -233,43 +218,43 @@ getCategories = do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching categories."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax GetCategoriesFatalError)
+      pure $ Just $ Ajax GetCategoriesError
     Just (Left err) -> do
       log $ show err
       delay $ Milliseconds 1000.0
-      pure $ Just $ Ajax GetCategories
+      pure $ Just $ Ajax GetCategoriesError
     Nothing -> do
       log $ "Error: Request timed out while getting categories."
-      pure $ Just $ Ajax GetCategories
+      pure $ Just $ Ajax GetCategoriesError
 
 
 postEntry :: forall eff. FormState -> Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
 postEntry formState = do
-  r <- attempt $ post "/backend/api/shoppinglist/entries.php" $ encodeFormState formState
-  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
-  --      integrity of data. I.e.: reload entries.
-  case r of
-    Right res | res.status == (StatusCode 200) -> do
+  maybeRes <- attemptWithTimeout 10000.0 $ post "/backend/api/shoppinglist/entries.php" (encodeFormState formState)
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
       -- If we POSTed successfully, get the id assigned to the new entry,
       -- reset the amount in the form and pass the new entry to the delete form.
       let id = decodeId =<< jsonParser res.response
       either
-        -- If we do not get a valid id back it's a server error and thus fatal.
-        (log >=> const (pure $ Just $ Ajax PostEntryFatalError))
+        -- If we do not get a valid id back it's a server error.
+        (log >=> const (pure $ Just $ Ajax PostEntryError))
         (pure <<< Just <<< Ajax <<< PostEntrySuccess)
         id
     -- If status is not 200, it should be 50* because we assume that no client error 40* is possible.
-    -- Therefore, this error is fatal.
     -- We expect an object of the form {error: String}.
-    Right res -> do
+    Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while posting entry."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax PostEntryFatalError)
-    -- Timed out or something. Possibly no fatal error.
+      pure $ Just (Ajax PostEntryError)
+    -- Timed out or something.
     -- Reload entries in delete form as data integrity is no more guaranteed.
-    Left err -> do
+    Just (Left err) -> do
       log $ show err
+      pure $ Just $ Ajax PostEntryError
+    Nothing -> do
+      log $ "Error: Request timed out while posting entry."
       pure $ Just $ Ajax PostEntryError
 
 

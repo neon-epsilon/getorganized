@@ -49,10 +49,6 @@ import App.Component as AppComp
 data ExternalEvent =
     AddEntry Entry
   | Reload
-  | NoOp
-
-class DeleteFormEventClass e where
-  getExternalEvent :: e -> ExternalEvent
 
 
 newtype Entry = Entry
@@ -106,7 +102,6 @@ data AjaxState =
     Idle
   | GettingEntries
   | DeletingEntries
-  | Error
 
 
 
@@ -141,7 +136,6 @@ view { ajaxState, entries, checkedIds } = do
       Idle -> "Löschen"
       GettingEntries -> "Lade..."
       DeletingEntries -> "Lösche Einträge..."
-      Error -> "Fehler"
     isActive = case ajaxState of
       Idle -> true
       _ -> false
@@ -152,33 +146,29 @@ foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJ.AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp Init state =
   { state : state
-  , effects : [ pure $ Just $ Ajax GetEntries ]
-  }
+  , effects : [ pure $ Just $ Ajax GetEntries ] }
 
 foldp (Ajax GetEntries) state =
   { state: state { ajaxState = GettingEntries }
-  , effects: [ getEntries ]
-  }
+  , effects: [ getEntries ] }
 foldp (Ajax (GetEntriesSuccess entries)) state =
   noEffects $ state
     { ajaxState = Idle
-    , entries = entries
-    }
+    , entries = entries }
 foldp (Ajax GetEntriesError) state =
-  noEffects $ state { ajaxState = Error }
+  onlyEffects state [ pure $ Just $ Ajax GetEntries ]
 
 foldp (Ajax DeleteEntries) state@{checkedIds} =
   { state: state { ajaxState = DeletingEntries }
-  , effects: [ deleteEntries checkedIds ]
-  }
+  , effects: [ deleteEntries checkedIds ] }
 foldp (Ajax DeleteEntriesSuccess) state@{checkedIds, entries} =
   noEffects $ state
     { ajaxState = Idle
     , checkedIds = (empty :: Set Int)
-    , entries = filter (\(Entry x) -> not $ x.id `member` checkedIds) entries
-    }
+    , entries = filter (\(Entry x) -> not $ x.id `member` checkedIds) entries }
 foldp (Ajax DeleteEntriesError) state =
-  noEffects $ state { ajaxState = Idle }
+  { state: state { checkedIds = (empty :: Set Int) }
+  , effects: [ pure $ Just $ Ajax GetEntries ] }
 
 foldp (Form (ToggleId id ev)) state@{checkedIds} =
   noEffects $ state {checkedIds = toggledIds}
@@ -198,13 +188,10 @@ foldp (External (AddEntry entry)) state@{entries} =
     }
 foldp (External Reload) state =
   onlyEffects state [pure $ Just $ Ajax GetEntries]
-foldp (External NoOp) state =
-  noEffects state
 
 
 -- | Get entries. If there is a recoverable error, wait a second and retry.
 -- | If no answer from server after ten seconds, retry.
--- | Otherwise success or fatal error.
 getEntries :: forall eff. Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 getEntries = do
   maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/backend/api/shoppinglist/entries.php")
@@ -220,32 +207,33 @@ getEntries = do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while fetching entries."
       log $ "Response from server:"
       log res.response
-      pure $ Just (Ajax GetEntriesError)
+      pure $ Just $ Ajax GetEntriesError
     Just (Left err) -> do
       log $ show err
       delay $ Milliseconds 1000.0
-      pure $ Just $ Ajax GetEntries
+      pure $ Just $ Ajax GetEntriesError
     Nothing -> do
       log $ "Error: Request timed out while getting entries."
-      pure $ Just $ Ajax GetEntries
+      pure $ Just $ Ajax GetEntriesError
 
 
 deleteEntries :: forall eff. Set Int -> Aff (ajax :: AJ.AJAX, console :: CONSOLE | eff) (Maybe Event)
 deleteEntries checkedIds = do
-  r <- attempt $ AJ.affjax deleteRequest
-  --TODO: Attempt with timout. In the case when an attempt was timed out we need to check 
-  --      integrity of data. I.e.: reload entries.
-  case r of
-    Right res | res.status == (StatusCode 200) -> do
+  maybeRes <- attemptWithTimeout 10000.0 $ AJ.affjax deleteRequest
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
       pure $ Just $ Ajax DeleteEntriesSuccess
     -- If status is not 200, we expect an object of the form {error: String}
-    Right res -> do
+    Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while deleting entries."
       log $ "Response from server:"
       log res.response
       pure $ Just $ Ajax DeleteEntriesError
-    Left err -> do
+    Just (Left err) -> do
       log $ show err
+      pure $ Just $ Ajax DeleteEntriesError
+    Nothing -> do
+      log $ "Error: Request timed out while deleting entries."
       pure $ Just $ Ajax DeleteEntriesError
   where
     deleteRequest = AJ.defaultRequest
