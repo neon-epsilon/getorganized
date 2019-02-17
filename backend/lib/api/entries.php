@@ -45,7 +45,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   }
 
   // query for entries
-  if (! $result = $mysqli->query("SELECT id, date, amount, category FROM " . $db_name . "_entries ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
+  if (! $result = $mysqli->query("SELECT id, date, amount, category, comment FROM " . $db_name . "_entries ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
     internal_server_error( "Query failed: (" . $mysqli->errno . ") " . $mysqli->error );
     exit;
   }
@@ -77,6 +77,9 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   $date = $data["date"];
   $amount = $data["amount"];
   $category = $data["category"];
+  $comment = $data["comment"];
+
+  if($comment === NULL) $comment = "";
 
   // Validierung
   $valid = true;
@@ -115,6 +118,12 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $valid = false;
     $invalid_fields[] = "category";
   }
+  // validate comment
+  if(! is_string($comment) )
+  {
+    $valid = false;
+    $invalid_fields[] = "comment";
+  }
 
   if(! $valid)
   {
@@ -135,9 +144,9 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     }
 
     $query = "INSERT INTO " . $db_name . "_entries
-      (date, amount, category)
+      (date, amount, category, comment)
       VALUES
-      (?,?,?)";
+      (?,?,?,?)";
 
     /* create a prepared statement */
     if (! $stmt = $mysqli->prepare($query)) {
@@ -146,7 +155,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     }
 
     /* bind parameters for markers */
-    if (! $stmt->bind_param("sds", $date, $amount, $category) ) {
+    if (! $stmt->bind_param("sdss", $date, $amount, $category, $comment) ) {
       internal_server_error( "Binding parameters failed: (" . $mysqli->errno . ") " . $mysqli->error);
       exit;
     }

@@ -22,7 +22,7 @@ if GET:
     200, {entries: [ {(id: int, date: string, category:string, amount: float)} ]}
 elif POST:
   expect JSON payload:
-    {(date: string, category:string, amount: float)}
+    {(date: string, category:string, amount: float, comment: String (default: ""))}
   if payload malformed:
     400, {error: String}
   if fields invalid:
