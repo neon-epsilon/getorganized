@@ -3,3 +3,9 @@ name = getorganized
 host = localhost
 user = root
 password = root
+
+[DB_shoppinglist]
+name = getorganized
+host = localhost
+user = root
+password = root

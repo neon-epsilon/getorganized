@@ -5,7 +5,7 @@ $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true)
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
 
   if ($mysqli->connect_errno)
   {

@@ -34,7 +34,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
     exit;
   }
 
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
   if ($mysqli->connect_errno)
   {
     internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
@@ -77,7 +77,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   $invalid_fields = array();
   // validate category
   // Get list of categories
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
   if ($mysqli->connect_errno)
   {
       internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
@@ -109,7 +109,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
   else
   {
-    $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+    $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
     if ($mysqli->connect_errno)
     {
         internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
@@ -180,7 +180,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
     }
   }
 
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
   if ($mysqli->connect_errno)
   {
     internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
@@ -215,7 +215,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
 
   // Delete rows, respond 200 and a dummy JSON object
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
   if ($mysqli->connect_errno)
   {
     internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
