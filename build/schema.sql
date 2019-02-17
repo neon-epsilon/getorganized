@@ -1,5 +1,3 @@
--- TODO: add "comment" field to hoursofwork, calories
-
 -- ---------- calories --------------
 
 DROP TABLE IF EXISTS `calories_entries`;
@@ -23,7 +21,8 @@ CREATE TABLE `calories_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
-  `category` varchar(40),
+  `category` varchar(40) NOT NULL,
+  `comment` varchar(40) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
   CONSTRAINT `calories_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `calories_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
@@ -65,7 +64,8 @@ CREATE TABLE `hoursofwork_entries` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `amount` decimal(15,2) NOT NULL,
   `date` date NOT NULL,
-  `category` varchar(40),
+  `category` varchar(40) NOT NULL,
+  `comment` varchar(40) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `category` (`category`),
   CONSTRAINT `hoursofwork_entries_ibfk_1` FOREIGN KEY (`category`) REFERENCES `hoursofwork_categories` (`category`) ON DELETE NO ACTION ON UPDATE CASCADE
