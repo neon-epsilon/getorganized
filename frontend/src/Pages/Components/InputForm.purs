@@ -82,6 +82,7 @@ data FormEvent =
   | DateChange DOMEvent
   | CategoryChange DOMEvent
   | AmountChange DOMEvent
+  | CommentChange DOMEvent
   | SetDate String
 
 data DeleteFormEvent =
@@ -117,7 +118,8 @@ data AjaxState =
 type FormState =
   { date :: String
   , category :: String
-  , amount :: String }
+  , amount :: String
+  , comment :: String }
 
 
 init :: State
@@ -130,7 +132,8 @@ initFormState :: FormState
 initFormState =
   { date : ""
   , category: ""
-  , amount: "" }
+  , amount: ""
+  , comment: "" }
 
 
 
@@ -152,6 +155,9 @@ view { ajaxState, categories, formState } = do
         categories)
         ! value formState.category
         #! onChange (Form <<< CategoryChange)
+    li $ do
+      label $ text "Kommentar:"
+      textInput ! value formState.comment #! onChange (Form <<< CommentChange)
   where
     buttonText = case ajaxState of
       Idle -> "Speichern"
@@ -233,6 +239,8 @@ makeFoldp resourceName = foldp
     noEffects $ state { formState = formState { category = targetValue ev } }
   foldp (Form (AmountChange ev)) state@{ formState } =
     noEffects $ state { formState = formState { amount = targetValue ev } }
+  foldp (Form (CommentChange ev)) state@{ formState } =
+    noEffects $ state { formState = formState { comment = targetValue ev } }
   foldp (Form (SetDate d)) state@{ formState } =
     noEffects $ state { formState = formState { date = d } }
 
@@ -326,4 +334,5 @@ encodeFormState formState =
   "date" := formState.date
   ~> "category" := formState.category
   ~> "amount" := (fromMaybe nan $ fromString formState.amount)
+  ~> "comment" := formState.comment
   ~> jsonEmptyObject

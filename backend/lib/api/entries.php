@@ -5,8 +5,6 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
 
-// TODO: use "comment" property of POST requests
-
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
