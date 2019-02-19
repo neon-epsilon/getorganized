@@ -22,7 +22,7 @@ import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.HTML (HTML, mapEvent)
 import Text.Smolder.Markup ((!), text)
 import Text.Smolder.HTML (img)
-import Text.Smolder.HTML.Attributes (src)
+import Text.Smolder.HTML.Attributes (src, className)
 
 import Pages.Components
 import App.Component as AppComp
@@ -75,8 +75,13 @@ makeView resourceName = view
         mapEvent InputFormEvent $ IF.view inputFormState
         mapEvent DeleteFormEvent $ DF.view deleteFormState
       box $ do
-        img ! src ("/generated/" <> resourceName <> "/chart_7days.png?" <> pictureState.timestamp)
-        img ! src ("/generated/" <> resourceName <> "/chart_progress.png?" <> pictureState.timestamp)
+        styledImage ! src ("/generated/" <> resourceName <> "/chart_7days.png?" <> pictureState.timestamp)
+        styledImage ! src ("/generated/" <> resourceName <> "/chart_progress.png?" <> pictureState.timestamp)
+      where
+      styledImage = case pictureState.waitingForUpdate of
+        Nothing -> img
+        _ -> img ! className "loading"
+
 
 
 
@@ -96,8 +101,8 @@ makeFoldp resourceName = foldp
       n <- (liftEff now)
       pure $ Just $ Picture $ UpdateTimestamp $ (\(Milliseconds t) -> show t) (unInstant n)
       ]
-  foldp (Picture (UpdateTimestamp t)) state@{pictureState} =
-    noEffects $ state { pictureState = pictureState{ timestamp = t} }
+  foldp (Picture (UpdateTimestamp t)) state =
+    noEffects $ state { pictureState = {timestamp: t, waitingForUpdate: Nothing} }
   foldp (Picture (CheckIfReady {timestamp, retries})) state@{pictureState} =
     case pictureState.waitingForUpdate of
       -- If l > timestamp, a newer CheckIfReady must have been triggered in the meantiime.
