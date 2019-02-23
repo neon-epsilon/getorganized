@@ -2,15 +2,18 @@ module App where
 
 import Prelude
 import Data.Maybe (Maybe (..))
+import Data.Either (Either (..))
 
 import Control.Monad.Eff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
-import Control.Monad.Aff (delay)
+import Control.Monad.Aff (Aff, delay)
+import Control.Monad.Aff.Console (log, CONSOLE)
 import Data.Time.Duration (Milliseconds (..))
 import DOM (DOM)
 import Network.HTTP.Affjax (AJAX)
+import Network.HTTP.StatusCode (StatusCode(..))
 
-import Pux (EffModel, noEffects)
+import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.HTML (HTML, mapEvent)
 import Text.Smolder.HTML (h1)
 import Text.Smolder.Markup (text)
@@ -21,6 +24,7 @@ import Pages.Home as Home
 import Pages.StandardPage as StandardPage
 import Pages.ShoppingList as ShoppingList
 
+import Utilities
 
 
 hoursOfWorkResource = "hoursofwork"
@@ -31,6 +35,7 @@ caloriesResource = "calories"
 
 data Event =
   Init |
+  InitComponents |
   NavigateTo Route |
   FlashMessage String |
   UnFlashMessage Int |
@@ -69,6 +74,8 @@ foldp :: forall eff. Event -> State
   -> EffModel State Event (ajax :: AJAX, console :: CONSOLE, dom :: DOM, now :: NOW | eff)
 foldp (NavigateTo route) state = noEffects $ state { currentRoute = route }
 foldp Init state =
+  onlyEffects state [checkIfAuthenticated]
+foldp InitComponents state =
   { state: state
   , effects:
     [ pure $ Just $ HoursOfWorkEvent StandardPage.Init
@@ -130,6 +137,32 @@ foldp (ShoppingListEvent shoppingListEvent) state@{shoppingListState} =
     effects = case getAppEvent shoppingListEvent of
       NoOp -> shoppingListEffects
       UserMessage s -> [pure $ Just $ FlashMessage s] <> shoppingListEffects
+
+checkIfAuthenticated :: forall eff. Aff (ajax :: AJAX, console :: CONSOLE | eff) (Maybe Event)
+checkIfAuthenticated = do
+  maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/index.html")
+  case maybeRes of
+    Just (Right res) | res.status == (StatusCode 200) -> do
+      pure $ Just $ InitComponents
+    -- if status is 401, wait ten seconds and try again
+    Just (Right res) | res.status == (StatusCode 401) -> do
+      delay $ Milliseconds 10000.0
+      checkIfAuthenticated
+    -- If status is neither 200 nor 401, we expect an object of the form {error: String}
+    Just (Right res) -> do
+      log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while checking if authenticated."
+      log $ "Response from server:"
+      log res.response
+      delay $ Milliseconds 1000.0
+      checkIfAuthenticated
+    Just (Left err) -> do
+      log $ show err
+      delay $ Milliseconds 1000.0
+      checkIfAuthenticated
+    Nothing -> do
+      log $ "Error: Request timed out while checking if authenticated."
+      checkIfAuthenticated
+
 
 
 
