@@ -32,7 +32,7 @@ instance appComponentEvent :: AppComp.ComponentEvent Event where
 
 
 type State =
-  { inputFormState :: IF.State 
+  { inputFormState :: IF.State
   , deleteFormState :: DF.State
   }
 

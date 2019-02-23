@@ -20,7 +20,7 @@ import Data.Time.Duration(Milliseconds(..))
 
 import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.HTML (HTML, mapEvent)
-import Text.Smolder.Markup ((!), text)
+import Text.Smolder.Markup (Markup, (!), text)
 import Text.Smolder.HTML (img)
 import Text.Smolder.HTML.Attributes (src, className)
 
@@ -65,23 +65,32 @@ init =
   }
 
 
-
 makeView :: String -> State -> HTML Event
 makeView resourceName = view
   where
-  view { inputFormState, deleteFormState, pictureState } =
+  view state@{ inputFormState, deleteFormState, pictureState } =
     container $ do
       smallBox $ do
         mapEvent InputFormEvent $ IF.view inputFormState
         mapEvent DeleteFormEvent $ DF.view deleteFormState
       box $ do
-        styledImage ! src ("/generated/" <> resourceName <> "/chart_7days.png?" <> pictureState.timestamp)
-        styledImage ! src ("/generated/" <> resourceName <> "/chart_progress.png?" <> pictureState.timestamp)
-      where
-      styledImage = case pictureState.waitingForUpdate of
-        Nothing -> img
-        _ -> img ! className "loading"
+        makeImageLink7Days resourceName state
+        makeImageLinkProgress resourceName state
 
+makeImageLink7Days :: forall e. String -> State -> Markup e
+makeImageLink7Days resourceName {pictureState} =
+  styledImage ! src ("/generated/" <> resourceName <> "/chart_7days.png?" <> pictureState.timestamp)
+  where
+  styledImage = case pictureState.waitingForUpdate of
+    Nothing -> img
+    _ -> img ! className "loading"
+makeImageLinkProgress :: forall e. String -> State -> Markup e
+makeImageLinkProgress resourceName {pictureState} =
+  styledImage ! src ("/generated/" <> resourceName <> "/chart_progress.png?" <> pictureState.timestamp)
+  where
+  styledImage = case pictureState.waitingForUpdate of
+    Nothing -> img
+    _ -> img ! className "loading"
 
 
 
@@ -131,7 +140,7 @@ makeFoldp resourceName = foldp
     , effects: effects }
     where
       deleteFormEffModel = (DF.makeFoldp resourceName) ev deleteFormState
-      deleteFormEffects = map (map DeleteFormEvent) <$> deleteFormEffModel.effects 
+      deleteFormEffects = map (map DeleteFormEvent) <$> deleteFormEffModel.effects
       pictureEvent = case ev of
         (DF.UpdatePicture timestamp) -> Just $ Picture $ CheckIfReady {timestamp, retries:0}
         _ -> Nothing
