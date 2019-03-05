@@ -18,7 +18,7 @@ import config
 config.www_root = str(config.www_root)
 
 # other imports
-import MySQLdb
+import pymysql
 import pandas as pd
 import time
 import datetime
@@ -40,7 +40,7 @@ else:
 
 
 # fetch from database
-con = MySQLdb.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
 # fetch hours to work in one week
 weekly_goal = pd.io.sql.read_sql('select value from hoursofwork_goals where property="weekly goal"', con=con)['value'][0]
 #fetch categories
@@ -84,7 +84,7 @@ per_day = per_day.fillna(0)
 seven_days_per_day = per_day[-7:]
 
 # create list of categories for 7 day plot
-seven_days_categories = seven_days_per_day.sum().order(ascending=False)
+seven_days_categories = seven_days_per_day.sum().sort_values(ascending=False)
 seven_days_categories_nonzero = list( seven_days_categories[seven_days_categories != 0].index )
 if len(seven_days_categories_nonzero) == 0:
     seven_days_per_day['Alles'] = np.zeros(7)
@@ -119,7 +119,7 @@ figprogress = plt.figure(figsize=(7,3))
 
 ### bar chart for this week's progress
 # aggregate data
-this_week = per_day[-today.weekday()-1:].sum().order(ascending=False)
+this_week = per_day[-today.weekday()-1:].sum().sort_values(ascending=False)
 this_week = this_week[this_week != 0]
 if len(this_week) == 0:
     this_week['Alles'] = 0
@@ -142,7 +142,7 @@ axweek.set_yticklabels([''])
 
 ### bar chart for this month's progress
 # aggregate data
-this_month = per_day[-today.day:].sum().order(ascending=False)
+this_month = per_day[-today.day:].sum().sort_values(ascending=False)
 this_month = this_month[this_month != 0]
 if len(this_month) == 0:
     this_month['Alles'] = 0
@@ -180,4 +180,4 @@ figprogress.savefig(config.www_root + chart_progress_outputpath)
 
 ### save timestamp to file
 with open(config.www_root + timestamp_outputpath, 'w') as f:
-    f.write(timestamp.encode('utf-8'))
+    f.write(timestamp)
