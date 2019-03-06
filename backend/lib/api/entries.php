@@ -4,7 +4,8 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
-
+$python = $_SERVER["DOCUMENT_ROOT"] . "/backend/virtualenv/bin/python";
+$output_build_script = $_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py";
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
@@ -179,7 +180,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $mysqli->close();
 
     /* rebuild output */
-    exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py " . strval($timestamp) . " > /dev/null 2> /dev/null &");
+    exec($python . " " . $output_build_script . " " . strval($timestamp) . " > /dev/null 2> /dev/null &");
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -268,7 +269,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   ));
 
   /* rebuild output */
-  exec($_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py " . strval($timestamp) . " > /dev/null 2> /dev/null &");
+  exec($python . " " . $output_build_script . " " . strval($timestamp) . " > /dev/null 2> /dev/null &");
 }
 else
 {
