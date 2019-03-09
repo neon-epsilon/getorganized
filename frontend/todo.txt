@@ -1,0 +1,7 @@
+Reset input form after successfully POSTing its contents
+
+Stop retrying a failed AJAX request after timeout, instead reload.
+Also: Check, which failed AJAX requests should just be tried again, and which should just fail.
+(Right now, every AJAX request that fails is just tried again.)
+
+After initial GET request fails with 401 (not authorized), stop retrying.

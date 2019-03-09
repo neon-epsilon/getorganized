@@ -21,7 +21,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   }
 
   if($start === NULL) $start = 0;
-  if($limit === NULL) $limit = 10;
+  if($limit === NULL) $limit = 999;
 
   if(! is_nonnegative_int($start))
   {

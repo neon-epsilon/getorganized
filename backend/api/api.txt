@@ -59,7 +59,7 @@ else:
 if GET:
   expect JSON payload:
     {
-      limit: non-negative integer (default: 10)
+      limit: non-negative integer (default: 999)
       start: non-negative integer (default: 0)
     }
   if payload malformed:
