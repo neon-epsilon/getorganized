@@ -5,3 +5,5 @@ Also: Check, which failed AJAX requests should just be tried again, and which sh
 (Right now, every AJAX request that fails is just tried again.)
 
 After initial GET request fails with 401 (not authorized), stop retrying.
+
+Make sure that shoppinglist is readable, even with long entries.
