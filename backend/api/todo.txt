@@ -1,2 +1,0 @@
-GET cannot contain a payload! -> limit and start need to go into query string.
-After this, default limit of shoppinglist/entries.php (GET) needs to be set to 10 again.

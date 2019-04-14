@@ -7,30 +7,22 @@ $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true)
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
-  $request_body = file_get_contents('php://input');
-  $data = json_decode($request_body, true);
-  if($data === NULL) // A request without body is accepted.
-  {
-    $start = NULL;
-    $limit = NULL;
-  }
-  else
-  {
-    $start = $data["start"];
-    $limit = $data["limit"];
-  }
+  $start = $_GET['start'];
+  $limit = $_GET['limit'];
 
-  if($start === NULL) $start = 0;
-  if($limit === NULL) $limit = 999;
-
-  if(! is_nonnegative_int($start))
+  if($start === NULL)
+    $start = "0";
+  else if(!ctype_digit($start))
   {
-    bad_request("Parameter 'start' is of wrong type.");
+    bad_request("Parameter 'start' is not a non-negative integer.");
     exit;
   }
-  if(! is_nonnegative_int($limit))
+
+  if($limit === NULL)
+    $limit = "10";
+  else if(!ctype_digit($limit))
   {
-    bad_request("Parameter 'limit' is of wrong type.");
+    bad_request("Parameter 'limit' is not a non-negative integer.");
     exit;
   }
 

@@ -9,11 +9,9 @@ else:
 
 /$db_name/entries.php:
 if GET:
-  expect JSON payload:
-    {
+  expect query parameters:
       limit: non-negative integer (default: 10)
       start: non-negative integer (default: 0)
-    }
   if payload malformed:
     400, {error: String}
   elif processing didn't work:
@@ -57,11 +55,9 @@ else:
 
 /shoppinglist/entries.php:
 if GET:
-  expect JSON payload:
-    {
-      limit: non-negative integer (default: 999)
+  expect query parameters:
+      limit: non-negative integer (default: 10)
       start: non-negative integer (default: 0)
-    }
   if payload malformed:
     400, {error: String}
   elif processing didn't work:
