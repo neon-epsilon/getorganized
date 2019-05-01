@@ -3,9 +3,9 @@ module Pages.Components.InputForm where
 import Prelude
 
 import Data.Number (fromString, nan)
-import Data.List (List (..), (:), sortBy)
+import Data.List (List (..), (:), sortBy, head)
 import Data.Either (Either (..), either)
-import Data.Maybe (Maybe (..), maybe, fromMaybe)
+import Data.Maybe (Maybe (..), fromMaybe)
 
 import Control.Alt((<|>))
 import Control.Comonad (extract)
@@ -218,7 +218,10 @@ makeFoldp resourceName = foldp
     }
   foldp (Ajax (PostEntrySuccess {id, timestamp})) state@{formState} =
     { state: state
-      { formState = formState { amount = "" }
+      { formState = formState
+        { amount = ""
+        , comment = ""
+        , category = fromMaybe "" $ map (\(Category x) -> x.category) $ head state.categories }
       , ajaxState = Idle }
     , effects:
       [ pure $ Just $ DeleteForm $ AddEntry $

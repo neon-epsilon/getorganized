@@ -143,25 +143,23 @@ checkIfAuthenticated = do
   maybeRes <- attemptWithTimeout 10000.0 (getWithoutCaching "/index.html")
   case maybeRes of
     Just (Right res) | res.status == (StatusCode 200) -> do
-      pure $ Just $ InitComponents
-    -- if status is 401, wait ten seconds and try again
+      pure $ Just InitComponents
+    -- If status is 401, stop trying to connect.
     Just (Right res) | res.status == (StatusCode 401) -> do
-      delay $ Milliseconds 10000.0
-      checkIfAuthenticated
+      log $ "Error: Not authorized."
+      pure Nothing
     -- If status is neither 200 nor 401, we expect an object of the form {error: String}
     Just (Right res) -> do
       log $ "Error: Expected status 200, received " <> (\(StatusCode n) -> show n) res.status <> " while checking if authenticated."
       log $ "Response from server:"
       log res.response
-      delay $ Milliseconds 1000.0
-      checkIfAuthenticated
+      pure Nothing
     Just (Left err) -> do
       log $ show err
-      delay $ Milliseconds 1000.0
-      checkIfAuthenticated
+      pure Nothing
     Nothing -> do
       log $ "Error: Request timed out while checking if authenticated."
-      checkIfAuthenticated
+      pure Nothing
 
 
 

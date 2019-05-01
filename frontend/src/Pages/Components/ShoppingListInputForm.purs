@@ -3,9 +3,9 @@ module Pages.Components.ShoppingListInputForm where
 import Prelude
 
 import Data.Number (fromString)
-import Data.List (List (..), (:), sortBy)
+import Data.List (List (..), (:), sortBy, head)
 import Data.Either (Either (..), either)
-import Data.Maybe (Maybe (..))
+import Data.Maybe (Maybe (..), fromMaybe)
 
 import Control.Alt((<|>))
 import Control.Comonad (extract)
@@ -178,9 +178,11 @@ foldp (Ajax GetCategoriesError) state =
 foldp (Ajax PostEntry) state =
   { state: state { ajaxState = PostingEntry }
   , effects: [ postEntry state.formState ] }
-foldp (Ajax (PostEntrySuccess id)) state@{ formState } =
+foldp (Ajax (PostEntrySuccess id)) state@{formState} =
   { state: state
-    { formState = formState { name = "" }
+    { formState = 
+      { name : ""
+      , category : fromMaybe "" $ map (\(Category x) -> x.category) $ head state.categories }
     , ajaxState = Idle }
   , effects:
     [ pure $ Just $ DeleteForm $ AddEntry $
