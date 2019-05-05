@@ -1,5 +1,3 @@
-Sort shoppinglist according to category
-
 Make sure that shoppinglist is readable, even with long entries.
 
 Stop retrying a failed AJAX request after timeout, instead reload.

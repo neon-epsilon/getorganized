@@ -7,6 +7,7 @@ import Data.List (List (..), (:), sortBy, filter)
 import Data.Array (fromFoldable)
 import Data.Either (Either (..), either)
 import Data.Maybe (Maybe (..))
+import Data.Foldable (foldl)
 import Data.Set (Set(..), empty, member, insert, delete)
 
 import Control.Alt((<|>))
@@ -123,16 +124,8 @@ view { ajaxState, entries, checkedIds } = do
         th ! style "width: 1%;" $ text "Kategorie"
         th $ text "Artikel"
         th ! style "width: 1%;" $ pure unit
-      for_ sortedEntries viewEntryRow
+      entryRows
   where
-    sortedEntries = sortBy (comparing (\(Entry e) -> e.category)) entries
-    viewEntryRow (Entry entry) =
-      tr #! onClick (Form <<< ToggleId entry.id) $ do
-        td $ strong $ text entry.category
-        td $ text entry.name
-        td $ if entry.id `member` checkedIds
-          then checkbox ! checked "true"
-          else checkbox ! checked ""
     buttonText = case ajaxState of
       Idle -> "Löschen"
       GettingEntries -> "Lade..."
@@ -140,6 +133,20 @@ view { ajaxState, entries, checkedIds } = do
     isActive = case ajaxState of
       Idle -> true
       _ -> false
+    entryRows = (foldl appendRow {lastCategory : "", rows : pure unit} sortedEntries).rows
+    sortedEntries = sortBy (comparing (\(Entry e) -> e.category)) entries
+    appendRow {lastCategory, rows} (Entry entry) =
+      { lastCategory : entry.category
+      , rows : do
+        rows
+        tr #! onClick (Form <<< ToggleId entry.id) $ do
+          td $ if entry.category == lastCategory
+            then pure unit
+            else strong $ text entry.category
+          td $ text entry.name
+          td $ if entry.id `member` checkedIds
+            then checkbox ! checked "true"
+            else checkbox ! checked "" }
 
 
 
