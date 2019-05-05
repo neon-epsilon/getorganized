@@ -123,9 +123,10 @@ view { ajaxState, entries, checkedIds } = do
         th ! style "width: 1%;" $ text "Kategorie"
         th $ text "Artikel"
         th ! style "width: 1%;" $ pure unit
-      for_ entries entryRow
+      for_ sortedEntries viewEntryRow
   where
-    entryRow (Entry entry) =
+    sortedEntries = sortBy (comparing (\(Entry e) -> e.category)) entries
+    viewEntryRow (Entry entry) =
       tr #! onClick (Form <<< ToggleId entry.id) $ do
         td $ strong $ text entry.category
         td $ text entry.name
