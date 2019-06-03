@@ -1,3 +1,7 @@
+Only delete entries from shoppinglist that have been confirmed deleted by the server.
+
+Make sure that comments that are entered cannot exceed 40 characters.
+
 Make sure that shoppinglist is readable, even with long entries.
 
 Stop retrying a failed AJAX request after timeout, instead reload.
