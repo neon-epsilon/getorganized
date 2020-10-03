@@ -2,7 +2,7 @@
 
 This application assumes you have a working PHP server with MySQL running on a linux machine.
 
-Clone the repository and check out the deploy branch. Make sure the www root of your server is the root of this repository.
+Clone the repository and check out the deploy branch. Make sure the www root of your server is the root of this repository. In the configuration of your server, disallow access to the folders ```config``` and ```build```. (```config``` will contain access details for your database which should not be visible from the outside for obvious security reasons.)
 
 Then, the Python virtualenv must be initialized. To do so, enter the following code from the root of the repository:
 
@@ -32,7 +32,7 @@ $ source backend/virtualenv/bin/activate
 $ ./build/setup.py
 ```
 
-For GetOrganized to automatically generate charts, we must change the owner of the folder ```generated``` to the user of your server. On Debian, this is usually ```www-data```:
+For GetOrganized to automatically generate charts upon entering new data, we must change the owner of the folder ```generated``` to the user of your server. On Debian, this is usually ```www-data```:
 ```shell
 $ sudo chown -R www-data:www-data generated
 ```
