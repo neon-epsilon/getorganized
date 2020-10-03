@@ -15,6 +15,7 @@ At its core GetOrganized is a CRUD application: it allows you to enter and delet
 The generated charts look like this:
 ![chart_7_days](chart_7days_example.png)
 ![chart_progress](chart_progress_example.png)
+
 The black lines in the charts represent the goal for the current day, the red lines the goal for the week and month, respectively. In the horizontal bar charts, the black line progresses every day until it meets the red line at the end of the week/month. (In the case of working hours, the black lines do not progress on Saturday and Sunday.)
 
 # Tech
