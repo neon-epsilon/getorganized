@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import pathlib, sys
@@ -17,7 +17,7 @@ generate_static_content_script_filename = dir_name / 'generate_static_content.py
 
 
 def execute_sql_file(filename, connection):
-    with connection as cursor:
+    with connection.cursor() as cursor:
         # We need to repeat the "with"-block.
         # Otherwise sql-errors do not raise an exception but the script simply hangs.
         with open(filename) as f:
@@ -52,6 +52,6 @@ connection.close()
 
 
 print('generating static content')
-subprocess.Popen(['python', str( generate_static_content_script_filename )]).wait()
+subprocess.Popen(['python3', str( generate_static_content_script_filename )]).wait()
 
 print('done')
