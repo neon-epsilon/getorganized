@@ -13,8 +13,8 @@ Moreover, I use this project to learn about the different parts of web developme
 At its core GetOrganized is a CRUD application: it allows you to enter and delete your expenses, consumed calories, etc. After entering or deleting an expense, the charts get updated, showing your expenses for the last 7 days and last month. To keep your budget in check, one can set a monthly goal for the expenses. (The goal is currently set by editing a corresponding database entry.)
 
 The generated charts look like this:
-![picture](http://getorganizeddemo.ddns.net/generated/spendings/chart_7days.png)
-![picture](http://getorganizeddemo.ddns.net/generated/spendings/chart_progress.png)
+![chart_7_days](chart_7days_example.png)
+![chart_progress](chart_progress_example.png)
 The black lines in the charts represent the goal for the current day, the red lines the goal for the week and month, respectively. In the horizontal bar charts, the black line progresses every day until it meets the red line at the end of the week/month. (In the case of working hours, the black lines do not progress on Saturday and Sunday.)
 
 # Tech
