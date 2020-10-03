@@ -54,6 +54,7 @@ img.loading {
 table {
     width: 100%;
     white-space: nowrap;
+    border-spacing: 0px;
 }
 tr:nth-child(2n+1) {
     background: #eee;
