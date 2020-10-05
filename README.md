@@ -1,18 +1,19 @@
 Welcome to GetOrganized, a simple dashboard and tracker for your expenses, diet, working hours and for managing your shoppinglist.
 
-A working demo can be found here: [getorganizeddemo.ddns.net/](http://getorganizeddemo.ddns.net/)
+A live demo can be found here: [getorganizeddemo.ddns.net/](http://getorganizeddemo.ddns.net/)
 
 # Purpose
 
-I built this tool for my personal use because similar apps didn't do exactly what I wanted and I would need several apps for budgeting, calorie counting, etc. With GetOrganized, I have everything in one place. Additionally, I have direct access to my data and can analyze it e.g. in a Jupyter notebook or via SQL queries.
+I built this tool for my personal use because similar apps did not do exactly what I wanted and I would need several apps for budgeting, calorie counting, etc. With GetOrganized, I have everything in one place. Additionally, I have direct access to my data and can analyze it e.g. in a Jupyter notebook or via SQL queries.
 
-Moreover, I use this project to learn about the different parts of web development and to try out interesting new technologies. To get a good idea of how everything works, I wrote everything myself from the bottom up with minimal use of frameworks - this is not just another Bootstrap app ;)
+Moreover, I used this project to learn about the different parts of web development and to try out interesting new technologies. To get a good idea of how everything works, I wrote everything myself from the bottom up with minimal use of frameworks - this is not just another Bootstrap app ;)
 
 # What does it do?
 
-At its core GetOrganized is a CRUD application: it allows you to enter and delete your expenses, consumed calories, etc. After entering or deleting an expense, the charts get updated, showing your expenses for the last 7 days and last month. To keep your budget in check, one can set a monthly goal for the expenses. (The goal is currently set by editing a corresponding database entry.)
+At its core, GetOrganized is a CRUD application: it allows you to enter and delete your expenses, consumed calories, etc. The latter are visually represented in bar charts, which allow for a quick overview of your budget or diet. After entering or deleting an expense, the charts get updated, showing your expenses for the last 7 days and last month. To keep your budget or diet in check, one can set a monthly goal for the expenses or calories. (The goal is currently set by editing a corresponding database entry.)
 
 The generated charts look like this:
+
 ![chart_7_days](chart_7days_example.png)
 ![chart_progress](chart_progress_example.png)
 
@@ -20,19 +21,19 @@ The black lines in the charts represent the goal for the current day, the red li
 
 # Tech
 
-I host GetOrganized on a Raspberry Pi running [NGINX](https://www.nginx.com/). The front end is written in the purely functional language [PureScript](https://www.purescript.org/), a non-lazy Haskell dialect which compiles directly to JavaScript. The front end communicates with the server via a REST API, written in PHP. Upon entering or deleting an expense, calorie count, etc. the API starts a Python script which updates the charts. The Python script is based on [pandas](https://pandas.pydata.org/).
+I host GetOrganized on a Raspberry Pi running [NGINX](https://www.nginx.com/). The front end is written in the purely functional language [PureScript](https://www.purescript.org/), a non-lazy Haskell dialect which compiles directly to JavaScript. The front end communicates with the server via a REST API, written in PHP. Upon entering or deleting an expense, calorie count, etc. the server starts a Python script which updates the charts. The Python script is based on [pandas](https://pandas.pydata.org/).
 
 ### Front End
 
-The front end is built according to [The Elm Architecture](https://guide.elm-lang.org/architecture/), which later inspired Redux. Instead of Elm, however, I used [purescript-pux](https://github.com/alexmingoia/purescript-pux), as PureScript is far more flexible and powerful. Pux renders the web page using [Preact](https://preactjs.com/), a lightweight alternative to React.
+The front end is built according to [The Elm Architecture](https://guide.elm-lang.org/architecture/), the architecture that later inspired Redux. Instead of Elm, however, I used [purescript-pux](https://github.com/alexmingoia/purescript-pux), as PureScript is far more flexible and powerful. Pux renders the web page using [Preact](https://preactjs.com/), a lightweight alternative to React.
 
 In accordance to The Elm Architecture/Redux, the entire state of the web page is stored in a single object. How the page is rendered depends only on this global state object. Whenever an event, like a mouse click, is triggered, this event together with the current state is used to compute the new state of the app, or to trigger another event.
 
-Side effects can only be executed via events. This makes this architecture robust and easy to maintain. Additionally, PureScript's excellent compiler and type system make it difficult to introduce bugs that result in runtime errors, and refactoring or introducing new features is a breeze.
+Side effects can only be executed via events. This makes this architecture robust and easy to maintain. Additionally, PureScript's excellent compiler and type system make it difficult to introduce bugs that result in runtime errors, and refactoring or introducing new components is a breeze.
 
 ### Design
 
-The style sheets for GetOrganized were written entirely from scratch (except the use of normalize.css) as an educational project to get a feeling for the capabilities of CSS. The design is responsive, i.e. works both on desktop and mobile, and does not utilize JavaScript to achieve this. The drop down menu in the mobile version is also written entirely in CSS by making use of (invisible) checkboxes.
+The style sheets for GetOrganized were written entirely from scratch (except for the use of normalize.css) as an educational project to get a feeling for the capabilities and limits of CSS. The design is responsive, i.e. works both on desktop and mobile, and does not utilize JavaScript to achieve this. The drop down menu in the mobile version is also written entirely in CSS by making use of (invisible) checkboxes.
 
 ### Back End
 
