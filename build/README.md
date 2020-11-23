@@ -17,7 +17,7 @@ This installs, in particular, numpy and pandas for the virtualenv. You might nee
 $ python
 >>> import pandas
 ```
-to see if pandas (and its depency, numpy) can be imported. If not, you likely have to install libatlas-base-dev (on Debian):
+to see if pandas (and its dependency, numpy) can be imported. If not, you likely have to install libatlas-base-dev (on Debian):
 ```shell
 $ sudo apt-get install libatlas-base-dev
 ```

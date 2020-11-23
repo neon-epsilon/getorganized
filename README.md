@@ -2,6 +2,8 @@ Welcome to GetOrganized, a simple dashboard and tracker for your expenses, diet,
 
 A live demo can be found here: [getorganizeddemo.ddns.net/](http://getorganizeddemo.ddns.net/)
 
+See here for build instructions: [building GetOrganized](build/README.md)
+
 # Purpose
 
 I built this tool for my personal use because similar apps did not do exactly what I wanted and I would need several apps for budgeting, calorie counting, etc. With GetOrganized, I have everything in one place. Additionally, I have direct access to my data and can analyze it e.g. in a Jupyter notebook or via SQL queries.
