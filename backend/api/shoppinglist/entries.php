@@ -2,8 +2,6 @@
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php' );
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
-$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
-
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
@@ -26,12 +24,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
     exit;
   }
 
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli_shoppinglist();
 
   // query for entries
   if (! $result = $mysqli->query("SELECT id, name, category FROM shoppinglist_entries ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
@@ -69,12 +62,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   $invalid_fields = array();
   // validate category
   // Get list of categories
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-  if ($mysqli->connect_errno)
-  {
-      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-      exit;
-  }
+  $mysqli = get_mysqli_shoppinglist();
+
   if (! $result = $mysqli->query("SELECT category, priority from shoppinglist_categories ORDER BY priority ASC")) {
       internal_server_error( "Query failed: (" . $mysqli->connect_errno . ") " . $mysqli->error );
       exit;
@@ -101,12 +90,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
   else
   {
-    $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-    if ($mysqli->connect_errno)
-    {
-        internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-        exit;
-    }
+    $mysqli = get_mysqli_shoppinglist();
 
     $query = "INSERT INTO shoppinglist_entries
       (name, category)
@@ -172,12 +156,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
     }
   }
 
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli_shoppinglist();
 
   // Check if rows are in table. If not, respond with not found ids.
   $not_found_ids = array();
@@ -207,12 +186,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
 
   // Delete rows, respond 200 and a dummy JSON object
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli_shoppinglist();
+
   foreach($ids as $id)
   {
     if (! $mysqli->query("DELETE FROM shoppinglist_entries WHERE id = {$id}" ) ) {

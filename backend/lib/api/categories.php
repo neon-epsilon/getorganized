@@ -1,17 +1,9 @@
 <?php
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php' );
 
-$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
-
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-
-  if ($mysqli->connect_errno)
-  {
-      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-      exit;
-  }
+  $mysqli = get_mysqli();
 
   // Get list of categories
   $categories = array();

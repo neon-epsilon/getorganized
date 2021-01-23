@@ -1,24 +1,17 @@
 <?php
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php' );
 
-$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
-
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
-
-  if ($mysqli->connect_errno)
-  {
-      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-      exit;
-  }
+  $mysqli = get_mysqli_shoppinglist();
 
   // Get list of categories
-  $categories = array();
   if (! $result = $mysqli->query("SELECT category, priority from shoppinglist_categories ORDER BY priority ASC")) {
       internal_server_error( "Query failed: (" . $mysqli->connect_errno . ") " . $mysqli->error );
       exit;
   }
+
+  $categories = array();
   for( $i = 0; $row = $result->fetch_assoc(); ++$i ) {
     $categories[$i] = array(
       "category" => $row["category"],
@@ -26,7 +19,6 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
     );
   }
   $mysqli->close();
-
 
   // output the categories as JSON
   $response = array(

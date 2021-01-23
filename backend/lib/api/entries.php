@@ -2,8 +2,6 @@
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php' );
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
-$config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
-
 $python = $_SERVER["DOCUMENT_ROOT"] . "/backend/virtualenv/bin/python";
 $output_build_script = $_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py";
 
@@ -29,12 +27,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
   }
 
 
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli();
 
   // query for entries
   if (! $result = $mysqli->query("SELECT id, date, amount, category, comment FROM " . $db_name . "_entries ORDER BY id DESC LIMIT {$limit} OFFSET {$start}" ) ) {
@@ -90,12 +83,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
   // validate category
   // Get list of categories
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-  if ($mysqli->connect_errno)
-  {
-      internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-      exit;
-  }
+  $mysqli = get_mysqli();
+
   if (! $result = $mysqli->query("SELECT category, priority from " . $db_name . "_categories ORDER BY priority ASC")) {
       internal_server_error( "Query failed: (" . $mysqli->connect_errno . ") " . $mysqli->error );
       exit;
@@ -128,12 +117,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
   }
   else
   {
-    $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-    if ($mysqli->connect_errno)
-    {
-        internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-        exit;
-    }
+    $mysqli = get_mysqli();
 
     $query = "INSERT INTO " . $db_name . "_entries
       (date, amount, category, comment)
@@ -204,12 +188,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
     }
   }
 
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli();
 
   // Check if rows are in table. If not, respond with not found ids.
   $not_found_ids = array();
@@ -239,12 +218,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   }
 
   // Delete rows, respond 200 and a JSON object with the timestamp of the new picture
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
-  if ($mysqli->connect_errno)
-  {
-    internal_server_error( "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error );
-    exit;
-  }
+  $mysqli = get_mysqli();
+
   foreach($ids as $id)
   {
     if (! $mysqli->query("DELETE FROM " . $db_name . "_entries WHERE id = {$id}" ) ) {
