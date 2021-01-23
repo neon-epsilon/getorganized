@@ -1,3 +1,8 @@
+Frontend
+--------
+
+Show current route in menu.
+
 Only delete entries from shoppinglist that have been confirmed deleted by the server.
 
 Make sure that comments that are entered cannot exceed 40 characters.
