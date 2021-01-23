@@ -1,4 +1,4 @@
-/$db_name/categories.php:
+/backend/api/$db_name/categories.php:
 if GET:
  try;
    200, {categories: [{category: String; priority: int}]}
@@ -7,7 +7,7 @@ if GET:
 else:
  405, error message
 
-/$db_name/entries.php:
+/backend/api/$db_name/entries.php:
 if GET:
   expect query parameters:
       limit: non-negative integer (default: 10)
@@ -44,7 +44,7 @@ else:
 
 
 
-/shoppinglist/categories.php:
+/backend/api/shoppinglist/categories.php:
 if GET:
  try;
    200, {categories: [{category: String; priority: int}]}
@@ -53,7 +53,7 @@ if GET:
 else:
  405, error message
 
-/shoppinglist/entries.php:
+/backend/api/shoppinglist/entries.php:
 if GET:
   expect query parameters:
       limit: non-negative integer (default: 10)
