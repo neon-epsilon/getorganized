@@ -157,7 +157,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     $mysqli->close();
 
     /* rebuild output */
-    exec($python . " " . $output_build_script . " " . strval($timestamp) . " > /dev/null 2> /dev/null &");
+    exec($python . " " . $output_build_script . " " . json_encode($timestamp) . " > /dev/null 2> /dev/null &");
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -237,7 +237,7 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
   ));
 
   /* rebuild output */
-  exec($python . " " . $output_build_script . " " . strval($timestamp) . " > /dev/null 2> /dev/null &");
+  exec($python . " " . $output_build_script . " " . json_encode($timestamp) . " > /dev/null 2> /dev/null &");
 }
 else
 {
