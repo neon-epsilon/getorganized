@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import pathlib, sys
-import pymysql
-import subprocess
-dir_name = (pathlib.Path.cwd() / pathlib.Path(__file__)).parent
-sys.path.append(str(dir_name.parent / 'backend' / 'config'))
+import os, pathlib, pymysql, subprocess, sys
+file_path = pathlib.Path( os.path.realpath(__file__) )
+dir_path = file_path.parent
+sys.path.append(str(dir_path.parent / 'backend' / 'config'))
 # import module ../backend/config/config.py
 import config
 
-schema_filename = dir_name / 'schema.sql'
-initial_data_filename = dir_name / 'initial_data.sql'
-schema_filename_shoppinglist = dir_name / 'schema_shoppinglist.sql'
-initial_data_filename_shoppinglist = dir_name / 'initial_data_shoppinglist.sql'
-generate_static_content_script_filename = dir_name / 'generate_static_content.py'
+schema_filename = dir_path / 'schema.sql'
+initial_data_filename = dir_path / 'initial_data.sql'
+schema_filename_shoppinglist = dir_path / 'schema_shoppinglist.sql'
+initial_data_filename_shoppinglist = dir_path / 'initial_data_shoppinglist.sql'
+generate_static_content_script_filename = dir_path / 'generate_static_content.py'
 
 
 def execute_sql_file(filename, connection):
