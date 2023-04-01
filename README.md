@@ -1,7 +1,5 @@
 Welcome to GetOrganized, a simple dashboard and tracker for your expenses, diet, working hours and for managing your shoppinglist.
 
-A live demo can be found here: [getorganizeddemo.ddns.net/](http://getorganizeddemo.ddns.net/)
-
 See here for build instructions: [building GetOrganized](build/README.md)
 
 # Purpose
