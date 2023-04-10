@@ -2,7 +2,7 @@
 
 This application assumes you have a working PHP server with MySQL running on a linux machine.
 
-_Note:_ For historical reasons, the setup process is quite cumbersome and has many manual steps. This can be improved by containerizing the entire application after splitting it up into independent services.
+_Note:_ For historical reasons, the setup process is quite cumbersome and has many manual steps. This can be in the future improved by containerizing the entire application after splitting it up into independent services.
 
 Clone the repository and check out the deploy branch. Make sure the www root of your server is the root of this repository. In the configuration of your server, disallow access to the folders `config` and `build`. (`config` will contain access details for your database which should not be visible from the outside for obvious security reasons.)
 
