@@ -6,6 +6,8 @@ _Note:_ For historical reasons, the setup process is quite cumbersome and has ma
 
 Clone the repository and check out the deploy branch. Make sure the www root of your server is the root of this repository. In the configuration of your server, disallow access to the folders `config` and `build`. (`config` will contain access details for your database which should not be visible from the outside for obvious security reasons.)
 
+TODO: update when done with containerizing charting service.
+
 Then, the Python virtualenv must be initialized. To do so, enter the following code from the root of the repository:
 
 ```bash
