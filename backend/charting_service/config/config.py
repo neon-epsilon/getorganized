@@ -2,20 +2,18 @@
 import pathlib
 import configparser
 
-# set up webroot
-file_name = pathlib.Path.cwd() / pathlib.Path(__file__)
-www_root = file_name.parent.parent.parent
+file_name = pathlib.Path.cwd() / 'config.ini'
 
 # set up database login data
-__parser = configparser.ConfigParser()
-__parser.read( str(www_root / 'config' / 'config.ini') )
+parser = configparser.ConfigParser()
+parser.read(str(file_name))
 
-db_name = __parser.get('DB', 'name').strip('"')
-db_host = __parser.get('DB', 'host').strip('"')
-db_user = __parser.get ('DB', 'user').strip('"')
-db_password = __parser.get('DB', 'password').strip('"')
+db_name = parser.get('DB', 'name').strip('"')
+db_host = parser.get('DB', 'host').strip('"')
+db_user = parser.get ('DB', 'user').strip('"')
+db_password = parser.get('DB', 'password').strip('"')
 
-db_name_shoppinglist = __parser.get('DB_shoppinglist', 'name').strip('"')
-db_host_shoppinglist = __parser.get('DB_shoppinglist', 'host').strip('"')
-db_user_shoppinglist = __parser.get ('DB_shoppinglist', 'user').strip('"')
-db_password_shoppinglist = __parser.get('DB_shoppinglist', 'password').strip('"')
+db_name_shoppinglist = parser.get('DB_shoppinglist', 'name').strip('"')
+db_host_shoppinglist = parser.get('DB_shoppinglist', 'host').strip('"')
+db_user_shoppinglist = parser.get ('DB_shoppinglist', 'user').strip('"')
+db_password_shoppinglist = parser.get('DB_shoppinglist', 'password').strip('"')

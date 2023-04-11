@@ -12,3 +12,6 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+# Copy the config explicitly to avoid hard to find errors when building this
+# image.
+COPY config.ini .
