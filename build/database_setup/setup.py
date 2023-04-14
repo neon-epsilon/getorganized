@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import os, pathlib, pymysql, subprocess, sys
+# import module ./config.py
 file_path = pathlib.Path( os.path.realpath(__file__) )
 dir_path = file_path.parent
-sys.path.append(str(dir_path.parent / 'backend' / 'config'))
-# import module ../backend/config/config.py
+sys.path.append(str(dir_path))
 import config
 
 schema_filename = dir_path / 'schema.sql'
