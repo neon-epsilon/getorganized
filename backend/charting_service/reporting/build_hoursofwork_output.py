@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pathlib
+import pathlib, sys, time
 
 timestamp_outputpath =  pathlib.Path.cwd() / 'hoursofwork/timestamp'
 chart_7days_outputpath = pathlib.Path.cwd() / 'hoursofwork/chart_7days.png'
@@ -11,10 +11,10 @@ max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
 plot_style = u'ggplot'
 
-# import module ../config/config.py and turn www_root into string
-import pathlib, sys, time
-file_name = pathlib.Path.cwd() / pathlib.Path(__file__)
-sys.path.append(str(file_name.parent.parent / 'config'))
+# import module ../config.py
+file_path = pathlib.Path( os.path.realpath(__file__) )
+dir_path = file_path.parent
+sys.path.append(str(dir_path.parent))
 import config
 
 # other imports
