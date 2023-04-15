@@ -3,7 +3,7 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php'
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
 $python = $_SERVER["DOCUMENT_ROOT"] . "/backend/virtualenv/bin/python";
-$output_build_script = $_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py";
+$output_build_script = $_SERVER["DOCUMENT_ROOT"] . "/backend/generate_" . $db_name . "_output.sh";
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
