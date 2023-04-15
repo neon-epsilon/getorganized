@@ -3,9 +3,9 @@
 
 import os, pathlib, sys, time
 
-timestamp_outputpath =  pathlib.Path.cwd() / 'spendings/timestamp'
-chart_7days_outputpath = pathlib.Path.cwd() / 'spendings/chart_7days.png'
-chart_progress_outputpath = pathlib.Path.cwd() / 'spendings/chart_progress.png'
+timestamp_outputpath =  pathlib.Path.cwd() / 'generated/spendings/timestamp'
+chart_7days_outputpath = pathlib.Path.cwd() / 'generated/spendings/chart_7days.png'
+chart_progress_outputpath = pathlib.Path.cwd() / 'generated/spendings/chart_progress.png'
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot

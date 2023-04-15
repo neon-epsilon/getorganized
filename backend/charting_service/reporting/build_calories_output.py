@@ -3,9 +3,9 @@
 
 import os, pathlib, sys, time
 
-timestamp_outputpath =  pathlib.Path.cwd() / 'calories/timestamp'
-chart_7days_outputpath = pathlib.Path.cwd() / 'calories/chart_7days.png'
-chart_progress_outputpath = pathlib.Path.cwd() / 'calories/chart_progress.png'
+timestamp_outputpath =  pathlib.Path.cwd() / 'generated/calories/timestamp'
+chart_7days_outputpath = pathlib.Path.cwd() / 'generated/calories/chart_7days.png'
+chart_progress_outputpath = pathlib.Path.cwd() / 'generated/calories/chart_progress.png'
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot

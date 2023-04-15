@@ -2,7 +2,7 @@ FROM python:3.8-slim
 # Note: A newer python version seems to require also updating the pip package
 # versions in requirements.txt.
 
-WORKDIR /usr/src/app
+WORKDIR /usr/app
 
 # requirements for numpy
 RUN apt update && apt install -y gcc g++
