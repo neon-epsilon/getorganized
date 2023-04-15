@@ -1,11 +1,9 @@
 [DB]
 name = getorganized
-host = host.docker.internal
 user = root
 password = root
 
 [DB_shoppinglist]
 name = getorganized
-host = host.docker.internal
 user = root
 password = root
