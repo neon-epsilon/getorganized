@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Perform first time setup on the database.
+
 set -euo pipefail
 IFS=$'\n\t'
 set -x

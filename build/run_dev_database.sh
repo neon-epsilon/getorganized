@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Set up a simple dev mysql instance and run it on localhost.
+
 set -euo pipefail
 IFS=$'\n\t'
 set -x

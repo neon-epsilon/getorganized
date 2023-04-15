@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Create the docker container with the charting service.
+
 set -euo pipefail
 IFS=$'\n\t'
 set -x
