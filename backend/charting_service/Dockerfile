@@ -19,3 +19,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/charting_service .
 COPY config/config.ini config/config.py .
+
+CMD ["./generate_all_outputs.sh"]
