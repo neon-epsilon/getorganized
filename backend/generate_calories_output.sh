@@ -6,6 +6,6 @@ set -euo pipefail
 IFS=$'\n\t'
 set -x
 
-SCRIPT_DIR=$(dirname -- "$( readlink -f -- "$0"; )")
+SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$0")")
 
-docker run -it --rm -v $SCRIPT_DIR/../generated/:/usr/app/generated charting_service python ./generate_calories_output.py
+docker run -it --rm --network=host -v $SCRIPT_DIR/../generated/:/usr/app/generated charting_service python ./generate_calories_output.py

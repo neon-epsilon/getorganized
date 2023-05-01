@@ -6,7 +6,7 @@ function get_mysqli()
 {
   global $config;
 
-  $mysqli = new mysqli("localhost",$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB']['host_from_outside_docker'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
 
   if ($mysqli->connect_errno)
   {
@@ -28,7 +28,7 @@ function get_mysqli_shoppinglist()
 {
   global $config;
 
-  $mysqli = new mysqli("localhost",$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host_from_outside_docker'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
 
   if ($mysqli->connect_errno)
   {
