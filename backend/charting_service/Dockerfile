@@ -9,7 +9,7 @@ FROM python:3.8-slim
 WORKDIR /usr/app
 
 # requirements for numpy
-RUN apt update && apt install -y gcc g++
+RUN apt-get update && apt-get install -y gcc g++
 
 # Install requirements first to avoid re-building whenever the rest of the code
 # changes.
