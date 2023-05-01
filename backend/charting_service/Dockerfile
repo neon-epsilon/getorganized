@@ -2,7 +2,11 @@
 # the config.ini, i.e.
 # $ docker build -f backend/charting_service/Dockerfile .
 
-FROM python:3.8-slim
+# Use buster, not bullseye, because the latter has a bug when running
+# `apt-get update` on a Docker host that runs Raspbian Buster. See
+# https://osmocom.org/issues/5453
+# Probably solvable by upgrading Raspbian Buster to Bullseye.
+FROM python:3.8-slim-buster
 # Note: A newer python version seems to require also updating the pip package
 # versions in requirements.txt.
 

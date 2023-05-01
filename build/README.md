@@ -13,7 +13,7 @@ To create the necessary Docker containers, run
 ```bash
 $ ./build/build_containers.sh
 ```
-In a first time setup of GetOrganized, set up the database using:
+In a first time setup of GetOrganized, set up the database using (**Warning:** if your database already exists, this will drop it):
 ```bash
 $ docker run -it --rm database_setup
 ```
