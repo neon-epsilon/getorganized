@@ -11,7 +11,6 @@ WORKDIR /usr/app
 # requirements for numpy
 RUN apt update && apt install -y gcc g++
 
-RUN pip install --no-cache-dir --upgrade pip
 # Install requirements first to avoid re-building whenever the rest of the code
 # changes.
 COPY backend/charting_service/requirements.txt .
