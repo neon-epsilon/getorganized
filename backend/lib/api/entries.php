@@ -142,7 +142,6 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     }
 
     $stmt->close();
-    $mysqli->close();
 
     $timestamp = microtime(true); //timestamp of generated charts
 
@@ -154,6 +153,8 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
       "timestamp" => $timestamp
     );
     send_json($response);
+
+    $mysqli->close();
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
