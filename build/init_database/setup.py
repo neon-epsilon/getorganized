@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os, pathlib, pymysql, subprocess, sys
+import os, pathlib, pymysql
 
 import config
 
