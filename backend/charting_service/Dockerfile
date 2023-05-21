@@ -27,6 +27,5 @@ COPY backend/charting_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/charting_service .
-COPY config/config.ini config/config.py .
 
 ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "server:app"]

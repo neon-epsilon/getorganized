@@ -7,3 +7,7 @@ services:
       - type: bind
         source: ./generated
         target: /usr/app/generated
+      - type: bind
+        source: ./config
+        target: /usr/app/config
+        read_only: true

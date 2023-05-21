@@ -8,12 +8,11 @@
 # Probably solvable by upgrading Raspbian Buster to Bullseye.
 FROM python:3.8-slim-buster
 
-WORKDIR /usr/src/app
+WORKDIR /usr/app
 
-COPY build/database_setup/requirements.txt ./
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY build/database_setup .
-COPY config/config.ini config/config.py .
+COPY . .
 
 ENTRYPOINT ["python", "setup.py"]

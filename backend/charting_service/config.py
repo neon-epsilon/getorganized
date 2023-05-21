@@ -2,7 +2,7 @@
 import pathlib
 import configparser
 
-file_name = pathlib.Path.cwd() / 'config.ini'
+file_name = pathlib.Path.cwd() / 'config' / 'config.ini'
 
 # set up database login data
 parser = configparser.ConfigParser()
