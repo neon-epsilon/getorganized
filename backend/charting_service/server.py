@@ -17,22 +17,11 @@ class ChartType(str, Enum):
     hoursofwork = "hoursofwork"
     spendings = "spendings"
 
-async def generate_chart(chart_type: ChartType, timestamp: Union[str, None] = None):
-    if timestamp is None:
-        timestamp = ""
-
-    await run(f"python generate_{chart_type.value}_output.py {timestamp}")
-
-async def generate_all_charts(timestamp: Union[str, None] = None):
-    for chart_type in ChartType:
-        await generate_chart(chart_type, timestamp)
-
 app = FastAPI()
 
 @app.post("/{chart_type}/")
 async def generate_chart_endpoint(chart_type: ChartType, timestamp: Union[str, None] = None):
-    await generate_chart(chart_type, timestamp)
+    if timestamp is None:
+        timestamp = ""
 
-@app.post("/")
-async def generate_all_charts_endpoint(timestamp: Union[str, None] = None):
-    await generate_all_charts(timestamp)
+    await run(f"python generate_{chart_type.value}_output.py {timestamp}")
