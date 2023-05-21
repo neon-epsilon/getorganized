@@ -1,0 +1,9 @@
+services:
+  charting-service:
+    image: "getorganized-charting-service"
+    ports:
+      - "8000:8000"
+    volumes:
+      - type: bind
+        source: ./generated
+        target: /usr/app/generated
