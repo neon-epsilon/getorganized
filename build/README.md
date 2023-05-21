@@ -4,7 +4,7 @@ _Note: For historical reasons, the setup process is still quite cumbersome and h
 
 ## Prerequisites
 
-This application assumes you have a working PHP server with MySQL running on a linux machine that also runs Docker.
+This application assumes you have a working PHP server with MySQL (including `php-mysql` and `php-curl`) running on a linux machine that also runs Docker.
 
 If you want to spin up a development database in Docker, run
 ```bash
