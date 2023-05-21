@@ -79,4 +79,17 @@ function internal_server_error($error_message)
   send_json($response);
 }
 
+function generate_charts($chart_type, $timestamp)
+{
+  $charting_service_endpoint = "localhost:8000/" . $chart_type . "/";
+  $params = array('timestamp' => $timestamp);
+  $uri = $charting_service_endpoint . "?" . http_build_query($params);
+
+  $curl = curl_init($uri);
+  curl_setopt($curl, CURLOPT_POST, true);
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+  $_response = curl_exec($curl);
+  curl_close($curl);
+}
+
 ?>
