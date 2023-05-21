@@ -5,7 +5,8 @@
 # Use buster, not bullseye, because the latter has a bug when running
 # `apt-get update` on a Docker host that runs Raspbian Buster. See
 # https://osmocom.org/issues/5453
-# Probably solvable by upgrading Raspbian Buster to Bullseye.
+# Probably solvable by upgrading Raspbian Buster to Bullseye on the host
+# machine.
 FROM python:3.9-slim-buster
 # Note: building on Raspbian is very slow because many wheels need to be built
 # from source. Make sure to have enough memory and swap. (Tested on RaspberryPi
@@ -28,4 +29,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/charting_service .
 COPY config/config.ini config/config.py .
 
-CMD ["./generate_all_outputs.sh"]
+ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "server:app"]
