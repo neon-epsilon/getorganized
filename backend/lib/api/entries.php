@@ -3,7 +3,6 @@ include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/api_helper_functions.php'
 include_once($_SERVER['DOCUMENT_ROOT'] . '/backend/lib/validators.php' );
 
 $python = $_SERVER["DOCUMENT_ROOT"] . "/backend/virtualenv/bin/python";
-$output_build_script = $_SERVER["DOCUMENT_ROOT"] . "/backend/reporting/build_" . $db_name . "_output.py";
 
 if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
@@ -142,10 +141,11 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
       exit;
     }
 
-    /* close statement */
     $stmt->close();
 
     $timestamp = microtime(true); //timestamp of generated charts
+
+    generate_charts($db_name, $timestamp);
 
     /* Respond with id of new database entry */
     $response = array(
@@ -155,9 +155,6 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
     send_json($response);
 
     $mysqli->close();
-
-    /* rebuild output */
-    exec($python . " " . $output_build_script . " " . json_encode($timestamp) . " > /dev/null 2> /dev/null &");
   }
 }
 elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
@@ -231,13 +228,12 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
 
   $timestamp = microtime(true); //timestamp of generated charts
 
+  generate_charts($db_name, $timestamp);
+
   send_json( array(
     "ids" => $ids,
     "timestamp" => $timestamp
   ));
-
-  /* rebuild output */
-  exec($python . " " . $output_build_script . " " . json_encode($timestamp) . " > /dev/null 2> /dev/null &");
 }
 else
 {

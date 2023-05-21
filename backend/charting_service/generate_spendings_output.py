@@ -1,21 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# absolute outputpaths regarding www_root as root (just like the server does)
-timestamp_outputpath = '/generated/spendings/timestamp'
-chart_7days_outputpath = '/generated/spendings/chart_7days.png'
-chart_progress_outputpath = '/generated/spendings/chart_progress.png'
+import pathlib, sys, time
+
+timestamp_outputpath =  pathlib.Path.cwd() / 'generated/spendings/timestamp'
+chart_7days_outputpath = pathlib.Path.cwd() / 'generated/spendings/chart_7days.png'
+chart_progress_outputpath = pathlib.Path.cwd() / 'generated/spendings/chart_progress.png'
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
 plot_style = u'ggplot'
 
-# import module ../config/config.py and turn www_root into string
-import pathlib, sys, time
-file_name = pathlib.Path.cwd() / pathlib.Path(__file__)
-sys.path.append(str(file_name.parent.parent / 'config'))
 import config
-config.www_root = str(config.www_root)
 
 # other imports
 import pymysql
@@ -40,13 +36,14 @@ else:
 
 
 # fetch from database
+# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
 con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
 # fetch money to be spent in one month
-monthly_goal = pd.io.sql.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
+monthly_goal = pd.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
 #fetch categories
-db_categories = pd.io.sql.read_sql('select category from spendings_categories order by priority', con=con)
+db_categories = pd.read_sql('select category from spendings_categories order by priority', con=con)
 #fetch data from last 30 days
-db = pd.io.sql.read_sql("""
+db = pd.read_sql("""
     select id, amount, date, category
     from spendings_entries
     where date >= date_sub(curdate(), interval 30 day)
@@ -107,7 +104,7 @@ ax7days.grid(zorder=0, which='minor', linewidth=0.4)
 ax7days.set_xticklabels(formatted_xticklabels)
 ax7days.legend(fancybox=True, loc='best', framealpha=0.8)
 fig7days.tight_layout()
-fig7days.savefig(config.www_root + chart_7days_outputpath)
+fig7days.savefig(chart_7days_outputpath)
 
 
 ### Make progress plots
@@ -171,9 +168,9 @@ boxmonth = axmonth.get_position()
 axmonth.set_position([boxmonth.x0, boxmonth.y0 + boxmonth.height*0.5, boxmonth.width, boxmonth.height * 0.5])
 axmonth.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_month.columns), bbox_to_anchor=(0.5,-1.6))
 
-figprogress.savefig(config.www_root + chart_progress_outputpath)
+figprogress.savefig(chart_progress_outputpath)
 
 
 ### save timestamp to file
-with open(config.www_root + timestamp_outputpath, 'w') as f:
+with open(timestamp_outputpath, 'w') as f:
     f.write(timestamp)

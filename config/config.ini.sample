@@ -1,11 +1,15 @@
 [DB]
+# On WSL: use host.docker.internal
+host_from_within_docker = 127.0.0.1
+host_from_outside_docker = 127.0.0.1
 name = getorganized
-host = localhost
 user = root
 password = root
 
 [DB_shoppinglist]
+# On WSL: use host.docker.internal
+host_from_within_docker = 127.0.0.1
+host_from_outside_docker = 127.0.0.1
 name = getorganized
-host = localhost
 user = root
 password = root

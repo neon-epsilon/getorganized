@@ -6,7 +6,7 @@ function get_mysqli()
 {
   global $config;
 
-  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB']['host_from_outside_docker'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
 
   if ($mysqli->connect_errno)
   {
@@ -28,7 +28,7 @@ function get_mysqli_shoppinglist()
 {
   global $config;
 
-  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host_from_outside_docker'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
 
   if ($mysqli->connect_errno)
   {
@@ -77,6 +77,19 @@ function internal_server_error($error_message)
     "error" => $error_message
   );
   send_json($response);
+}
+
+function generate_charts($chart_type, $timestamp)
+{
+  $charting_service_endpoint = "localhost:8000/" . $chart_type . "/";
+  $params = array('timestamp' => $timestamp);
+  $uri = $charting_service_endpoint . "?" . http_build_query($params);
+
+  $curl = curl_init($uri);
+  curl_setopt($curl, CURLOPT_POST, true);
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+  $_response = curl_exec($curl);
+  curl_close($curl);
 }
 
 ?>
