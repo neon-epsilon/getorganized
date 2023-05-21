@@ -145,7 +145,14 @@ elseif($_SERVER['REQUEST_METHOD'] === 'POST')
 
     $timestamp = microtime(true); //timestamp of generated charts
 
-    generate_charts($db_name, $timestamp);
+    // Json_encode the timestamp to make sure it is serialized the same way as
+    // what is sent back as a response.
+    // Failing to do so will lead to charts never being recognized as having been
+    // updated. The reason is that without json_encode, the timestamp string will
+    // be rounded to a lower number of digits. In 50% of the cases, it will thus
+    // appear later than the actual timestamp that is used to mark the generated
+    // charts.
+    generate_charts($db_name, json_encode($timestamp));
 
     /* Respond with id of new database entry */
     $response = array(
@@ -228,7 +235,14 @@ elseif($_SERVER['REQUEST_METHOD'] === 'DELETE')
 
   $timestamp = microtime(true); //timestamp of generated charts
 
-  generate_charts($db_name, $timestamp);
+  // Json_encode the timestamp to make sure it is serialized the same way as
+  // what is sent back as a response.
+  // Failing to do so will lead to charts never being recognized as having been
+  // updated. The reason is that without json_encode, the timestamp string will
+  // be rounded to a lower number of digits. In 50% of the cases, it will thus
+  // appear later than the actual timestamp that is used to mark the generated
+  // charts.
+  generate_charts($db_name, json_encode($timestamp));
 
   send_json( array(
     "ids" => $ids,

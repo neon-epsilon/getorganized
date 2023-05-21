@@ -79,10 +79,10 @@ function internal_server_error($error_message)
   send_json($response);
 }
 
-function generate_charts($chart_type, $timestamp)
+function generate_charts($chart_type, $timestamp_string)
 {
   $charting_service_endpoint = "localhost:8000/" . $chart_type . "/";
-  $params = array('timestamp' => $timestamp);
+  $params = array('timestamp' => $timestamp_string);
   $uri = $charting_service_endpoint . "?" . http_build_query($params);
 
   $curl = curl_init($uri);
