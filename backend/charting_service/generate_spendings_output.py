@@ -40,13 +40,14 @@ else:
 
 
 # fetch from database
+# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
 con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
 # fetch money to be spent in one month
-monthly_goal = pd.io.sql.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
+monthly_goal = pd.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
 #fetch categories
-db_categories = pd.io.sql.read_sql('select category from spendings_categories order by priority', con=con)
+db_categories = pd.read_sql('select category from spendings_categories order by priority', con=con)
 #fetch data from last 30 days
-db = pd.io.sql.read_sql("""
+db = pd.read_sql("""
     select id, amount, date, category
     from spendings_entries
     where date >= date_sub(curdate(), interval 30 day)
