@@ -1,14 +1,18 @@
-[DB]
+# Note on `host_from_within_docker` settings:
 # On WSL: use host.docker.internal
-host_from_within_docker = 127.0.0.1
+# On Linux: use 172.17.0.1 (standard docker gateway)
+# Do not forget to give the grants on the database with respect to the host
+# name given here. For 172.17.0.1, enable non-localhost connections by
+# configuring mysql's `bind-address` setting.
+[DB]
+host_from_within_docker = 172.17.0.1
 host_from_outside_docker = 127.0.0.1
 name = getorganized
 user = root
 password = root
 
 [DB_shoppinglist]
-# On WSL: use host.docker.internal
-host_from_within_docker = 127.0.0.1
+host_from_within_docker = 172.17.0.1
 host_from_outside_docker = 127.0.0.1
 name = getorganized
 user = root
