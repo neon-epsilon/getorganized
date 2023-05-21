@@ -11,10 +11,6 @@ max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
 plot_style = u'ggplot'
 
-# import module ../config.py
-file_path = pathlib.Path( os.path.realpath(__file__) )
-dir_path = file_path.parent
-sys.path.append(str(dir_path.parent))
 import config
 
 # other imports
