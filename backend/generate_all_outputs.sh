@@ -6,6 +6,8 @@ set -euo pipefail
 IFS=$'\n\t'
 set -x
 
-curl -vX POST 'localhost:8000/calories/'
-curl -vX POST 'localhost:8000/spendings/'
-curl -vX POST 'localhost:8000/hoursofwork/'
+CHARTING_SERVICE_URL=localhost:8000
+
+curl -vX POST "$CHARTING_SERVICE_URL/calories/"
+curl -vX POST "$CHARTING_SERVICE_URL/spendings/"
+curl -vX POST "$CHARTING_SERVICE_URL/hoursofwork/"
