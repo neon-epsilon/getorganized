@@ -1,6 +1,6 @@
 # Building GetOrganized #
 
-_Note: For historical reasons, the setup process is still quite cumbersome and has many manual steps. This can be in the future improved by containerizing the entire application._
+_Note: For historical reasons, the setup process is still quite cumbersome and has many manual steps. This can be improved in the future by containerizing the entire application._
 
 ## Prerequisites
 
