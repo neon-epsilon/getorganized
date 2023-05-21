@@ -1,6 +1,8 @@
 # Frontend
 
-- Check why updated timestamp is not recognized as updated timestamp.
+- Check why updated timestamp is sometimes not recognized even though it was
+  written just fine on the server. (Or get rid of timestamp polling mechanism
+  altogether.)
 
 - Stop retrying a failed AJAX request after timeout, instead reload.
 
@@ -17,5 +19,10 @@
 
 # Backend
 
-- Turn charting service container into web server rather than loose collection
-  of scripts in a container.
+- Instead of spawning a subprocess for every chart generation, just pull chart
+  generation into the FastAPI server of the charting service - this should make
+  chart generation much faster.
+
+- Then, probably get rid of the polling mechanism in the frontend - if chart
+  generation is fast, no need poll the last generated timestamp to see whether
+  the chart is up to date and can be displayed.
