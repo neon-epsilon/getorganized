@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, pathlib, sys, time
+import pathlib, sys, time
 
 timestamp_outputpath =  pathlib.Path.cwd() / 'generated/hoursofwork/timestamp'
 chart_7days_outputpath = pathlib.Path.cwd() / 'generated/hoursofwork/chart_7days.png'
