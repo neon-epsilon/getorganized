@@ -6,14 +6,14 @@
 # configuring mysql's `bind-address` setting.
 [DB]
 host_from_within_docker = 172.17.0.1
-host_from_outside_docker = 127.0.0.1
+host_from_outside_docker = 172.17.0.1
 name = getorganized
 user = root
 password = root
 
 [DB_shoppinglist]
 host_from_within_docker = 172.17.0.1
-host_from_outside_docker = 127.0.0.1
+host_from_outside_docker = 172.17.0.1
 name = getorganized
 user = root
 password = root
