@@ -4,8 +4,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - type: bind
-        source: ./generated
+      - type: volume
+        source: generated-graphs
         target: /usr/app/generated
       - type: bind
         source: ./config
@@ -17,6 +17,9 @@ services:
     ports:
       - "8009:80"
     volumes:
-      - type: bind
-        source: ./generated
+      - type: volume
+        source: generated-graphs
         target: /var/www/html/generated
+
+volumes:
+  generated-graphs:
