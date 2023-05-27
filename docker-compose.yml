@@ -13,7 +13,7 @@ services:
   api-and-frontend-service:
     image: "getorganized-api-and-frontend-service"
     ports:
-      - "8009:80"
+      - "80:80"
     environment:
       - CHARTING_SERVICE_ADDRESS=charting-service
       - CHARTING_SERVICE_PORT=8000
