@@ -1,10 +1,8 @@
 # Building GetOrganized #
 
-_Note: For historical reasons, the setup process is still quite cumbersome and has many manual steps. This can be improved in the future by containerizing the entire application._
-
 ## Prerequisites
 
-This application assumes you have a working PHP server with MySQL (including `php-mysql` and `php-curl`) running on a linux machine that also runs Docker.
+You need a working MySQL Database.
 
 If you want to spin up a development database in Docker, run
 ```bash
