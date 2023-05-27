@@ -21,13 +21,9 @@
 
 - Make the re-generation of charts during midnight the job of the chart generation service. Also, create charts on startup.
 
-- Containerize the API and add it to the docker-compose setup.
-
-- Use the database via container as well.
-
 - Maybe use PostgreSQL rather than MySQL/MariaDB, as the containerized version is much better.
 
-- Reimplement the API in something other than PHP.
+- Reimplement the API in something other than PHP. E.g. Rust with Axum.
 
 - Instead of spawning a subprocess for every chart generation, just pull chart
   generation into the FastAPI server of the charting service - this should make
