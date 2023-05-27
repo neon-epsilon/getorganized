@@ -11,3 +11,12 @@ services:
         source: ./config
         target: /usr/app/config
         read_only: true
+
+  api-and-frontend-service:
+    image: "getorganized-api-and-frontend-service"
+    ports:
+      - "8009:80"
+    volumes:
+      - type: bind
+        source: ./generated
+        target: /var/www/html/generated
