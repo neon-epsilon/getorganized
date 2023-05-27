@@ -2,11 +2,14 @@
 
 $config = parse_ini_file($_SERVER['DOCUMENT_ROOT'] . '/config/config.ini', true);
 
+$charting_service_address = getenv('CHARTING_SERVICE_ADDRESS') ?: "charting-service";
+$charting_service_port = getenv('CHARTING_SERVICE_PORT') ?: "8000";
+
 function get_mysqli()
 {
   global $config;
 
-  $mysqli = new mysqli($config['DB']['host_from_outside_docker'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
+  $mysqli = new mysqli($config['DB']['host'],$config['DB']['user'],$config['DB']['password'],$config['DB']['name']);
 
   if ($mysqli->connect_errno)
   {
@@ -28,7 +31,7 @@ function get_mysqli_shoppinglist()
 {
   global $config;
 
-  $mysqli = new mysqli($config['DB_shoppinglist']['host_from_outside_docker'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
+  $mysqli = new mysqli($config['DB_shoppinglist']['host'],$config['DB_shoppinglist']['user'],$config['DB_shoppinglist']['password'],$config['DB_shoppinglist']['name']);
 
   if ($mysqli->connect_errno)
   {
@@ -81,7 +84,10 @@ function internal_server_error($error_message)
 
 function generate_charts($chart_type, $timestamp_string)
 {
-  $charting_service_endpoint = "localhost:8000/" . $chart_type . "/";
+  global $charting_service_address;
+  global $charting_service_port;
+
+  $charting_service_endpoint = "$charting_service_address:$charting_service_port/$chart_type/";
   $params = array('timestamp' => $timestamp_string);
   $uri = $charting_service_endpoint . "?" . http_build_query($params);
 

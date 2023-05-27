@@ -1,3 +1,4 @@
 virtual_env
 config.ini
 generated
+*.pyc

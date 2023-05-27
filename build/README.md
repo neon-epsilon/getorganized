@@ -1,16 +1,13 @@
 # Building GetOrganized #
 
-_Note: For historical reasons, the setup process is still quite cumbersome and has many manual steps. This can be improved in the future by containerizing the entire application._
-
 ## Prerequisites
 
-This application assumes you have a working PHP server with MySQL (including `php-mysql` and `php-curl`) running on a linux machine that also runs Docker.
+You need a working MySQL Database.
 
 If you want to spin up a development database in Docker, run
 ```bash
 $ ./build/run_dev_database.sh
 ```
-Clone the repository and check out the deploy branch. Make sure the www root of your server is the root of this repository. In the configuration of your server, disallow access to the folders `config` and `build`. (`config` will contain access details for your database which should not be visible from the outside for obvious security reasons.)
 
 ## Database setup
 
@@ -24,13 +21,13 @@ $ ./build/init_database.sh
 ```
 This will create the necessary tables and populate them where necessary.
 
-## Set up the charting service
+## Build and run
 
 To create the necessary Docker containers, run
 ```bash
 $ ./build/build_containers.sh
 ```
-Now the charting service can be started via:
+Now start GetOrganized via:
 ```bash
 $ docker compose up -d
 ```
@@ -41,8 +38,7 @@ If you want it to update the generated charts every night, set up a cron job. Fo
 ```bash
 $ sudo crontab -e
 ```
-and add the following line to the crontab (replacing `yourwwwroot` with the root of this repository):
+and add the following line to the crontab (replacing `$GetOrganizedDir` and `$SomeUser` accordingly):
 ```
-0 0 * * * sudo -u www-data /yourwwwroot/backend/generate_all_outputs.sh
+0 0 * * * sudo -u $SomeUser $GetOrganizedDir/build/generate_all_outputs.sh
 ```
-This will make the user www-data run the python instance from the virtualenv to update the charts every day at midnight. 

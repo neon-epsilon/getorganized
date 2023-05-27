@@ -1,13 +1,30 @@
 services:
   charting-service:
     image: "getorganized-charting-service"
-    ports:
-      - "8000:8000"
     volumes:
-      - type: bind
-        source: ./generated
+      - type: volume
+        source: generated-graphs
         target: /usr/app/generated
       - type: bind
         source: ./config
         target: /usr/app/config
         read_only: true
+
+  api-and-frontend-service:
+    image: "getorganized-api-and-frontend-service"
+    ports:
+      - "80:80"
+    environment:
+      - CHARTING_SERVICE_ADDRESS=charting-service
+      - CHARTING_SERVICE_PORT=8000
+    volumes:
+      - type: volume
+        source: generated-graphs
+        target: /var/www/html/generated
+      - type: bind
+        source: ./config
+        target: /var/www/html/config
+        read_only: true
+
+volumes:
+  generated-graphs:
