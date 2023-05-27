@@ -20,6 +20,10 @@ services:
       - type: volume
         source: generated-graphs
         target: /var/www/html/generated
+      - type: bind
+        source: ./config
+        target: /var/www/html/config
+        read_only: true
 
 volumes:
   generated-graphs:
