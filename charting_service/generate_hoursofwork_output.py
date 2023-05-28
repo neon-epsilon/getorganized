@@ -1,32 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pathlib, sys, time
-
-timestamp_outputpath =  pathlib.Path.cwd() / 'generated/hoursofwork/timestamp'
-chart_7days_outputpath = pathlib.Path.cwd() / 'generated/hoursofwork/chart_7days.png'
-chart_progress_outputpath = pathlib.Path.cwd() / 'generated/hoursofwork/chart_progress.png'
-
-max_categories_7days = 6  # max number of categories to show for 7 days plot
-max_categories_progress = 5  # max number of categories to show for progress plot
-plot_style = u'ggplot'
+import calendar
+import datetime
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.style as style
+import numpy as np
+import os
+import pandas as pd
+import pathlib
+import pymysql
+import sys
+import time
+from matplotlib.ticker import AutoMinorLocator
 
 import config
 
-# other imports
-import pymysql
-import pandas as pd
-import time
-import datetime
-import calendar
-import numpy as np
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.style as style
-style.use(plot_style)
-import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoMinorLocator
+output_dir = pathlib.Path.cwd() / 'generated/hoursofwork'
 
+timestamp_outputpath = output_dir / 'timestamp'
+chart_7days_outputpath = output_dir / 'chart_7days.png'
+chart_progress_outputpath = output_dir / 'chart_progress.png'
+
+max_categories_7days = 6  # max number of categories to show for 7 days plot
+max_categories_progress = 5  # max number of categories to show for progress plot
+
+plot_style = u'ggplot'
+mpl.use('Agg')
+style.use(plot_style)
 
 # generate timestamp if it is not given via command line arguments
 if len(sys.argv) > 1:
@@ -34,6 +36,9 @@ if len(sys.argv) > 1:
 else:
     timestamp = str (time.time())
 
+# Ensure output dir exists.
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
 
 # fetch from database
 # TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
