@@ -23,6 +23,8 @@
   generation into the FastAPI server of the charting service - this should make
   chart generation much faster.
 
+- Remove the horrible code duplication in the charting scripts.
+
 - Then, probably get rid of the polling mechanism in the frontend - if chart
   generation is fast, no need poll the last generated timestamp to see whether
   the chart is up to date and can be displayed.
