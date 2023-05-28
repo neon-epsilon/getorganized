@@ -23,9 +23,9 @@ RUN apt-get update && apt-get install -y gcc g++ make zlib1g-dev libjpeg-dev
 
 # Install requirements first to avoid re-building whenever the rest of the code
 # changes.
-COPY charting_service/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY charting_service .
+COPY . .
 
 ENTRYPOINT ["uvicorn", "--host", "0.0.0.0", "server:app"]
