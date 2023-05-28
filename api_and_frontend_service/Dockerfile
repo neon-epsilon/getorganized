@@ -11,4 +11,4 @@ RUN cat <<EOF >> "$APACHE_CONFDIR/apache2.conf"
 </Directory>
 EOF
 
-COPY api_and_frontend_service /var/www/html/
+COPY . /var/www/html/
