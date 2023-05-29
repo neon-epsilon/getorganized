@@ -19,16 +19,10 @@
 
 # Backend
 
-- Use (async) work queue for chart generation; reply with 200 once chart generation is queued.
+- Make the re-generation of charts during midnight the job of the chart generation service. Also, create charts on startup.
 
 - Remove the horrible code duplication in the charting scripts.
 
-- Then, probably get rid of the polling mechanism in the frontend - if chart
-  generation is fast, no need poll the last generated timestamp to see whether
-  the chart is up to date and can be displayed.
-
-- Make the re-generation of charts during midnight the job of the chart generation service. Also, create charts on startup.
+- Reimplement the API in something other than PHP. E.g. Rust with Axum.
 
 - Maybe use PostgreSQL rather than MySQL/MariaDB, as the containerized version is much better.
-
-- Reimplement the API in something other than PHP. E.g. Rust with Axum.
