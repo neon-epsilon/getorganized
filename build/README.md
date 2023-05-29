@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-You need a working MySQL Database.
+You need Docker and a working MySQL Database.
 
 If you want to spin up a development database in Docker, run
 ```bash
@@ -30,15 +30,4 @@ $ ./build/build_containers.sh
 Now start GetOrganized via:
 ```bash
 $ docker compose up -d
-```
-
-## Automatic rebuilding of charts
-
-If you want it to update the generated charts every night, set up a cron job. For this, run
-```bash
-$ sudo crontab -e
-```
-and add the following line to the crontab (replacing `$GetOrganizedDir` and `$SomeUser` accordingly):
-```
-0 0 * * * sudo -u $SomeUser $GetOrganizedDir/build/generate_all_outputs.sh
 ```
