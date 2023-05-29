@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from typing import Union
 from enum import Enum
-import asyncio
 
 import generate_calories_output as calories
 import generate_hoursofwork_output as hoursofwork

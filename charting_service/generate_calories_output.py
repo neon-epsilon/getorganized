@@ -11,7 +11,6 @@ import os
 import pandas as pd
 import pathlib
 import pymysql
-import sys
 import time
 from matplotlib.ticker import AutoMinorLocator
 
