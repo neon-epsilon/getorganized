@@ -19,9 +19,9 @@
 
 # Backend
 
-- Instead of spawning a subprocess for every chart generation, just pull chart
-  generation into the FastAPI server of the charting service - this should make
-  chart generation much faster.
+- Use (async) work queue for chart generation; reply with 200 once chart generation is queued.
+
+- Remove the horrible code duplication in the charting scripts.
 
 - Then, probably get rid of the polling mechanism in the frontend - if chart
   generation is fast, no need poll the last generated timestamp to see whether
