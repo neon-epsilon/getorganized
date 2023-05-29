@@ -24,7 +24,7 @@ The black lines in the charts represent the goal for the current day, the red li
 
 # Tech
 
-I host GetOrganized on a Raspberry Pi running [NGINX](https://www.nginx.com/). The front end is written in the purely functional language [PureScript](https://www.purescript.org/), a non-lazy Haskell dialect which compiles directly to JavaScript. The front end communicates with the server via a REST API, written in PHP (a legacy left-over that can be replaced by something more robust). Upon entering or deleting an expense, calorie count, etc. the server starts a Python script which updates the charts. The Python script is based on [pandas](https://pandas.pydata.org/).
+I host GetOrganized on a Raspberry Pi running [NGINX](https://www.nginx.com/). The front end is written in the purely functional language [PureScript](https://www.purescript.org/), a non-lazy Haskell dialect which compiles directly to JavaScript. The front end communicates with the server via a REST API, written in PHP (a legacy left-over that can be replaced by something more robust). Upon entering or deleting an expense, calorie count, etc. a Python service updates the charts. The Python service is based on [pandas](https://pandas.pydata.org/).
 
 ### Front End
 
@@ -40,6 +40,4 @@ The style sheets for GetOrganized were written entirely from scratch (except for
 
 ### Back End
 
-The REST API is written in plain PHP: as it only performs CRUD tasks, I went with something simple. POST and DELETE requests (e.g. when adding or deleting a calorie count) trigger a Python script that updates the corresponding charts with the help of pandas.
-
-The Python scripts could be replaced by a proper (micro-) service (e.g. based on FastAPI), especially since they are quite slow. However, the speed of the chart generation was, so far, not very limiting since they are generated asynchronously in the background.
+The REST API is written in plain PHP: as it only performs CRUD tasks, I went with something simple. POST and DELETE requests (e.g. when adding or deleting a calorie count) trigger a request to a service that (re-)generates the bar charts.
