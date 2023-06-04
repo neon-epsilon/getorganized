@@ -4,9 +4,9 @@ from enum import Enum
 from fastapi import FastAPI
 from typing import Union
 
-import generate_calories_output as calories
-import generate_hoursofwork_output as hoursofwork
-import generate_spendings_output as spendings
+import charts.generate_calories_output as calories
+import charts.generate_hoursofwork_output as hoursofwork
+import charts.generate_spendings_output as spendings
 
 class ChartType(str, Enum):
     calories = "calories"
