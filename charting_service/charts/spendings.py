@@ -13,6 +13,7 @@ import pathlib
 import pymysql
 import time
 from matplotlib.ticker import AutoMinorLocator
+from typing import Union
 
 import config
 
@@ -29,7 +30,7 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(timestamp):
+def generate_charts(timestamp: Union[str, None]):
 # generate timestamp if it is not given via command line arguments
     if timestamp is None:
         timestamp = str (time.time())
