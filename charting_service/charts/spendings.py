@@ -17,12 +17,6 @@ from typing import Union
 
 import config
 
-output_dir = pathlib.Path.cwd() / 'generated/spendings'
-
-timestamp_outputpath = output_dir / 'timestamp'
-chart_7days_outputpath = output_dir / 'chart_7days.png'
-chart_progress_outputpath = output_dir / 'chart_progress.png'
-
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
 
@@ -30,7 +24,11 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(timestamp: Union[str, None]):
+def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
+    timestamp_outputpath = output_dir / 'timestamp'
+    chart_7days_outputpath = output_dir / 'chart_7days.png'
+    chart_progress_outputpath = output_dir / 'chart_progress.png'
+
 # generate timestamp if it is not given via command line arguments
     if timestamp is None:
         timestamp = str (time.time())
