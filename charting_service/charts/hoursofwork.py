@@ -29,7 +29,7 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_chart(timestamp):
+def generate_charts(timestamp):
 # generate timestamp if it is not given via command line arguments
     if timestamp is None:
         timestamp = str (time.time())

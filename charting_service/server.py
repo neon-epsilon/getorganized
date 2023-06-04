@@ -4,9 +4,7 @@ from enum import Enum
 from fastapi import FastAPI
 from typing import Union
 
-import charts.generate_calories_output as calories
-import charts.generate_hoursofwork_output as hoursofwork
-import charts.generate_spendings_output as spendings
+import charts
 
 class ChartType(str, Enum):
     calories = "calories"
@@ -28,8 +26,8 @@ app = FastAPI(lifespan=lifespan)
 def generate_chart_endpoint(chart_type: ChartType, timestamp: Union[str, None] = None):
     match chart_type:
         case ChartType.calories:
-            chart_generation_executor.submit(calories.generate_chart, timestamp)
+            chart_generation_executor.submit(charts.generate_calories_charts, timestamp)
         case ChartType.hoursofwork:
-            chart_generation_executor.submit(hoursofwork.generate_chart, timestamp)
+            chart_generation_executor.submit(charts.generate_hoursofwork_charts, timestamp)
         case ChartType.spendings:
-            chart_generation_executor.submit(spendings.generate_chart, timestamp)
+            chart_generation_executor.submit(charts.generate_spendings_charts, timestamp)
