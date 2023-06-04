@@ -13,7 +13,7 @@ import pathlib
 import time
 from matplotlib.ticker import AutoMinorLocator
 from typing import Union
-from charts.amountsource import CaloriesAmountSource
+from charts.amountsource import AmountSource
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
@@ -22,7 +22,7 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(output_dir: pathlib.Path, calories_amount_source: CaloriesAmountSource, timestamp: Union[str, None]):
+def generate_charts(output_dir: pathlib.Path, calories_amount_source: AmountSource, timestamp: Union[str, None]):
     timestamp_outputpath = output_dir / 'timestamp'
     chart_7days_outputpath = output_dir / 'chart_7days.png'
     chart_progress_outputpath = output_dir / 'chart_progress.png'
