@@ -14,6 +14,7 @@ import pymysql
 import time
 from matplotlib.ticker import AutoMinorLocator
 from typing import Union
+from charts.amountsource import HoursOfWorkAmountSource
 
 import config
 
@@ -38,25 +39,15 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
         os.makedirs(output_dir)
 
 # fetch from database
-# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
     con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
-# fetch hours to work in one week
-    weekly_goal = pd.read_sql('select value from hoursofwork_goals where property="weekly goal"', con=con)['value'][0]
-#fetch categories
-    # TODO: the ORDER BY clause is likely completely irrelevant
-    db_categories = pd.read_sql('select category from hoursofwork_categories order by priority', con=con)
-#fetch data from last 30 days
-    db = pd.read_sql("""
-        select id, amount, date, category
-        from hoursofwork_entries
-        where date >= date_sub(curdate(), interval 30 day)
-        """, con=con, parse_dates=True, index_col="id")
+    hoursofwork_amount_source = HoursOfWorkAmountSource(con)
+    daily_goal = hoursofwork_amount_source.daily_goal()
+    amount_categories = hoursofwork_amount_source.categories()
+    amounts_last_31_days = hoursofwork_amount_source.amounts_last_31_days()
     con.close()
-
 
 # find out date today and calculate daily goal
     today = datetime.date.today()
-    daily_goal = weekly_goal/5.0
 # find out businessdays in this month and calculate monthly goal
     businessdays_this_month = sum( 1 for x in range( calendar.monthrange(today.year, today.month)[1] ) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
     businessdays_until_today = sum( 1 for x in range(today.day) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
@@ -68,10 +59,10 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
 
 # create dataframe containing hoursofwork (per category) per day for the last 31 days
     per_day = pd.DataFrame(index = index)
-    number_of_categories = db_categories.shape[0]
+    number_of_categories = amount_categories.shape[0]
     for i in range(0,number_of_categories):
-        category = db_categories['category'][i]
-        temp = db[db['category'] == category] # select appropriate category
+        category = amount_categories['category'][i]
+        temp = amounts_last_31_days[amounts_last_31_days['category'] == category] # select appropriate category
         temp.drop('category', axis=1, inplace=True) # drop 'category' column (if dataframe is empty, taking the sum over the groupby object created next otherwise doesn't work)
         temp = temp.groupby(['date']).sum() # calculate sum over each date
         temp.columns = [category]
