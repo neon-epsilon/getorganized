@@ -46,13 +46,11 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
     amounts_last_31_days = hoursofwork_amount_source.amounts_last_31_days()
     con.close()
 
-# find out date today and calculate daily goal
-    today = datetime.date.today()
 # find out businessdays in this month and calculate monthly goal
+    today = datetime.date.today()
     businessdays_this_month = sum( 1 for x in range( calendar.monthrange(today.year, today.month)[1] ) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
     businessdays_until_today = sum( 1 for x in range(today.day) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
     monthly_goal = daily_goal*businessdays_this_month
-
 
 # create index column with last 31 dates
     index = pd.date_range(start = today-datetime.timedelta(30), end = today)

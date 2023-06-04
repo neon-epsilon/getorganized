@@ -1,3 +1,5 @@
+import calendar
+import datetime
 import pandas as pd
 import pymysql
 from abc import ABC, abstractmethod
@@ -76,5 +78,26 @@ class HoursOfWorkAmountSource(AmountSource):
         return pd.read_sql("""
             SELECT id, amount, date, category
             FROM hoursofwork_entries
+            WHERE date >= date_sub(curdate(), interval 30 day)
+            """, con=self.con, parse_dates=True, index_col="id")
+
+class SpendingsAmountSource(AmountSource):
+    def __init__(self, con: pymysql.Connection) -> None:
+# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql if we want to use 'read_sql'.
+        self.con = con
+
+    def daily_goal(self) -> float:
+        monthly_goal = pd.read_sql('SELECT value FROM spendings_goals WHERE property="monthly goal"', con=self.con)['value'][0]
+        today = datetime.date.today()
+        return monthly_goal/calendar.monthrange(today.year, today.month)[1]
+
+    def categories(self) -> pd.DataFrame:
+# TODO: the ORDER BY clause is likely completely irrelevant
+        return pd.read_sql('SELECT category FROM spendings_categories ORDER BY priority', con=self.con)
+
+    def amounts_last_31_days(self) -> pd.DataFrame:
+        return pd.read_sql("""
+            SELECT id, amount, date, category
+            FROM spendings_entries
             WHERE date >= date_sub(curdate(), interval 30 day)
             """, con=self.con, parse_dates=True, index_col="id")

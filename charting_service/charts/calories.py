@@ -46,7 +46,7 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
     amounts_last_31_days = calories_amount_source.amounts_last_31_days()
     con.close()
 
-# find out date today and calculate daily goal
+# find out date today and calculate monthly goal
     today = datetime.date.today()
     monthly_goal = daily_goal * calendar.monthrange(today.year, today.month)[1]
 
