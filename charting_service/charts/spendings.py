@@ -43,6 +43,7 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
 # fetch money to be spent in one month
     monthly_goal = pd.read_sql('select value from spendings_goals where property="monthly goal"', con=con)['value'][0]
 #fetch categories
+    # TODO: the ORDER BY clause is likely completely irrelevant
     db_categories = pd.read_sql('select category from spendings_categories order by priority', con=con)
 #fetch data from last 30 days
     db = pd.read_sql("""
@@ -171,7 +172,6 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
     axmonth.legend(fancybox=True, loc='lower center', prop={'size':10}, ncol=len(this_month.columns), bbox_to_anchor=(0.5,-1.6))
 
     figprogress.savefig(chart_progress_outputpath)
-
 
 ### save timestamp to file
     with open(timestamp_outputpath, 'w') as f:

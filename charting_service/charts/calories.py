@@ -38,13 +38,15 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
         os.makedirs(output_dir)
 
 # fetch from database
+
 # TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
     con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
 # fetch money to be spent in one month
     daily_goal = pd.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=con)['value'][0]
 #fetch categories
+    # TODO: the ORDER BY clause is likely completely irrelevant
     db_categories = pd.read_sql('SELECT category FROM calories_categories ORDER BY priority', con=con)
-#fetch data from last 30 days
+#fetch data from last 31 days
     db = pd.read_sql("""
         select id, amount, date, category
         from calories_entries
