@@ -10,13 +10,10 @@ import numpy as np
 import os
 import pandas as pd
 import pathlib
-import pymysql
 import time
 from matplotlib.ticker import AutoMinorLocator
 from typing import Union
 from charts.amountsource import CaloriesAmountSource
-
-import config
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
@@ -25,7 +22,7 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
+def generate_charts(output_dir: pathlib.Path, calories_amount_source: CaloriesAmountSource, timestamp: Union[str, None]):
     timestamp_outputpath = output_dir / 'timestamp'
     chart_7days_outputpath = output_dir / 'chart_7days.png'
     chart_progress_outputpath = output_dir / 'chart_progress.png'
@@ -39,12 +36,9 @@ def generate_charts(output_dir: pathlib.Path, timestamp: Union[str, None]):
         os.makedirs(output_dir)
 
 # fetch from database
-    con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
-    calories_amount_source = CaloriesAmountSource(con)
     daily_goal = calories_amount_source.daily_goal()
     amount_categories = calories_amount_source.categories()
     amounts_last_31_days = calories_amount_source.amounts_last_31_days()
-    con.close()
 
 # find out date today and calculate monthly goal
     today = datetime.date.today()

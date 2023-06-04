@@ -1,17 +1,36 @@
-import pathlib
 from typing import Union
+import pathlib
+import pymysql
+
 from charts import calories
 from charts import hoursofwork
 from charts import spendings
+from charts.amountsource import CaloriesAmountSource, HoursOfWorkAmountSource, SpendingsAmountSource
+import config
 
 def generate_calories_charts(timestamp: Union[str, None]):
+    con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+    calories_amount_source = CaloriesAmountSource(con)
+
     output_dir = pathlib.Path.cwd() / 'generated/calories'
-    calories.generate_charts(output_dir, timestamp)
+    calories.generate_charts(output_dir, calories_amount_source, timestamp)
+
+    con.close()
 
 def generate_hoursofwork_charts(timestamp: Union[str, None]):
+    con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+    hoursofwork_amount_source = HoursOfWorkAmountSource(con)
+
     output_dir = pathlib.Path.cwd() / 'generated/hoursofwork'
-    hoursofwork.generate_charts(output_dir, timestamp)
+    hoursofwork.generate_charts(output_dir, hoursofwork_amount_source, timestamp)
+
+    con.close()
 
 def generate_spendings_charts(timestamp: Union[str, None]):
+    con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
+    spendings_amount_source = SpendingsAmountSource(con)
+
     output_dir = pathlib.Path.cwd() / 'generated/spendings'
-    spendings.generate_charts(output_dir, timestamp)
+    spendings.generate_charts(output_dir, spendings_amount_source, timestamp)
+
+    con.close()
