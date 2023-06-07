@@ -2,7 +2,6 @@ from typing import Union
 import pathlib
 import pymysql
 
-from charts import spendings
 from charts.generation import generate_charts
 from charts.amountsource import CaloriesAmountSource, HoursOfWorkAmountSource, SpendingsAmountSource
 import config
@@ -30,6 +29,6 @@ def generate_spendings_charts(output_timestamp: Union[str, None]):
     spendings_amount_source = SpendingsAmountSource(con)
 
     output_dir = pathlib.Path.cwd() / 'generated/spendings'
-    spendings.generate_charts(output_dir, spendings_amount_source, output_timestamp)
+    generate_charts(output_dir, spendings_amount_source, output_timestamp)
 
     con.close()
