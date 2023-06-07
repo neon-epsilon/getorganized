@@ -22,7 +22,7 @@ def generate_hoursofwork_charts(timestamp: Union[str, None]):
     hoursofwork_amount_source = HoursOfWorkAmountSource(con)
 
     output_dir = pathlib.Path.cwd() / 'generated/hoursofwork'
-    hoursofwork.generate_charts(output_dir, hoursofwork_amount_source, timestamp)
+    hoursofwork.generate_charts(output_dir, hoursofwork_amount_source, timestamp, only_monday_to_friday=True)
 
     con.close()
 

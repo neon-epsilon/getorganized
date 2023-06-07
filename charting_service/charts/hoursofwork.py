@@ -22,29 +22,43 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountSource, timestamp: Union[str, None]):
+def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountSource,
+                    timestamp: Union[str, None], only_monday_to_friday: bool = False):
     timestamp_outputpath = output_dir / 'timestamp'
     chart_7days_outputpath = output_dir / 'chart_7days.png'
     chart_progress_outputpath = output_dir / 'chart_progress.png'
 
-# generate timestamp if it is not given via command line arguments
+# Generate timestamp if it is not given via command line arguments
     if timestamp is None:
         timestamp = str (time.time())
+
+# Set the relevant weekdays.
+    if only_monday_to_friday:
+        relevant_weekdays = range(0, 5)
+    else:
+        relevant_weekdays = range(0, 7)
 
 # Ensure output dir exists.
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-# fetch from database
+# Fetch from database.
     daily_goal = hoursofwork_amount_source.daily_goal()
     amount_categories = hoursofwork_amount_source.categories()
     amounts_last_31_days = hoursofwork_amount_source.amounts_last_31_days()
 
-# find out businessdays in this month and calculate monthly goal
+# Find out relevant days in this month/week and compute monthly goal.
     today = datetime.date.today()
-    businessdays_this_month = sum( 1 for x in range( calendar.monthrange(today.year, today.month)[1] ) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
-    businessdays_until_today = sum( 1 for x in range(today.day) if datetime.date(today.year, today.month, 1+x).weekday() < 5)
-    monthly_goal = daily_goal*businessdays_this_month
+
+    relevant_days_this_month = sum(1 for x in range(calendar.monthrange(today.year, today.month)[1])\
+        if datetime.date(today.year, today.month, x+1).weekday() in relevant_weekdays)
+    relevant_days_this_month_until_today = sum(1 for x in range(today.day)\
+        if datetime.date(today.year, today.month, x+1).weekday() in relevant_weekdays)
+
+    relevant_days_this_week = len(relevant_weekdays)
+    relevant_days_this_week_until_today = sum(1 for x in range(today.weekday() + 1) if x in relevant_weekdays)
+
+    monthly_goal = daily_goal*relevant_days_this_month
 
 # create index column with last 31 dates
     index = pd.date_range(start = today-datetime.timedelta(30), end = today)
@@ -115,8 +129,8 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
 # plot data
     axweek = figprogress.add_subplot(211)
     this_week.plot(ax = axweek, kind='barh', stacked=True, title="Diese Woche", width=0.8, grid=False, zorder=2)
-    axweek.axvline(x=min((today.weekday()+1),5)*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the week
-    axweek.axvline(x=5*daily_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per week
+    axweek.axvline(x=relevant_days_this_week_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the week
+    axweek.axvline(x=relevant_days_this_week*daily_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per week
 # add minor ticks on the x-axis
     axweek.xaxis.set_minor_locator(AutoMinorLocator())
     axweek.grid(zorder=0, which='major', linewidth=0.8)
@@ -138,7 +152,7 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
 # plot data
     axmonth = figprogress.add_subplot(212)
     this_month.plot(ax = axmonth, kind='barh', stacked=True, title="Diesen Monat", width=0.8, grid=False, zorder=2)
-    axmonth.axvline(x=businessdays_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the month
+    axmonth.axvline(x=relevant_days_this_month_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the month
     axmonth.axvline(x=monthly_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per month
 # add minor ticks on the x-axis
     axmonth.xaxis.set_minor_locator(AutoMinorLocator())
