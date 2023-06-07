@@ -44,14 +44,16 @@ class AmountSource(ABC):
 
 class CaloriesAmountSource(AmountSource):
     def __init__(self, con: pymysql.Connection) -> None:
-# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql if we want to use 'read_sql'.
+        # TODO: per pandas docs, we should use a SQLAlchemy connectable instead
+        # of pymysql if we want to use 'read_sql'. Also applies to the other
+        # `AmountSource` implementations here.
         self.con = con
 
     def daily_goal(self) -> float:
         return pd.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=self.con)['value'][0]
 
     def categories(self) -> pd.DataFrame:
-# TODO: the ORDER BY clause is likely completely irrelevant
+        # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM calories_categories ORDER BY priority', con=self.con)
 
     def amounts_last_31_days(self) -> pd.DataFrame:
@@ -63,7 +65,6 @@ class CaloriesAmountSource(AmountSource):
 
 class HoursOfWorkAmountSource(AmountSource):
     def __init__(self, con: pymysql.Connection) -> None:
-# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql if we want to use 'read_sql'.
         self.con = con
 
     def daily_goal(self) -> float:
@@ -71,7 +72,7 @@ class HoursOfWorkAmountSource(AmountSource):
         return weekly_goal/5.0
 
     def categories(self) -> pd.DataFrame:
-# TODO: the ORDER BY clause is likely completely irrelevant
+        # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM hoursofwork_categories ORDER BY priority', con=self.con)
 
     def amounts_last_31_days(self) -> pd.DataFrame:
@@ -83,7 +84,6 @@ class HoursOfWorkAmountSource(AmountSource):
 
 class SpendingsAmountSource(AmountSource):
     def __init__(self, con: pymysql.Connection) -> None:
-# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql if we want to use 'read_sql'.
         self.con = con
 
     def daily_goal(self) -> float:
@@ -92,7 +92,7 @@ class SpendingsAmountSource(AmountSource):
         return monthly_goal/calendar.monthrange(today.year, today.month)[1]
 
     def categories(self) -> pd.DataFrame:
-# TODO: the ORDER BY clause is likely completely irrelevant
+        # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM spendings_categories ORDER BY priority', con=self.con)
 
     def amounts_last_31_days(self) -> pd.DataFrame:
