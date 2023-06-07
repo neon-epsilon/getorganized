@@ -22,15 +22,18 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountSource,
-                    timestamp: Union[str, None], only_monday_to_friday: bool = False):
+def generate_charts(output_dir: pathlib.Path,
+                    hoursofwork_amount_source: AmountSource,
+                    output_timestamp: Union[str, None] = None,
+                    day: datetime.date = datetime.date.today(),
+                    only_monday_to_friday: bool = False):
     timestamp_outputpath = output_dir / 'timestamp'
     chart_7days_outputpath = output_dir / 'chart_7days.png'
     chart_progress_outputpath = output_dir / 'chart_progress.png'
 
 # Generate timestamp if it is not given via command line arguments
-    if timestamp is None:
-        timestamp = str (time.time())
+    if output_timestamp is None:
+        output_timestamp = str (time.time())
 
 # Set the relevant weekdays.
     if only_monday_to_friday:
@@ -48,20 +51,18 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
     amounts_last_31_days = hoursofwork_amount_source.amounts_last_31_days()
 
 # Find out relevant days in this month/week and compute monthly goal.
-    today = datetime.date.today()
-
-    relevant_days_this_month = sum(1 for x in range(calendar.monthrange(today.year, today.month)[1])\
-        if datetime.date(today.year, today.month, x+1).weekday() in relevant_weekdays)
-    relevant_days_this_month_until_today = sum(1 for x in range(today.day)\
-        if datetime.date(today.year, today.month, x+1).weekday() in relevant_weekdays)
+    relevant_days_this_month = sum(1 for x in range(calendar.monthrange(day.year, day.month)[1])\
+        if datetime.date(day.year, day.month, x+1).weekday() in relevant_weekdays)
+    relevant_days_this_month_until_today = sum(1 for x in range(day.day)\
+        if datetime.date(day.year, day.month, x+1).weekday() in relevant_weekdays)
 
     relevant_days_this_week = len(relevant_weekdays)
-    relevant_days_this_week_until_today = sum(1 for x in range(today.weekday() + 1) if x in relevant_weekdays)
+    relevant_days_this_week_until_today = sum(1 for x in range(day.weekday() + 1) if x in relevant_weekdays)
 
     monthly_goal = daily_goal*relevant_days_this_month
 
 # create index column with last 31 dates
-    index = pd.date_range(start = today-datetime.timedelta(30), end = today)
+    index = pd.date_range(start = day-datetime.timedelta(30), end = day)
 
 # create dataframe containing hoursofwork (per category) per day for the last 31 days
     per_day = pd.DataFrame(index = index)
@@ -116,7 +117,7 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
 
 ### bar chart for this week's progress
 # aggregate data
-    this_week = per_day[-today.weekday()-1:].sum().sort_values(ascending=False)
+    this_week = per_day[-day.weekday()-1:].sum().sort_values(ascending=False)
     this_week = this_week[this_week != 0]
     if len(this_week) == 0:
         this_week['Alles'] = 0
@@ -139,7 +140,7 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
 
 ### bar chart for this month's progress
 # aggregate data
-    this_month = per_day[-today.day:].sum().sort_values(ascending=False)
+    this_month = per_day[-day.day:].sum().sort_values(ascending=False)
     this_month = this_month[this_month != 0]
     if len(this_month) == 0:
         this_month['Alles'] = 0
@@ -176,4 +177,4 @@ def generate_charts(output_dir: pathlib.Path, hoursofwork_amount_source: AmountS
 
 ### save timestamp to file
     with open(timestamp_outputpath, 'w') as f:
-        f.write(timestamp)
+        f.write(output_timestamp)
