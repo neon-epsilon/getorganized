@@ -10,17 +10,10 @@ import numpy as np
 import os
 import pandas as pd
 import pathlib
-import pymysql
 import time
 from matplotlib.ticker import AutoMinorLocator
-
-import config
-
-output_dir = pathlib.Path.cwd() / 'generated/calories'
-
-timestamp_outputpath = output_dir / 'timestamp'
-chart_7days_outputpath = output_dir / 'chart_7days.png'
-chart_progress_outputpath = output_dir / 'chart_progress.png'
+from typing import Union
+from charts.amountsource import AmountSource
 
 max_categories_7days = 6  # max number of categories to show for 7 days plot
 max_categories_progress = 5  # max number of categories to show for progress plot
@@ -29,49 +22,60 @@ plot_style = u'ggplot'
 mpl.use('Agg')
 style.use(plot_style)
 
-def generate_chart(timestamp):
-# generate timestamp if it is not given via command line arguments
-    if timestamp is None:
-        timestamp = str (time.time())
+def generate_charts(output_dir: pathlib.Path,
+                    amount_source: AmountSource,
+                    output_timestamp: Union[str, None] = None,
+                    day: datetime.date = datetime.date.today(),
+                    only_monday_to_friday: bool = False):
+    timestamp_outputpath = output_dir / 'timestamp'
+    chart_7days_outputpath = output_dir / 'chart_7days.png'
+    chart_progress_outputpath = output_dir / 'chart_progress.png'
+
+# Generate timestamp if it is not given via command line arguments
+    if output_timestamp is None:
+        output_timestamp = str (time.time())
+
+# Set the relevant weekdays.
+    if only_monday_to_friday:
+        relevant_weekdays = range(0, 5)
+    else:
+        relevant_weekdays = range(0, 7)
 
 # Ensure output dir exists.
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-# fetch from database
-# TODO: per pandas docs, we should use a SQLAlchemy connectable instead of pymysql.
-    con = pymysql.connect(host=config.db_host,user=config.db_user,passwd=config.db_password,db=config.db_name)
-# fetch money to be spent in one month
-    daily_goal = pd.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=con)['value'][0]
-#fetch categories
-    db_categories = pd.read_sql('SELECT category FROM calories_categories ORDER BY priority', con=con)
-#fetch data from last 30 days
-    db = pd.read_sql("""
-        select id, amount, date, category
-        from calories_entries
-        where date >= date_sub(curdate(), interval 30 day)
-        """, con=con, parse_dates=True, index_col="id")
-    con.close()
+# Fetch from database.
+    daily_goal = amount_source.daily_goal()
+    amount_categories = amount_source.categories()
+    amounts_last_31_days = amount_source.amounts_last_31_days()
 
+# Find out relevant days in this month/week and compute monthly goal.
+    relevant_days_this_month = sum(1 for x in range(calendar.monthrange(day.year, day.month)[1])\
+        if datetime.date(day.year, day.month, x+1).weekday() in relevant_weekdays)
+    relevant_days_this_month_until_today = sum(1 for x in range(day.day)\
+        if datetime.date(day.year, day.month, x+1).weekday() in relevant_weekdays)
 
-# find out date today and calculate daily goal
-    today = datetime.date.today()
-    monthly_goal = daily_goal * calendar.monthrange(today.year, today.month)[1]
+    relevant_days_this_week = len(relevant_weekdays)
+    relevant_days_this_week_until_today = sum(1 for x in range(day.weekday() + 1) if x in relevant_weekdays)
+
+    monthly_goal = daily_goal*relevant_days_this_month
 
 # create index column with last 31 dates
-    index = pd.date_range(start = today-datetime.timedelta(30), end = today)
+    index = pd.date_range(start = day-datetime.timedelta(30), end = day)
 
-# create dataframe containing calories (per category) per day for the last 31 days
+# create dataframe containing aggregated amount (per category) per day for the last 31 days
     per_day = pd.DataFrame(index = index)
-    number_of_categories = db_categories.shape[0]
+    number_of_categories = amount_categories.shape[0]
     for i in range(0,number_of_categories):
-        category = db_categories['category'][i]
-        temp = db[db['category'] == category] # select appropriate category
+        category = amount_categories['category'][i]
+        temp = amounts_last_31_days[amounts_last_31_days['category'] == category] # select appropriate category
         temp.drop('category', axis=1, inplace=True) # drop 'category' column (if dataframe is empty, taking the sum over the groupby object created next otherwise doesn't work)
         temp = temp.groupby(['date']).sum() # calculate sum over each date
         temp.columns = [category]
         per_day = per_day.join(temp)
     per_day = per_day.fillna(0)
+
 
 ### 7 days plot
 # prepare for creating plot of last 7 days
@@ -107,12 +111,13 @@ def generate_chart(timestamp):
     fig7days.tight_layout()
     fig7days.savefig(chart_7days_outputpath)
 
+
 ### Make progress plots
     figprogress = plt.figure(figsize=(7,3))
 
 ### bar chart for this week's progress
 # aggregate data
-    this_week = per_day[-today.weekday()-1:].sum().sort_values(ascending=False)
+    this_week = per_day[-day.weekday()-1:].sum().sort_values(ascending=False)
     this_week = this_week[this_week != 0]
     if len(this_week) == 0:
         this_week['Alles'] = 0
@@ -125,8 +130,8 @@ def generate_chart(timestamp):
 # plot data
     axweek = figprogress.add_subplot(211)
     this_week.plot(ax = axweek, kind='barh', stacked=True, title="Diese Woche", width=0.8, grid=False, zorder=2)
-    axweek.axvline(x=(today.weekday()+1)*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the week
-    axweek.axvline(x=7*daily_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per week
+    axweek.axvline(x=relevant_days_this_week_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the week
+    axweek.axvline(x=relevant_days_this_week*daily_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per week
 # add minor ticks on the x-axis
     axweek.xaxis.set_minor_locator(AutoMinorLocator())
     axweek.grid(zorder=0, which='major', linewidth=0.8)
@@ -135,7 +140,7 @@ def generate_chart(timestamp):
 
 ### bar chart for this month's progress
 # aggregate data
-    this_month = per_day[-today.day:].sum().sort_values(ascending=False)
+    this_month = per_day[-day.day:].sum().sort_values(ascending=False)
     this_month = this_month[this_month != 0]
     if len(this_month) == 0:
         this_month['Alles'] = 0
@@ -148,7 +153,7 @@ def generate_chart(timestamp):
 # plot data
     axmonth = figprogress.add_subplot(212)
     this_month.plot(ax = axmonth, kind='barh', stacked=True, title="Diesen Monat", width=0.8, grid=False, zorder=2)
-    axmonth.axvline(x=(today.day)*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the month
+    axmonth.axvline(x=relevant_days_this_month_until_today*daily_goal, color='black', alpha=0.8, linewidth=2, zorder=1) # goal for this day of the month
     axmonth.axvline(x=monthly_goal, color='red', alpha=0.8, linewidth=2, zorder=1) # goal per month
 # add minor ticks on the x-axis
     axmonth.xaxis.set_minor_locator(AutoMinorLocator())
@@ -172,4 +177,4 @@ def generate_chart(timestamp):
 
 ### save timestamp to file
     with open(timestamp_outputpath, 'w') as f:
-        f.write(timestamp)
+        f.write(output_timestamp)
