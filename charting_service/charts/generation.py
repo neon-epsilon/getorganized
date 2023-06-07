@@ -23,7 +23,7 @@ mpl.use('Agg')
 style.use(plot_style)
 
 def generate_charts(output_dir: pathlib.Path,
-                    hoursofwork_amount_source: AmountSource,
+                    amount_source: AmountSource,
                     output_timestamp: Union[str, None] = None,
                     day: datetime.date = datetime.date.today(),
                     only_monday_to_friday: bool = False):
@@ -46,9 +46,9 @@ def generate_charts(output_dir: pathlib.Path,
         os.makedirs(output_dir)
 
 # Fetch from database.
-    daily_goal = hoursofwork_amount_source.daily_goal()
-    amount_categories = hoursofwork_amount_source.categories()
-    amounts_last_31_days = hoursofwork_amount_source.amounts_last_31_days()
+    daily_goal = amount_source.daily_goal()
+    amount_categories = amount_source.categories()
+    amounts_last_31_days = amount_source.amounts_last_31_days()
 
 # Find out relevant days in this month/week and compute monthly goal.
     relevant_days_this_month = sum(1 for x in range(calendar.monthrange(day.year, day.month)[1])\
@@ -64,7 +64,7 @@ def generate_charts(output_dir: pathlib.Path,
 # create index column with last 31 dates
     index = pd.date_range(start = day-datetime.timedelta(30), end = day)
 
-# create dataframe containing hoursofwork (per category) per day for the last 31 days
+# create dataframe containing aggregated amount (per category) per day for the last 31 days
     per_day = pd.DataFrame(index = index)
     number_of_categories = amount_categories.shape[0]
     for i in range(0,number_of_categories):
