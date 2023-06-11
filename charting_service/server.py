@@ -2,8 +2,10 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from enum import Enum
 from fastapi import FastAPI
+from rocketry import Rocketry
+from rocketry.conds import daily
 from typing import Union
-
+import asyncio
 import charts
 
 class ChartType(str, Enum):
@@ -11,13 +13,26 @@ class ChartType(str, Enum):
     hoursofwork = "hoursofwork"
     spendings = "spendings"
 
+# Use a process pool to generate charts in the background.
 chart_generation_executor = ProcessPoolExecutor()
 
+# We use rocketry to re-generate the charts at midnight.
+chart_generation_scheduler = Rocketry(execution="async")
+
+@chart_generation_scheduler.task(daily.at("00:00"))
+def generate_all_charts():
+    chart_generation_executor.submit(charts.generate_calories_charts, None)
+    chart_generation_executor.submit(charts.generate_hoursofwork_charts, None)
+    chart_generation_executor.submit(charts.generate_spendings_charts, None)
+
+# Define what to do at server startup and shutdown
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Nothing specific to do on startup
+    # Server startup
+    asyncio.create_task(chart_generation_scheduler.serve())
     yield
-    # Clean up
+    # Server shutdown
+    chart_generation_scheduler.session.shutdown()
     chart_generation_executor.shutdown()
 
 app = FastAPI(lifespan=lifespan)
