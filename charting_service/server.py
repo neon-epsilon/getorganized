@@ -29,6 +29,7 @@ def generate_all_charts():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Server startup
+    generate_all_charts()
     asyncio.create_task(chart_generation_scheduler.serve())
     yield
     # Server shutdown

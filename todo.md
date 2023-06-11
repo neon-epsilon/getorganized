@@ -19,8 +19,6 @@
 
 # Backend
 
-- Make the re-generation of charts during midnight the job of the chart generation service. Also, create charts on startup.
-
 - Reimplement the API in something other than PHP. E.g. Rust with Axum.
 
 - Maybe use PostgreSQL rather than MySQL/MariaDB, as the containerized version is much better.
