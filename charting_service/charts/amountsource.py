@@ -1,7 +1,7 @@
 import calendar
-import datetime
 import pandas as pd
 import pymysql
+from datetime import date
 from abc import ABC, abstractmethod
 
 
@@ -9,13 +9,6 @@ class AmountSource(ABC):
     """
     Provides amounts from which charts can be generated.
     """
-
-    @abstractmethod
-    def daily_goal(self) -> float:
-        '''
-        Indicates the total amount the user aims for per day.
-        '''
-        pass
 
     @abstractmethod
     def categories(self) -> pd.DataFrame:
@@ -29,7 +22,14 @@ class AmountSource(ABC):
         pass
 
     @abstractmethod
-    def amounts_last_31_days(self) -> pd.DataFrame:
+    def daily_goal(self, day: date) -> float:
+        '''
+        Indicates the total amount the user aims for per day.
+        '''
+        pass
+
+    @abstractmethod
+    def amounts_last_31_days(self, day: date) -> pd.DataFrame:
         '''
         Contains all the amounts for the last 31 days (including the current day).
 
@@ -49,55 +49,60 @@ class CaloriesAmountSource(AmountSource):
         # `AmountSource` implementations here.
         self.con = con
 
-    def daily_goal(self) -> float:
-        return pd.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=self.con)['value'][0]
-
     def categories(self) -> pd.DataFrame:
         # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM calories_categories ORDER BY priority', con=self.con)
 
-    def amounts_last_31_days(self) -> pd.DataFrame:
-        return pd.read_sql("""
+    def daily_goal(self, day: date) -> float:
+        return pd.read_sql('SELECT value FROM calories_goals WHERE property="daily goal"', con=self.con)['value'][0]
+
+    def amounts_last_31_days(self, day: date) -> pd.DataFrame:
+        date_string = day.isoformat()
+
+        return pd.read_sql(f"""
             SELECT id, amount, date, category
             FROM calories_entries
-            WHERE date >= date_sub(curdate(), interval 30 day)
+            WHERE date BETWEEN date_sub('{date_string}', interval 30 day) AND date_add('{date_string}', interval 1 day)
             """, con=self.con, parse_dates=True, index_col="id")
 
 class HoursOfWorkAmountSource(AmountSource):
     def __init__(self, con: pymysql.Connection) -> None:
         self.con = con
 
-    def daily_goal(self) -> float:
-        weekly_goal = pd.read_sql('SELECT value FROM hoursofwork_goals WHERE property="weekly goal"', con=self.con)['value'][0]
-        return weekly_goal/5.0
-
     def categories(self) -> pd.DataFrame:
         # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM hoursofwork_categories ORDER BY priority', con=self.con)
 
-    def amounts_last_31_days(self) -> pd.DataFrame:
-        return pd.read_sql("""
+    def daily_goal(self, day: date) -> float:
+        weekly_goal = pd.read_sql('SELECT value FROM hoursofwork_goals WHERE property="weekly goal"', con=self.con)['value'][0]
+        return weekly_goal/5.0
+
+    def amounts_last_31_days(self, day: date) -> pd.DataFrame:
+        date_string = day.isoformat()
+
+        return pd.read_sql(f"""
             SELECT id, amount, date, category
             FROM hoursofwork_entries
-            WHERE date >= date_sub(curdate(), interval 30 day)
+            WHERE date BETWEEN date_sub('{date_string}', interval 30 day) AND date_add('{date_string}', interval 1 day)
             """, con=self.con, parse_dates=True, index_col="id")
 
 class SpendingsAmountSource(AmountSource):
     def __init__(self, con: pymysql.Connection) -> None:
         self.con = con
 
-    def daily_goal(self) -> float:
-        monthly_goal = pd.read_sql('SELECT value FROM spendings_goals WHERE property="monthly goal"', con=self.con)['value'][0]
-        today = datetime.date.today()
-        return monthly_goal/calendar.monthrange(today.year, today.month)[1]
-
     def categories(self) -> pd.DataFrame:
         # The ORDER BY only fixes the ordering.
         return pd.read_sql('SELECT category FROM spendings_categories ORDER BY priority', con=self.con)
 
-    def amounts_last_31_days(self) -> pd.DataFrame:
-        return pd.read_sql("""
+    def daily_goal(self, day: date) -> float:
+        monthly_goal = pd.read_sql('SELECT value FROM spendings_goals WHERE property="monthly goal"', con=self.con)['value'][0]
+        return monthly_goal/calendar.monthrange(day.year, day.month)[1]
+
+    def amounts_last_31_days(self, day: date) -> pd.DataFrame:
+        date_string = day.isoformat()
+
+        return pd.read_sql(f"""
             SELECT id, amount, date, category
             FROM spendings_entries
-            WHERE date >= date_sub(curdate(), interval 30 day)
+            WHERE date BETWEEN date_sub('{date_string}', interval 30 day) AND date_add('{date_string}', interval 1 day)
             """, con=self.con, parse_dates=True, index_col="id")

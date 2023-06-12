@@ -1,12 +1,15 @@
-# set up relevant variables
-import pathlib
 import configparser
+import pathlib
+import pytz
 
 file_name = pathlib.Path.cwd() / 'config' / 'config.ini'
 
 # set up database login data
 parser = configparser.ConfigParser()
 parser.read(str(file_name))
+
+timezone_name = parser.get('Localization', 'timezone').strip('"')
+timezone = pytz.timezone(timezone_name)
 
 db_host = parser.get('DB', 'host').strip('"')
 db_name = parser.get('DB', 'name').strip('"')
