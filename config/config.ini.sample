@@ -5,6 +5,8 @@
 ; Do not forget to give the grants on the database with respect to hosts from
 ; the `172.%` subnet if on Linux. To do so, configure mysql's `bind-address`
 ; setting.
+[Localization]
+timezone = UTC
 
 [DB]
 host = 172.17.0.1

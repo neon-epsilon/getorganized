@@ -8,7 +8,8 @@ file_name = pathlib.Path.cwd() / 'config' / 'config.ini'
 parser = configparser.ConfigParser()
 parser.read(str(file_name))
 
-timezone=pytz.timezone("Europe/Zurich")
+timezone_name = parser.get('Localization', 'timezone').strip('"')
+timezone = pytz.timezone(timezone_name)
 
 db_host = parser.get('DB', 'host').strip('"')
 db_name = parser.get('DB', 'name').strip('"')
