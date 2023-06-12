@@ -7,6 +7,7 @@ from rocketry.conds import daily
 from typing import Union
 import asyncio
 import charts
+import config
 
 class ChartType(str, Enum):
     calories = "calories"
@@ -17,7 +18,7 @@ class ChartType(str, Enum):
 chart_generation_executor = ProcessPoolExecutor()
 
 # We use rocketry to re-generate the charts at midnight.
-chart_generation_scheduler = Rocketry(execution="async")
+chart_generation_scheduler = Rocketry(execution="async", timezone=config.timezone)
 
 @chart_generation_scheduler.task(daily.at("00:00"))
 def generate_all_charts():
