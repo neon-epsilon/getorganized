@@ -5,7 +5,6 @@ from charts.amountsource import AmountSource
 from matplotlib.ticker import AutoMinorLocator
 from typing import Union
 import calendar
-import config
 import datetime
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -25,8 +24,8 @@ style.use(plot_style)
 
 def generate_charts(output_dir: pathlib.Path,
                     amount_source: AmountSource,
+                    day: datetime.date,
                     output_timestamp: Union[str, None] = None,
-                    day: datetime.date = datetime.datetime.now(config.timezone).date(),
                     only_monday_to_friday: bool = False):
     timestamp_outputpath = output_dir / 'timestamp'
     chart_7days_outputpath = output_dir / 'chart_7days.png'
@@ -47,9 +46,9 @@ def generate_charts(output_dir: pathlib.Path,
         os.makedirs(output_dir)
 
 # Fetch from database.
-    daily_goal = amount_source.daily_goal()
     amount_categories = amount_source.categories()
-    amounts_last_31_days = amount_source.amounts_last_31_days()
+    daily_goal = amount_source.daily_goal(day)
+    amounts_last_31_days = amount_source.amounts_last_31_days(day)
 
 # Find out relevant days in this month/week and compute monthly goal.
     relevant_days_this_month = sum(1 for x in range(calendar.monthrange(day.year, day.month)[1])\
